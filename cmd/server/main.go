@@ -34,16 +34,24 @@ func main() {
 
 	h := handlers.NewHandler(store)
 
-	tmpl, err := template.ParseFiles("web/templates/index.html")
+	indexTmpl, err := template.ParseFiles("web/templates/index.html")
 	if err != nil {
-		log.Fatalf("failed to parse templates: %v", err)
+		log.Fatalf("failed to parse index template: %v", err)
+	}
+
+	gamesTmpl, err := template.ParseFiles("web/templates/games.html")
+	if err != nil {
+		log.Fatalf("failed to parse games template: %v", err)
 	}
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /{$}", func(w http.ResponseWriter, r *http.Request) {
-		if err := tmpl.Execute(w, nil); err != nil {
+		if err := indexTmpl.Execute(w, nil); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
+	})
+	mux.HandleFunc("GET /jogos", func(w http.ResponseWriter, r *http.Request) {
+		h.ListGames(w, r, gamesTmpl)
 	})
 	mux.HandleFunc("POST /members", h.CreateMember)
 	mux.HandleFunc("GET /games/{id}", h.GetGame)
