@@ -1,7 +1,67 @@
 package main
 
-import "fmt"
+import (
+	"context"
+	"fmt"
+	"log"
+	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
+
+	"github.com/cmellojr/modo-locadora/internal/database"
+	"github.com/cmellojr/modo-locadora/internal/handlers"
+)
 
 func main() {
-	fmt.Println("Rental Mode Server")
+	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer cancel()
+
+	connString := os.Getenv("DATABASE_URL")
+	if connString == "" {
+		// Defaulting for local development
+		connString = "postgres://postgres:postgres@localhost:5432/modo_locadora?sslmode=disable"
+	}
+
+	store, err := database.NewPostgresStore(ctx, connString)
+	if err != nil {
+		log.Fatalf("failed to initialize store: %v", err)
+	}
+	defer store.Close()
+
+	h := handlers.NewHandler(store)
+
+	mux := http.NewServeMux()
+	mux.HandleFunc("POST /members", h.CreateMember)
+	mux.HandleFunc("GET /games/{id}", h.GetGame)
+
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
+
+	srv := &http.Server{
+		Addr:    ":" + port,
+		Handler: mux,
+	}
+
+	go func() {
+		fmt.Printf("Rental Mode Server starting on port %s\n", port)
+		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Fatalf("listen: %s\n", err)
+		}
+	}()
+
+	<-ctx.Done()
+	fmt.Println("Shutting down server...")
+
+	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer shutdownCancel()
+
+	if err := srv.Shutdown(shutdownCtx); err != nil {
+		log.Fatalf("Server forced to shutdown: %v", err)
+	}
+
+	fmt.Println("Server gracefully stopped")
 }
