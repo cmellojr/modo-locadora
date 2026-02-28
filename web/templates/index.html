@@ -42,14 +42,16 @@
             <h3 class="title">Balcão da Locadora</h3>
             <p>"Sopre a fita e respeite o tempo."</p>
 
-            <div class="input-group nes-field">
-                <label for="member_name">Nome do Sócio</label>
-                <input type="text" id="member_name" class="nes-input" placeholder="Digite seu nome...">
-            </div>
+            <form action="/login" method="POST">
+                <div class="input-group nes-field">
+                    <label for="member_name">Nome do Sócio</label>
+                    <input type="text" id="member_name" name="member_name" class="nes-input" placeholder="Digite seu nome..." required>
+                </div>
 
-            <div class="btn-group">
-                <button type="button" class="nes-btn is-primary">Entrar no Modo Locadora</button>
-            </div>
+                <div class="btn-group">
+                    <button type="submit" class="nes-btn is-primary">Entrar no Modo Locadora</button>
+                </div>
+            </form>
         </section>
     </div>
 </body>
