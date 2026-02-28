@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modo Locadora - Bem-vindo ao Balcão</title>
+    <!-- Google Fonts: Press Start 2P -->
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <!-- NES.css CDN -->
+    <link href="https://unpkg.com/nes.css@2.3.0/css/nes.min.css" rel="stylesheet" />
+    <style>
+        body {
+            background-color: #212529;
+            color: white;
+            font-family: 'Press Start 2P', cursive;
+            padding: 2rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .container-wrapper {
+            max-width: 600px;
+            width: 100%;
+        }
+        .nes-container.is-rounded {
+            background-color: white;
+            color: #212529;
+        }
+        .input-group {
+            margin-top: 2rem;
+            margin-bottom: 2rem;
+        }
+        .btn-group {
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-wrapper">
+        <section class="nes-container with-title is-rounded is-centered">
+            <h3 class="title">Balcão da Locadora</h3>
+            <p>"Sopre a fita e respeite o tempo."</p>
+
+            <div class="input-group nes-field">
+                <label for="member_name">Nome do Sócio</label>
+                <input type="text" id="member_name" class="nes-input" placeholder="Digite seu nome...">
+            </div>
+
+            <div class="btn-group">
+                <button type="button" class="nes-btn is-primary">Entrar no Modo Locadora</button>
+            </div>
+        </section>
+    </div>
+</body>
+</html>

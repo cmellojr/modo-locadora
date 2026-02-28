@@ -30,6 +30,11 @@ type CreateMemberRequest struct {
 
 // CreateMember handles POST /members.
 func (h *Handler) CreateMember(w http.ResponseWriter, r *http.Request) {
+	if h.store == nil {
+		http.Error(w, "Database not configured", http.StatusServiceUnavailable)
+		return
+	}
+
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
@@ -62,6 +67,11 @@ func (h *Handler) CreateMember(w http.ResponseWriter, r *http.Request) {
 
 // GetGame handles GET /games/{id}.
 func (h *Handler) GetGame(w http.ResponseWriter, r *http.Request) {
+	if h.store == nil {
+		http.Error(w, "Database not configured", http.StatusServiceUnavailable)
+		return
+	}
+
 	if r.Method != http.MethodGet {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
