@@ -2,7 +2,7 @@
 
 > **"Sopre a fita, pegue o controle e respeite o tempo."**
 
-O **Modo Locadora** é um sistema web open-source, desenvolvido em **Go**, projetado para gerenciar sessões de jogos (jogatinas) simulando a experiência das videolocadoras brasileiras dos anos 90. 
+O **Modo Locadora** é um sistema web open-source, desenvolvido em **Go**, projetado para gerenciar sessões de jogos (jogatinas) simulando a experiência das videolocadoras brasileiras dos anos 90.
 
 Aqui, a escassez gera valor, o tempo é um compromisso e o conhecimento é compartilhado através do lendário "caderninho".
 
