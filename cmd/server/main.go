@@ -54,6 +54,9 @@ func main() {
 	mux.HandleFunc("GET /games", func(w http.ResponseWriter, r *http.Request) {
 		h.ListGames(w, r, gamesTmpl)
 	})
+	mux.HandleFunc("GET /jogos", func(w http.ResponseWriter, r *http.Request) {
+		h.ListGames(w, r, gamesTmpl)
+	})
 	mux.HandleFunc("POST /members", h.CreateMember)
 	mux.HandleFunc("GET /games/{id}", h.GetGame)
 
