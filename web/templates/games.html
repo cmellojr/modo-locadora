@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prateleira de Jogos - Modo Locadora</title>
+    <!-- Google Fonts: Press Start 2P -->
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <!-- NES.css CDN -->
+    <link href="https://unpkg.com/nes.css@2.3.0/css/nes.min.css" rel="stylesheet" />
+    <style>
+        body {
+            background-color: #212529;
+            color: white;
+            font-family: 'Press Start 2P', cursive;
+            padding: 2rem;
+        }
+        .shelf-title {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+        .games-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 2rem;
+        }
+        .game-card {
+            background-color: white;
+            color: #212529;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        .game-cover {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            image-rendering: pixelated;
+            margin-bottom: 1rem;
+            border: 4px solid #212529;
+        }
+        .game-info {
+            flex-grow: 1;
+        }
+        .game-title {
+            font-size: 0.8rem;
+            margin-bottom: 0.5rem;
+        }
+        .game-platform {
+            font-size: 0.6rem;
+            margin-bottom: 1rem;
+        }
+        .copy-count {
+            font-size: 0.7rem;
+            margin-bottom: 1rem;
+        }
+        .back-link {
+            display: block;
+            margin-top: 2rem;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <h2 class="shelf-title">Prateleira de Jogos</h2>
+
+    <div class="games-grid">
+        {{range .Games}}
+        <section class="nes-container with-title game-card">
+            <h3 class="title game-title">{{.Title}}</h3>
+            <div class="game-info">
+                <img src="{{.CoverURL}}" alt="{{.Title}}" class="game-cover">
+                <p class="game-platform">Plataforma: {{.Platform}}</p>
+                <p class="copy-count">Cópias: {{.CopiesAvailable}}</p>
+            </div>
+            <button type="button" class="nes-btn is-primary {{if eq .CopiesAvailable 0}}is-disabled{{end}}" {{if eq .CopiesAvailable 0}}disabled{{end}}>
+                Alugar
+            </button>
+        </section>
+        {{end}}
+    </div>
+
+    <a href="/" class="back-link">
+        <button type="button" class="nes-btn">Voltar ao Balcão</button>
+    </a>
+</body>
+</html>

@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"html/template"
 	"net/http"
 	"time"
 
@@ -63,6 +64,53 @@ func (h *Handler) CreateMember(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(member)
+}
+
+// GameView represents a game for display in the shelf.
+type GameView struct {
+	ID              string
+	Title           string
+	Platform        string
+	CoverURL        string
+	CopiesAvailable int
+}
+
+// ListGames handles GET /jogos and renders the games shelf.
+func (h *Handler) ListGames(w http.ResponseWriter, r *http.Request, tmpl *template.Template) {
+	// Mock data for testing
+	games := []GameView{
+		{
+			ID:              "1",
+			Title:           "Super Mario World",
+			Platform:        "SNES",
+			CoverURL:        "https://upload.wikimedia.org/wikipedia/en/3/32/Super_Mario_World_Coverart.png",
+			CopiesAvailable: 2,
+		},
+		{
+			ID:              "2",
+			Title:           "The Legend of Zelda: A Link to the Past",
+			Platform:        "SNES",
+			CoverURL:        "https://upload.wikimedia.org/wikipedia/en/2/21/The_Legend_of_Zelda_A_Link_to_the_Past_SNES_Game_Cover.jpg",
+			CopiesAvailable: 0,
+		},
+		{
+			ID:              "3",
+			Title:           "Sonic the Hedgehog",
+			Platform:        "Mega Drive",
+			CoverURL:        "https://upload.wikimedia.org/wikipedia/en/b/ba/Sonic_the_Hedgehog_1_Genesis_box_art.jpg",
+			CopiesAvailable: 1,
+		},
+	}
+
+	data := struct {
+		Games []GameView
+	}{
+		Games: games,
+	}
+
+	if err := tmpl.Execute(w, data); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
 }
 
 // GetGame handles GET /games/{id}.
