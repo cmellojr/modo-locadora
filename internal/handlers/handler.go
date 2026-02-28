@@ -98,7 +98,7 @@ type GameView struct {
 	CopiesAvailable int
 }
 
-// ListGames handles GET /jogos and renders the games shelf.
+// ListGames handles GET /games and renders the games shelf.
 func (h *Handler) ListGames(w http.ResponseWriter, r *http.Request, tmpl *template.Template) {
 	// Mock data for testing
 	games := []GameView{

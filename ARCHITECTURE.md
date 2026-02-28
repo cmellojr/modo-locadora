@@ -1,7 +1,7 @@
 # Modo Locadora - System Architecture 🕹️
 
 ## 1. Vision & Concept
-Modo Locadora is a retro-gaming session manager focused on scarcity, community, and nostalgia. 
+Modo Locadora is a retro-gaming session manager focused on scarcity, community, and nostalgia.
 It emulates the experience of 90s Brazilian video rental stores ("locadoras").
 
 ## 2. Tech Stack
@@ -13,7 +13,7 @@ It emulates the experience of 90s Brazilian video rental stores ("locadoras").
 
 ## 3. Design Principles (The "Nostalgic" Rulebook)
 - **Clean & Static:** No heavy JavaScript, no ads, no trackers.
-- **Visuals:** Use `image-rendering: pixelated` for game covers. 
+- **Visuals:** Use `image-rendering: pixelated` for game covers.
 - **Language:** Code, Routes, and Database must be in **English**. The UI (templates) must be in **Portuguese (BR)**.
 - **Copyleft:** Licensed under **GPL v3**.
 
