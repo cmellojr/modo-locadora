@@ -50,7 +50,8 @@ func main() {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
 	})
-	mux.HandleFunc("GET /jogos", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("POST /login", h.Login)
+	mux.HandleFunc("GET /games", func(w http.ResponseWriter, r *http.Request) {
 		h.ListGames(w, r, gamesTmpl)
 	})
 	mux.HandleFunc("POST /members", h.CreateMember)

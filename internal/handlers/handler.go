@@ -66,6 +66,29 @@ func (h *Handler) CreateMember(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(member)
 }
 
+// Login handles POST /login, setting a cookie with the member name.
+func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	memberName := r.FormValue("member_name")
+	if memberName == "" {
+		http.Error(w, "Member name is required", http.StatusBadRequest)
+		return
+	}
+
+	http.SetCookie(w, &http.Cookie{
+		Name:     "member_name",
+		Value:    memberName,
+		Path:     "/",
+		HttpOnly: true,
+	})
+
+	http.Redirect(w, r, "/games", http.StatusSeeOther)
+}
+
 // GameView represents a game for display in the shelf.
 type GameView struct {
 	ID              string
