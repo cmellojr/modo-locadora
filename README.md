@@ -43,4 +43,4 @@ Este projeto preza pela simplicidade, performance e legibilidade, servindo tamb�
 Distribuído sob a licença MIT. Veja `LICENSE` para mais informações.
 
 ---
-*Desenvolvido com ❤️ por entusiastas da era de outro dos videogames.*
+*Desenvolvido com ❤️ por entusiastas da era de ouro dos videogames.*
