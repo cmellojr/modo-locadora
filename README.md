@@ -40,7 +40,7 @@ Este projeto preza pela simplicidade, performance e legibilidade, servindo tamb�
 
 ## 📜 Licença
 
-Distribuído sob a licença MIT. Veja `LICENSE` para mais informações.
+Distribuído sob a licença **GPL v3**. Veja `LICENSE` para mais informações.
 
 ---
 *Desenvolvido com ❤️ por entusiastas da era de ouro dos videogames.*
