@@ -54,6 +54,11 @@ func main() {
 	mux.HandleFunc("GET /games", func(w http.ResponseWriter, r *http.Request) {
 		h.ListGames(w, r, gamesTmpl)
 	})
+
+	// Serve static files from web/static
+	fileServer := http.FileServer(http.Dir("web/static"))
+	mux.Handle("GET /static/", http.StripPrefix("/static", fileServer))
+
 	mux.HandleFunc("POST /members", h.CreateMember)
 	mux.HandleFunc("GET /games/{id}", h.GetGame)
 
