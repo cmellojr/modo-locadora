@@ -107,36 +107,41 @@ func (h *Handler) ListGames(w http.ResponseWriter, r *http.Request, tmpl *templa
 	}
 
 	// Mock data for testing
-	games := []GameView{
+	releases := []GameView{
 		{
 			ID:              "1",
-			Title:           "Chrono Trigger (Lançamento)",
+			Title:           "Chrono Trigger",
 			Platform:        "SNES",
-			CoverURL:        "https://upload.wikimedia.org/wikipedia/en/a/a7/Chrono_Trigger_SNES_US_box_art.jpg",
+			CoverURL:        "https://images.igdb.com/igdb/image/upload/t_cover_big/co1v9x.jpg",
 			CopiesAvailable: 1,
 		},
+	}
+
+	catalog := []GameView{
 		{
 			ID:              "2",
-			Title:           "Top Gear (Catálogo)",
+			Title:           "Top Gear",
 			Platform:        "SNES",
-			CoverURL:        "https://upload.wikimedia.org/wikipedia/en/e/e0/Top_Gear_box_art.jpg",
+			CoverURL:        "https://images.igdb.com/igdb/image/upload/t_cover_big/co2607.jpg",
 			CopiesAvailable: 0,
 		},
 		{
 			ID:              "3",
-			Title:           "Super Metroid (Disponível)",
+			Title:           "Super Metroid",
 			Platform:        "SNES",
-			CoverURL:        "https://upload.wikimedia.org/wikipedia/en/e/e4/Smetroidbox.jpg",
+			CoverURL:        "https://images.igdb.com/igdb/image/upload/t_cover_big/co1tpz.jpg",
 			CopiesAvailable: 2,
 		},
 	}
 
 	data := struct {
 		MemberName string
-		Games      []GameView
+		Releases   []GameView
+		Catalog    []GameView
 	}{
 		MemberName: memberName,
-		Games:      games,
+		Releases:   releases,
+		Catalog:    catalog,
 	}
 
 	if err := tmpl.Execute(w, data); err != nil {

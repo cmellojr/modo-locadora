@@ -13,76 +13,122 @@
             background-color: #212529;
             color: white;
             font-family: 'Press Start 2P', cursive;
-            padding: 2rem;
+            margin: 0;
+            padding: 1rem;
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
         }
         .shelf-title {
             text-align: center;
-            margin-bottom: 3rem;
-        }
-        .games-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 2rem;
-        }
-        .game-card {
-            background-color: white;
-            color: #212529;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-        }
-        .game-cover {
-            width: 100%;
-            height: 200px;
-            object-fit: cover;
-            image-rendering: pixelated;
-            margin-bottom: 1rem;
-            border: 4px solid #212529;
-        }
-        .game-info {
-            flex-grow: 1;
-        }
-        .game-title {
-            font-size: 0.8rem;
+            font-size: 1.2rem;
             margin-bottom: 0.5rem;
         }
-        .game-platform {
+        .greeting {
+            text-align: center;
             font-size: 0.6rem;
             margin-bottom: 1rem;
         }
-        .copy-count {
-            font-size: 0.7rem;
+        .shelf-section {
             margin-bottom: 1rem;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+        }
+        .shelf-section-title {
+            font-size: 0.8rem;
+            margin-bottom: 0.5rem;
+            color: #f7d51d;
+        }
+        .horizontal-shelf {
+            display: flex;
+            gap: 1rem;
+            overflow-x: auto;
+            padding-bottom: 0.5rem;
+            min-height: 0;
+        }
+        /* Custom scrollbar for horizontal shelves */
+        .horizontal-shelf::-webkit-scrollbar {
+            height: 8px;
+        }
+        .horizontal-shelf::-webkit-scrollbar-thumb {
+            background: #f7d51d;
+        }
+
+        .game-card {
+            background-color: white;
+            color: #212529;
+            width: 140px; /* Adjusted slightly to fit content nicely */
+            min-width: 140px;
+            padding: 0.5rem !important;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+        .game-cover {
+            width: 80px;
+            height: 100px;
+            object-fit: cover;
+            image-rendering: pixelated;
+            margin-bottom: 0.5rem;
+            border: 2px solid #212529;
+        }
+        .game-title {
+            font-size: 0.4rem;
+            margin-bottom: 0.5rem;
+            word-wrap: break-word;
+            width: 100%;
+        }
+        .btn-rent {
+            width: 100%;
         }
         .back-link {
-            display: block;
-            margin-top: 2rem;
             text-align: center;
+            margin-top: 0.5rem;
         }
     </style>
 </head>
 <body>
     <h2 class="shelf-title">Prateleira de Jogos</h2>
-    <p style="text-align: center; margin-bottom: 2rem;">Bem-vindo, Sócio {{.MemberName}}!</p>
+    <p class="greeting">Bem-vindo, Sócio {{.MemberName}}!</p>
 
-    <div class="games-grid">
-        {{range .Games}}
-        <section class="nes-container with-title game-card">
-            <h3 class="title game-title">{{.Title}}</h3>
-            <div class="game-info">
+    <div class="shelf-section">
+        <h3 class="shelf-section-title">Lançamentos</h3>
+        <div class="horizontal-shelf">
+            {{range .Releases}}
+            <section class="nes-container is-rounded game-card">
                 <img src="{{.CoverURL}}" alt="{{.Title}}" class="game-cover">
-                <p class="game-platform">Plataforma: {{.Platform}}</p>
-                <p class="copy-count">Cópias: {{.CopiesAvailable}}</p>
-            </div>
-            <button type="button" class="nes-btn is-primary {{if eq .CopiesAvailable 0}}is-disabled{{end}}" {{if eq .CopiesAvailable 0}}disabled{{end}}>
-                Alugar
-            </button>
-        </section>
-        {{end}}
+                <p class="game-title">{{.Title}}</p>
+                <button type="button" class="nes-btn is-primary is-small btn-rent {{if eq .CopiesAvailable 0}}is-disabled{{end}}" {{if eq .CopiesAvailable 0}}disabled{{end}}>
+                    Alugar
+                </button>
+            </section>
+            {{end}}
+        </div>
     </div>
 
-    <a href="/" class="back-link">
-        <button type="button" class="nes-btn">Voltar ao Balcão</button>
-    </a>
+    <div class="shelf-section">
+        <h3 class="shelf-section-title">Catálogo</h3>
+        <div class="horizontal-shelf">
+            {{range .Catalog}}
+            <section class="nes-container is-rounded game-card">
+                <img src="{{.CoverURL}}" alt="{{.Title}}" class="game-cover">
+                <p class="game-title">{{.Title}}</p>
+                <button type="button" class="nes-btn is-primary is-small btn-rent {{if eq .CopiesAvailable 0}}is-disabled{{end}}" {{if eq .CopiesAvailable 0}}disabled{{end}}>
+                    Alugar
+                </button>
+            </section>
+            {{end}}
+        </div>
+    </div>
+
+    <div class="back-link">
+        <a href="/">
+            <button type="button" class="nes-btn is-small">Voltar</button>
+        </a>
+    </div>
 </body>
 </html>
