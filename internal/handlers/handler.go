@@ -109,7 +109,7 @@ func (h *Handler) ListGames(w http.ResponseWriter, r *http.Request, tmpl *templa
 	// Mock data for testing
 	releases := []GameView{
 		{
-			ID:              "1",
+			ID:              "00000000-0000-0000-0000-000000000001",
 			Title:           "Chrono Trigger",
 			Platform:        "SNES",
 			CoverURL:        "https://images.igdb.com/igdb/image/upload/t_cover_big/co1v9x.jpg",
@@ -119,14 +119,14 @@ func (h *Handler) ListGames(w http.ResponseWriter, r *http.Request, tmpl *templa
 
 	catalog := []GameView{
 		{
-			ID:              "2",
+			ID:              "00000000-0000-0000-0000-000000000002",
 			Title:           "Top Gear",
 			Platform:        "SNES",
 			CoverURL:        "https://images.igdb.com/igdb/image/upload/t_cover_big/co2607.jpg",
 			CopiesAvailable: 0,
 		},
 		{
-			ID:              "3",
+			ID:              "00000000-0000-0000-0000-000000000003",
 			Title:           "Super Metroid",
 			Platform:        "SNES",
 			CoverURL:        "https://images.igdb.com/igdb/image/upload/t_cover_big/co1tpz.jpg",
