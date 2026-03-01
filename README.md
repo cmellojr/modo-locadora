@@ -12,6 +12,7 @@ Aqui, a escassez gera valor, o tempo é um compromisso e o conhecimento é compa
 
 * **O Balcão:** Um portal onde comunidades (podcasts, canais, grupos) podem gerenciar suas próprias "unidades".
 * **Fitas Físicas Virtuais:** O acervo é limitado. Se todas as cópias de um jogo estiverem alugadas, você terá que esperar alguém devolver.
+* **Prateleiras Horizontais:** Navegue pelo acervo de Lançamentos e Catálogo em um layout otimizado para uma única tela.
 * **O Caderninho:** Espaço pessoal para anotar passwords, códigos e mapas.
 * **Verso da Capa:** Deixe dicas públicas para os próximos jogadores ao devolver uma fita.
 * **Regra da Sexta:** Alugou na sexta? Só precisa devolver na segunda!
