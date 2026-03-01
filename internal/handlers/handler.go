@@ -80,7 +80,7 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 	}
 
 	http.SetCookie(w, &http.Cookie{
-		Name:     "member_name",
+		Name:     "session_member",
 		Value:    memberName,
 		Path:     "/",
 		HttpOnly: true,
@@ -100,35 +100,43 @@ type GameView struct {
 
 // ListGames handles GET /games and renders the games shelf.
 func (h *Handler) ListGames(w http.ResponseWriter, r *http.Request, tmpl *template.Template) {
+	memberCookie, err := r.Cookie("session_member")
+	memberName := "Visitante"
+	if err == nil {
+		memberName = memberCookie.Value
+	}
+
 	// Mock data for testing
 	games := []GameView{
 		{
 			ID:              "1",
-			Title:           "Super Mario World",
+			Title:           "Chrono Trigger (Lançamento)",
 			Platform:        "SNES",
-			CoverURL:        "https://upload.wikimedia.org/wikipedia/en/3/32/Super_Mario_World_Coverart.png",
-			CopiesAvailable: 2,
+			CoverURL:        "https://upload.wikimedia.org/wikipedia/en/a/a7/Chrono_Trigger_SNES_US_box_art.jpg",
+			CopiesAvailable: 1,
 		},
 		{
 			ID:              "2",
-			Title:           "The Legend of Zelda: A Link to the Past",
+			Title:           "Top Gear (Catálogo)",
 			Platform:        "SNES",
-			CoverURL:        "https://upload.wikimedia.org/wikipedia/en/2/21/The_Legend_of_Zelda_A_Link_to_the_Past_SNES_Game_Cover.jpg",
+			CoverURL:        "https://upload.wikimedia.org/wikipedia/en/e/e0/Top_Gear_box_art.jpg",
 			CopiesAvailable: 0,
 		},
 		{
 			ID:              "3",
-			Title:           "Sonic the Hedgehog",
-			Platform:        "Mega Drive",
-			CoverURL:        "https://upload.wikimedia.org/wikipedia/en/b/ba/Sonic_the_Hedgehog_1_Genesis_box_art.jpg",
-			CopiesAvailable: 1,
+			Title:           "Super Metroid (Disponível)",
+			Platform:        "SNES",
+			CoverURL:        "https://upload.wikimedia.org/wikipedia/en/e/e4/Smetroidbox.jpg",
+			CopiesAvailable: 2,
 		},
 	}
 
 	data := struct {
-		Games []GameView
+		MemberName string
+		Games      []GameView
 	}{
-		Games: games,
+		MemberName: memberName,
+		Games:      games,
 	}
 
 	if err := tmpl.Execute(w, data); err != nil {
