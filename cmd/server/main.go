@@ -11,11 +11,18 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/joho/godotenv"
 	"github.com/cmellojr/modo-locadora/internal/database"
 	"github.com/cmellojr/modo-locadora/internal/handlers"
 )
 
 func main() {
+	if err := godotenv.Load(); err != nil {
+		log.Printf("No .env file found: %v. Proceeding with environment variables.", err)
+	} else {
+		log.Println("Environment variables loaded successfully.")
+	}
+
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer cancel()
 
