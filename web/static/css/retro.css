@@ -1,0 +1,62 @@
+/* Global Retro Optimizations */
+html, body {
+    text-rendering: optimizeSpeed;
+    -webkit-font-smoothing: none;
+    -moz-osx-font-smoothing: grayscale;
+    image-rendering: pixelated;
+    background-color: #000 !important;
+    color: #fff;
+    font-family: 'Press Start 2P', cursive;
+}
+
+/* Dragon Warrior III Style Double Border */
+.nes-rpg-border {
+    position: relative;
+    border: 2px solid #fff !important;
+    background-color: #000 !important;
+    color: #fff !important;
+    padding: 1.5rem !important;
+    box-shadow: 0 0 0 4px #000, 0 0 0 6px #fff !important;
+    margin: 10px !important;
+    border-radius: 0 !important;
+}
+
+/* Small Card Border */
+.game-card-retro {
+    background-color: #000 !important;
+    color: #fff !important;
+    border: 2px solid #fff !important;
+    padding: 0.5rem !important;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    image-rendering: pixelated;
+}
+
+/* Refined Button for Shelf */
+.btn-rent-small {
+    font-size: 8px !important;
+    padding: 4px 6px !important;
+    min-width: auto !important;
+    border-radius: 0 !important;
+}
+
+/* Game Cover Definition */
+.game-cover-mini {
+    border: 1px solid #fff !important;
+    image-rendering: pixelated;
+    margin-bottom: 0.5rem;
+}
+
+/* Pixel alignment for titles */
+.pixel-aligned-title {
+    font-size: 16px !important;
+    line-height: 1.5;
+    text-transform: uppercase;
+}
+
+.pixel-aligned-subtitle {
+    font-size: 8px !important;
+    line-height: 1.5;
+}

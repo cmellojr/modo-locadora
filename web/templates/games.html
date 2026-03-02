@@ -8,11 +8,9 @@
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
     <!-- NES.css CDN -->
     <link href="https://unpkg.com/nes.css@2.3.0/css/nes.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="/static/css/retro.css">
     <style>
         body {
-            background-color: #212529;
-            color: white;
-            font-family: 'Press Start 2P', cursive;
             margin: 0;
             padding: 1rem;
             height: 100vh;
@@ -22,12 +20,10 @@
         }
         .shelf-title {
             text-align: center;
-            font-size: 1.2rem;
             margin-bottom: 0.5rem;
         }
         .greeting {
             text-align: center;
-            font-size: 0.6rem;
             margin-bottom: 1rem;
         }
         .shelf-section {
@@ -38,7 +34,7 @@
             min-height: 0;
         }
         .shelf-section-title {
-            font-size: 0.8rem;
+            font-size: 8px;
             margin-bottom: 0.5rem;
             color: #f7d51d;
         }
@@ -49,7 +45,6 @@
             padding-bottom: 0.5rem;
             min-height: 0;
         }
-        /* Custom scrollbar for horizontal shelves */
         .horizontal-shelf::-webkit-scrollbar {
             height: 8px;
         }
@@ -58,26 +53,16 @@
         }
 
         .game-card {
-            background-color: white;
-            color: #212529;
-            width: 140px; /* Adjusted slightly to fit content nicely */
+            width: 140px;
             min-width: 140px;
-            padding: 0.5rem !important;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            text-align: center;
         }
         .game-cover {
             width: 80px;
             height: 100px;
             object-fit: cover;
-            image-rendering: pixelated;
-            margin-bottom: 0.5rem;
-            border: 2px solid #212529;
         }
         .game-title {
-            font-size: 0.4rem;
+            font-size: 8px;
             margin-bottom: 0.5rem;
             word-wrap: break-word;
             width: 100%;
@@ -92,17 +77,17 @@
     </style>
 </head>
 <body>
-    <h2 class="shelf-title">Prateleira de Jogos</h2>
-    <p class="greeting">Bem-vindo, Sócio {{.MemberName}}!</p>
+    <h2 class="shelf-title pixel-aligned-title">Prateleira de Jogos</h2>
+    <p class="greeting pixel-aligned-subtitle">Bem-vindo, Sócio {{.MemberName}}!</p>
 
     <div class="shelf-section">
         <h3 class="shelf-section-title">Lançamentos</h3>
         <div class="horizontal-shelf">
             {{range .Releases}}
-            <section class="nes-container is-rounded game-card">
-                <img src="{{.CoverURL}}" alt="{{.Title}}" class="game-cover">
+            <section class="nes-container game-card game-card-retro">
+                <img src="{{.CoverURL}}" alt="{{.Title}}" class="game-cover game-cover-mini">
                 <p class="game-title">{{.Title}}</p>
-                <button type="button" class="nes-btn is-primary is-small btn-rent {{if eq .CopiesAvailable 0}}is-disabled{{end}}" {{if eq .CopiesAvailable 0}}disabled{{end}}>
+                <button type="button" class="nes-btn is-primary btn-rent btn-rent-small {{if eq .CopiesAvailable 0}}is-disabled{{end}}" {{if eq .CopiesAvailable 0}}disabled{{end}}>
                     Alugar
                 </button>
             </section>
@@ -114,10 +99,10 @@
         <h3 class="shelf-section-title">Catálogo</h3>
         <div class="horizontal-shelf">
             {{range .Catalog}}
-            <section class="nes-container is-rounded game-card">
-                <img src="{{.CoverURL}}" alt="{{.Title}}" class="game-cover">
+            <section class="nes-container game-card game-card-retro">
+                <img src="{{.CoverURL}}" alt="{{.Title}}" class="game-cover game-cover-mini">
                 <p class="game-title">{{.Title}}</p>
-                <button type="button" class="nes-btn is-primary is-small btn-rent {{if eq .CopiesAvailable 0}}is-disabled{{end}}" {{if eq .CopiesAvailable 0}}disabled{{end}}>
+                <button type="button" class="nes-btn is-primary btn-rent btn-rent-small {{if eq .CopiesAvailable 0}}is-disabled{{end}}" {{if eq .CopiesAvailable 0}}disabled{{end}}>
                     Alugar
                 </button>
             </section>
