@@ -1,31 +1,39 @@
-/* Global Retro Optimizations */
+/* Global Retro Optimizations - Super Mario Bros 3 Theme */
 html, body {
     text-rendering: optimizeSpeed;
     -webkit-font-smoothing: none;
     -moz-osx-font-smoothing: grayscale;
     image-rendering: pixelated;
-    background-color: #000 !important;
-    color: #fff;
+    background-color: #FF8B6F !important; /* Coral/Peach Vibrant background */
+    color: #A8EFFF; /* Bright Light Blue */
     font-family: 'Press Start 2P', cursive;
 }
 
-/* Dragon Warrior III Style Double Border */
+/* SMB3 Style Double Border (Adapted from NES-RPG style) */
 .nes-rpg-border {
     position: relative;
-    border: 2px solid #fff !important;
-    background-color: #000 !important;
-    color: #fff !important;
+    border: 2px solid #A8EFFF !important; /* Bright Light Blue */
+    background-color: #000 !important; /* Keep background dark for readability inside containers */
+    color: #A8EFFF !important;
     padding: 1.5rem !important;
-    box-shadow: 0 0 0 4px #000, 0 0 0 6px #fff !important;
+    box-shadow: 0 0 0 4px #000, 0 0 0 6px #A8EFFF !important;
     margin: 10px !important;
     border-radius: 0 !important;
 }
 
-/* Small Card Border */
+/* Back Link Button Styling for consistency */
+.back-link .nes-btn {
+    background-color: #000 !important;
+    color: #A8EFFF !important;
+    border: 2px solid #A8EFFF !important;
+    box-shadow: 4px 4px 0px #400080 !important;
+}
+
+/* Small Card Border - SMB3 style */
 .game-card-retro {
     background-color: #000 !important;
-    color: #fff !important;
-    border: 2px solid #fff !important;
+    color: #A8EFFF !important;
+    border: 2px solid #A8EFFF !important;
     padding: 0.5rem !important;
     display: flex;
     flex-direction: column;
@@ -44,19 +52,37 @@ html, body {
 
 /* Game Cover Definition */
 .game-cover-mini {
-    border: 1px solid #fff !important;
+    border: 1px solid #5D707E !important; /* Blue-gray tone for definition on light bg */
     image-rendering: pixelated;
     margin-bottom: 0.5rem;
 }
 
-/* Pixel alignment for titles */
+/* Pixel alignment for titles - SMB3 Style Depth */
 .pixel-aligned-title {
     font-size: 16px !important;
     line-height: 1.5;
     text-transform: uppercase;
+    color: #A8EFFF !important;
+    text-shadow: 2px 2px 0px #400080; /* Dark blue/purple depth shadow */
 }
 
 .pixel-aligned-subtitle {
     font-size: 8px !important;
     line-height: 1.5;
+    color: #A8EFFF !important;
+}
+
+/* Forms and Inputs */
+.nes-input {
+    background-color: #000 !important;
+    color: #A8EFFF !important;
+    border-color: #A8EFFF !important;
+}
+
+.nes-input::placeholder {
+    color: rgba(168, 239, 255, 0.5) !important;
+}
+
+label {
+    color: #A8EFFF !important;
 }
