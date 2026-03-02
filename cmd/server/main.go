@@ -47,6 +47,11 @@ func main() {
 		log.Fatalf("failed to parse games template: %v", err)
 	}
 
+	adminStockTmpl, err := template.ParseFiles("web/templates/admin_stock.html")
+	if err != nil {
+		log.Fatalf("failed to parse admin stock template: %v", err)
+	}
+
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /{$}", func(w http.ResponseWriter, r *http.Request) {
 		if err := indexTmpl.Execute(w, nil); err != nil {
@@ -58,6 +63,10 @@ func main() {
 		h.ListGames(w, r, gamesTmpl)
 	})
 	mux.HandleFunc("GET /search", h.SearchGame)
+	mux.HandleFunc("GET /admin/stock", func(w http.ResponseWriter, r *http.Request) {
+		h.AdminStock(w, r, adminStockTmpl)
+	})
+	mux.HandleFunc("POST /admin/purchase", h.PurchaseGame)
 
 	// Serve static files from web/static
 	fileServer := http.FileServer(http.Dir("web/static"))

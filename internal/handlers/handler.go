@@ -110,32 +110,59 @@ func (h *Handler) ListGames(w http.ResponseWriter, r *http.Request, tmpl *templa
 		memberName = memberCookie.Value
 	}
 
-	// Mock data for testing
-	releases := []GameView{
-		{
-			ID:              "00000000-0000-0000-0000-000000000001",
-			Title:           "Chrono Trigger",
-			Platform:        "SNES",
-			CoverURL:        "https://images.igdb.com/igdb/image/upload/t_cover_big/co1v9x.jpg",
-			CopiesAvailable: 1,
-		},
+	var dbGames []models.Game
+	if h.store != nil {
+		dbGames, _ = h.store.ListGames(r.Context())
 	}
 
-	catalog := []GameView{
-		{
-			ID:              "00000000-0000-0000-0000-000000000002",
-			Title:           "Top Gear",
-			Platform:        "SNES",
-			CoverURL:        "https://images.igdb.com/igdb/image/upload/t_cover_big/co2607.jpg",
-			CopiesAvailable: 0,
-		},
-		{
-			ID:              "00000000-0000-0000-0000-000000000003",
-			Title:           "Super Metroid",
-			Platform:        "SNES",
-			CoverURL:        "https://images.igdb.com/igdb/image/upload/t_cover_big/co1tpz.jpg",
-			CopiesAvailable: 2,
-		},
+	// For now, let's mix mock data with DB data if DB is empty
+	var releases []GameView
+	var catalog []GameView
+
+	if len(dbGames) > 0 {
+		for _, g := range dbGames {
+			view := GameView{
+				ID:              g.ID.String(),
+				Title:           g.Title,
+				Platform:        g.Platform,
+				CoverURL:        g.CoverURL,
+				CopiesAvailable: 1, // Defaulting to 1 for now until copies are implemented
+			}
+			// Logic to separate: let's say last 2 are releases
+			if len(releases) < 2 {
+				releases = append(releases, view)
+			} else {
+				catalog = append(catalog, view)
+			}
+		}
+	} else {
+		// Mock data for testing
+		releases = []GameView{
+			{
+				ID:              "00000000-0000-0000-0000-000000000001",
+				Title:           "Chrono Trigger",
+				Platform:        "SNES",
+				CoverURL:        "https://images.igdb.com/igdb/image/upload/t_cover_big/co1v9x.jpg",
+				CopiesAvailable: 1,
+			},
+		}
+
+		catalog = []GameView{
+			{
+				ID:              "00000000-0000-0000-0000-000000000002",
+				Title:           "Top Gear",
+				Platform:        "SNES",
+				CoverURL:        "https://images.igdb.com/igdb/image/upload/t_cover_big/co2607.jpg",
+				CopiesAvailable: 0,
+			},
+			{
+				ID:              "00000000-0000-0000-0000-000000000003",
+				Title:           "Super Metroid",
+				Platform:        "SNES",
+				CoverURL:        "https://images.igdb.com/igdb/image/upload/t_cover_big/co1tpz.jpg",
+				CopiesAvailable: 2,
+			},
+		}
 	}
 
 	data := struct {
@@ -151,6 +178,65 @@ func (h *Handler) ListGames(w http.ResponseWriter, r *http.Request, tmpl *templa
 	if err := tmpl.Execute(w, data); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
+}
+
+// AdminStock handles GET /admin/stock and renders the IGDB search page.
+func (h *Handler) AdminStock(w http.ResponseWriter, r *http.Request, tmpl *template.Template) {
+	query := r.URL.Query().Get("q")
+	magazine := r.URL.Query().Get("magazine")
+
+	var results []igdb.GameData
+	if query != "" {
+		clientID := os.Getenv("TWITCH_CLIENT_ID")
+		clientSecret := os.Getenv("TWITCH_CLIENT_SECRET")
+
+		if clientID != "" && clientSecret != "" {
+			token, err := igdb.GetAccessToken(clientID, clientSecret)
+			if err == nil {
+				results, _ = igdb.SearchGame(clientID, token.AccessToken, query)
+			}
+		}
+	}
+
+	data := struct {
+		Query    string
+		Magazine string
+		Results  []igdb.GameData
+	}{
+		Query:    query,
+		Magazine: magazine,
+		Results:  results,
+	}
+
+	if err := tmpl.Execute(w, data); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+}
+
+// PurchaseGame handles POST /admin/purchase.
+func (h *Handler) PurchaseGame(w http.ResponseWriter, r *http.Request) {
+	if h.store == nil {
+		http.Error(w, "Database not configured", http.StatusServiceUnavailable)
+		return
+	}
+
+	game := &models.Game{
+		ID:             uuid.New(),
+		Title:          r.FormValue("title"),
+		IgdbID:         r.FormValue("igdb_id"),
+		Platform:       "SNES", // Default for now
+		Summary:        r.FormValue("summary"),
+		CoverURL:       r.FormValue("cover_url"),
+		SourceMagazine: r.FormValue("magazine"),
+		AcquiredAt:     time.Now(),
+	}
+
+	if err := h.store.AddGame(r.Context(), game); err != nil {
+		http.Error(w, "Failed to purchase game: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	http.Redirect(w, r, "/games", http.StatusSeeOther)
 }
 
 // SearchGame handles GET /search?q=... and returns raw JSON from IGDB.

@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Abastecimento de Estoque - Modo Locadora</title>
+    <!-- Google Fonts: Press Start 2P -->
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <!-- NES.css CDN -->
+    <link href="https://unpkg.com/nes.css@2.3.0/css/nes.min.css" rel="stylesheet" />
+    <style>
+        body {
+            background-color: #212529;
+            color: white;
+            font-family: 'Press Start 2P', cursive;
+            padding: 2rem;
+        }
+        .admin-title {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        .form-section {
+            background-color: white;
+            color: #212529;
+            margin-bottom: 2rem;
+        }
+        .search-results {
+            margin-top: 2rem;
+        }
+        .search-item {
+            background-color: white;
+            color: #212529;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            padding: 1rem !important;
+        }
+        .search-item img {
+            width: 50px;
+            image-rendering: pixelated;
+            margin-right: 1rem;
+            border: 2px solid #212529;
+        }
+        .search-info {
+            flex-grow: 1;
+        }
+        .search-info h4 {
+            font-size: 0.6rem;
+            margin: 0;
+        }
+    </style>
+</head>
+<body>
+    <h2 class="admin-title">Abastecimento (Interface do Tio)</h2>
+
+    <section class="nes-container with-title is-rounded form-section">
+        <h3 class="title">Novo Lote</h3>
+        <form action="/admin/stock" method="GET">
+            <div class="nes-field">
+                <label for="magazine">Revista / Edição</label>
+                <input type="text" id="magazine" name="magazine" class="nes-input" value="{{.Magazine}}" placeholder="Ex: Super Game Power #45">
+            </div>
+            <div class="nes-field" style="margin-top: 1rem;">
+                <label for="q">Buscar Jogo (IGDB)</label>
+                <input type="text" id="q" name="q" class="nes-input" value="{{.Query}}" placeholder="Nome do jogo...">
+            </div>
+            <div style="margin-top: 1.5rem; text-align: center;">
+                <button type="submit" class="nes-btn is-primary">Buscar</button>
+            </div>
+        </form>
+    </section>
+
+    {{if .Results}}
+    <div class="search-results">
+        {{range .Results}}
+        <section class="nes-container is-rounded search-item">
+            <img src="{{.Cover.URL}}" alt="{{.Name}}">
+            <div class="search-info">
+                <h4>{{.Name}}</h4>
+            </div>
+            <form action="/admin/purchase" method="POST" style="flex-grow: 2; display: flex; flex-direction: column; gap: 0.5rem; margin-left: 1rem;">
+                <input type="hidden" name="igdb_id" value="{{.ID}}">
+                <input type="hidden" name="title" value="{{.Name}}">
+                <input type="hidden" name="cover_url" value="{{.Cover.URL}}">
+                <input type="hidden" name="magazine" value="{{$.Magazine}}">
+
+                <div class="nes-field is-inline">
+                    <label for="summary_{{.ID}}">Resumo (PT-BR)</label>
+                    <textarea id="summary_{{.ID}}" name="summary" class="nes-textarea is-small" rows="2">{{.Summary}}</textarea>
+                </div>
+
+                <div style="text-align: right;">
+                    <button type="submit" class="nes-btn is-success is-small">Comprar</button>
+                </div>
+            </form>
+        </section>
+        {{end}}
+    </div>
+    {{end}}
+
+    <div style="text-align: center; margin-top: 2rem;">
+        <a href="/games" class="nes-btn">Ver Prateleira</a>
+    </div>
+</body>
+</html>
