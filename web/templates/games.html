@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Prateleira de Jogos - Modo Locadora</title>
+    <title>Acervo de Jogos - Modo Locadora</title>
     <!-- Google Fonts: Press Start 2P -->
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
     <!-- NES.css CDN -->
@@ -12,108 +12,93 @@
     <style>
         body {
             margin: 0;
-            padding: 1rem;
-            height: 100vh;
-            overflow: hidden;
+            padding: 20px;
+            height: auto;
+            overflow-y: auto;
             display: flex;
-            flex-direction: column;
+            justify-content: center;
         }
-        .shelf-title {
-            text-align: center;
-            margin-bottom: 0.5rem;
+        .container-wrapper {
+            max-width: 900px;
+            width: 100%;
+        }
+        .header-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
         }
         .greeting {
-            text-align: center;
-            margin-bottom: 1rem;
-        }
-        .shelf-section {
-            margin-bottom: 1rem;
-            flex-grow: 1;
-            display: flex;
-            flex-direction: column;
-            min-height: 0;
-        }
-        .shelf-section-title {
             font-size: 8px;
-            margin-bottom: 0.5rem;
-            color: #f7d51d;
+            color: #3498DB;
         }
-        .horizontal-shelf {
-            display: flex;
-            gap: 1rem;
-            overflow-x: auto;
-            padding-bottom: 0.5rem;
-            min-height: 0;
-        }
-        .horizontal-shelf::-webkit-scrollbar {
-            height: 8px;
-        }
-        .horizontal-shelf::-webkit-scrollbar-thumb {
-            background: #f7d51d;
-        }
-
-        .game-card {
-            width: 140px;
-            min-width: 140px;
-        }
-        .game-cover {
-            width: 80px;
-            height: 100px;
-            object-fit: cover;
-        }
-        .game-title {
-            font-size: 8px;
-            margin-bottom: 0.5rem;
-            word-wrap: break-word;
-            width: 100%;
-        }
-        .btn-rent {
-            width: 100%;
+        .shelf-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 15px;
+            padding: 15px;
         }
         .back-link {
-            text-align: center;
-            margin-top: 0.5rem;
+            text-align: left;
+            margin-top: 20px;
+            margin-bottom: 40px;
         }
     </style>
 </head>
 <body>
-    <h2 class="shelf-title pixel-aligned-title">Prateleira de Jogos</h2>
-    <p class="greeting pixel-aligned-subtitle">Bem-vindo, Sócio {{.MemberName}}!</p>
-
-    <div class="shelf-section">
-        <h3 class="shelf-section-title">Lançamentos</h3>
-        <div class="horizontal-shelf">
-            {{range .Releases}}
-            <section class="nes-container game-card game-card-retro">
-                <img src="{{.CoverURL}}" alt="{{.Title}}" class="game-cover game-cover-mini">
-                <p class="game-title">{{.Title}}</p>
-                <button type="button" class="nes-btn is-primary btn-rent btn-rent-small {{if eq .CopiesAvailable 0}}is-disabled{{end}}" {{if eq .CopiesAvailable 0}}disabled{{end}}>
-                    Alugar
-                </button>
-            </section>
-            {{end}}
+    <div class="container-wrapper">
+        <div class="header-bar">
+            <h2 class="pixel-aligned-title">ACERVO DE JOGOS</h2>
+            <p class="greeting">AUTENTICADO: {{.MemberName}}</p>
         </div>
-    </div>
 
-    <div class="shelf-section">
-        <h3 class="shelf-section-title">Catálogo</h3>
-        <div class="horizontal-shelf">
-            {{range .Catalog}}
-            <section class="nes-container game-card game-card-retro">
-                <img src="{{.CoverURL}}" alt="{{.Title}}" class="game-cover game-cover-mini">
-                <p class="game-title">{{.Title}}</p>
-                <button type="button" class="nes-btn is-primary btn-rent btn-rent-small {{if eq .CopiesAvailable 0}}is-disabled{{end}}" {{if eq .CopiesAvailable 0}}disabled{{end}}>
-                    Alugar
-                </button>
-            </section>
-            {{end}}
+        <!-- LANÇAMENTOS SECTION -->
+        <div class="forum-block">
+            <header class="forum-header">
+                <span>[NOVIDADES DA SEMANA]</span>
+                <span style="font-size: 8px;">SUB-FORUM: LANÇAMENTOS</span>
+            </header>
+            <div class="forum-body">
+                <div class="shelf-container">
+                    {{range .Releases}}
+                    <div class="forum-game-card">
+                        <img src="{{.CoverURL}}" alt="{{.Title}}" class="game-cover-mini">
+                        <p class="game-title">{{.Title}}</p>
+                        <button type="button" class="forum-btn {{if eq .CopiesAvailable 0}}is-disabled{{end}}" {{if eq .CopiesAvailable 0}}disabled{{end}}>
+                            {{if eq .CopiesAvailable 0}}INDISPONÍVEL{{else}}RESERVAR{{end}}
+                        </button>
+                    </div>
+                    {{end}}
+                </div>
+            </div>
         </div>
-    </div>
 
-    <div class="back-link">
-        <a href="/">
-            <button type="button" class="nes-btn is-small">Voltar</button>
-        </a>
+        <!-- CATÁLOGO SECTION -->
+        <div class="forum-block">
+            <header class="forum-header">
+                <span>[ARQUIVO HISTÓRICO]</span>
+                <span style="font-size: 8px;">SUB-FORUM: CATÁLOGO GERAL</span>
+            </header>
+            <div class="forum-body">
+                <div class="shelf-container">
+                    {{range .Catalog}}
+                    <div class="forum-game-card">
+                        <img src="{{.CoverURL}}" alt="{{.Title}}" class="game-cover-mini">
+                        <p class="game-title">{{.Title}}</p>
+                        <button type="button" class="forum-btn {{if eq .CopiesAvailable 0}}is-disabled{{end}}" {{if eq .CopiesAvailable 0}}disabled{{end}}>
+                            {{if eq .CopiesAvailable 0}}INDISPONÍVEL{{else}}RESERVAR{{end}}
+                        </button>
+                    </div>
+                    {{end}}
+                </div>
+            </div>
+        </div>
+
+        <div class="back-link">
+            <a href="/" class="forum-btn">VOLTAR AO BALCÃO</a>
+        </div>
+
+        <p style="font-size: 8px; text-align: center; margin-top: 20px; color: #555;">© 2024 NES ARCHIVE FORUM. TODOS OS DIREITOS RESERVADOS.</p>
     </div>
 </body>
 </html>

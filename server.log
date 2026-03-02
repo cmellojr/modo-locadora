@@ -1,5 +1,0 @@
-2026/03/02 21:22:18 Warning: No .env file found: open .env: no such file or directory. Proceeding with system environment variables.
-2026/03/02 21:22:18 No DATABASE_URL provided. Proceeding without database.
-Rental Mode Server starting on port 8080
-Shutting down server...
-Server gracefully stopped

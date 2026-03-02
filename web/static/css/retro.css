@@ -1,88 +1,139 @@
-/* Global Retro Optimizations - Super Mario Bros 3 Theme */
+/* Global Retro Optimizations - Nes Archive Forum V3 Theme */
 html, body {
     text-rendering: optimizeSpeed;
     -webkit-font-smoothing: none;
     -moz-osx-font-smoothing: grayscale;
     image-rendering: pixelated;
-    background-color: #FF8B6F !important; /* Coral/Peach Vibrant background */
-    color: #A8EFFF; /* Bright Light Blue */
+    background-color: #0A0E1A !important; /* Dark Navy Blue background */
+    color: #CCCCCC; /* Light Gray for general text */
     font-family: 'Press Start 2P', cursive;
+    margin: 0;
+    padding: 0;
 }
 
-/* SMB3 Style Double Border (Adapted from NES-RPG style) */
-.nes-rpg-border {
-    position: relative;
-    border: 2px solid #A8EFFF !important; /* Bright Light Blue */
-    background-color: #000 !important; /* Keep background dark for readability inside containers */
-    color: #A8EFFF !important;
-    padding: 1.5rem !important;
-    box-shadow: 0 0 0 4px #000, 0 0 0 6px #A8EFFF !important;
-    margin: 10px !important;
-    border-radius: 0 !important;
+/* Forum Block Structure */
+.forum-block {
+    border: 1px solid #000;
+    margin-bottom: 20px;
+    box-shadow: 2px 2px 0px rgba(0,0,0,0.5);
 }
 
-/* Back Link Button Styling for consistency */
-.back-link .nes-btn {
-    background-color: #000 !important;
-    color: #A8EFFF !important;
-    border: 2px solid #A8EFFF !important;
-    box-shadow: 4px 4px 0px #400080 !important;
-}
-
-/* Small Card Border - SMB3 style */
-.game-card-retro {
-    background-color: #000 !important;
-    color: #A8EFFF !important;
-    border: 2px solid #A8EFFF !important;
-    padding: 0.5rem !important;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-    image-rendering: pixelated;
-}
-
-/* Refined Button for Shelf */
-.btn-rent-small {
-    font-size: 8px !important;
-    padding: 4px 6px !important;
-    min-width: auto !important;
-    border-radius: 0 !important;
-}
-
-/* Game Cover Definition */
-.game-cover-mini {
-    border: 1px solid #5D707E !important; /* Blue-gray tone for definition on light bg */
-    image-rendering: pixelated;
-    margin-bottom: 0.5rem;
-}
-
-/* Pixel alignment for titles - SMB3 Style Depth */
-.pixel-aligned-title {
-    font-size: 16px !important;
-    line-height: 1.5;
+.forum-header {
+    background-color: #1F3A5F !important; /* Medium Blue Header */
+    border-top: 2px solid #3498DB; /* Lighter Blue top accent */
+    padding: 10px 15px;
+    color: #FFFFFF !important;
+    font-size: 12px;
     text-transform: uppercase;
-    color: #A8EFFF !important;
-    text-shadow: 2px 2px 0px #400080; /* Dark blue/purple depth shadow */
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
 }
 
-.pixel-aligned-subtitle {
-    font-size: 8px !important;
-    line-height: 1.5;
-    color: #A8EFFF !important;
+.forum-body {
+    background-color: #121212 !important; /* Dark Gray/Black Body */
+    padding: 20px;
+    border-top: 1px solid #000;
+}
+
+/* Generic Retro Border - Replacing nes-rpg-border */
+.nes-forum-container {
+    background-color: transparent !important;
+    border: none !important;
+    padding: 0 !important;
+}
+
+/* Links and Hover Effects */
+a {
+    color: #3498DB;
+    text-decoration: none;
+}
+
+a:hover {
+    color: #FFFFFF;
+    text-decoration: underline;
+}
+
+/* Forum Buttons */
+.forum-btn {
+    background-color: #1F3A5F !important;
+    color: #FFFFFF !important;
+    border: 1px solid #3498DB !important;
+    padding: 8px 12px;
+    font-size: 8px;
+    cursor: pointer;
+}
+
+.forum-btn:hover {
+    background-color: #3498DB !important;
+}
+
+.forum-btn.is-disabled {
+    background-color: #333 !important;
+    border-color: #555 !important;
+    color: #777 !important;
+    cursor: not-allowed;
 }
 
 /* Forms and Inputs */
 .nes-input {
     background-color: #000 !important;
-    color: #A8EFFF !important;
-    border-color: #A8EFFF !important;
+    color: #FFFFFF !important;
+    border: 1px solid #1F3A5F !important;
 }
 
 .nes-input::placeholder {
-    color: rgba(168, 239, 255, 0.5) !important;
+    color: #555 !important;
 }
 
 label {
-    color: #A8EFFF !important;
+    color: #3498DB !important;
+    font-size: 10px;
+    display: block;
+    margin-bottom: 8px;
+}
+
+/* Game Card in Forum Style */
+.forum-game-card {
+    background-color: #1A1A1A !important;
+    border: 1px solid #333;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    transition: background-color 0.2s;
+}
+
+.forum-game-card:hover {
+    background-color: #222 !important;
+    border-color: #3498DB;
+}
+
+.game-cover-mini {
+    border: 1px solid #000;
+    image-rendering: pixelated;
+    margin-bottom: 10px;
+    width: 80px;
+    height: 100px;
+    object-fit: cover;
+}
+
+.game-title {
+    font-size: 8px;
+    color: #FFFFFF;
+    margin-bottom: 10px;
+    height: 30px;
+    overflow: hidden;
+}
+
+/* Pixel alignment for titles */
+.pixel-aligned-title {
+    font-size: 14px !important;
+    color: #FFFFFF !important;
+}
+
+.pixel-aligned-subtitle {
+    font-size: 8px !important;
+    color: #3498DB !important;
 }
