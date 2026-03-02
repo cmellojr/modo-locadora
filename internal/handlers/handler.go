@@ -2,11 +2,15 @@ package handlers
 
 import (
 	"encoding/json"
+	"fmt"
 	"html/template"
 	"net/http"
 	"time"
 
+	"os"
+
 	"github.com/cmellojr/modo-locadora/internal/database"
+	"github.com/cmellojr/modo-locadora/internal/igdb"
 	"github.com/cmellojr/modo-locadora/internal/models"
 	"github.com/google/uuid"
 )
@@ -147,6 +151,38 @@ func (h *Handler) ListGames(w http.ResponseWriter, r *http.Request, tmpl *templa
 	if err := tmpl.Execute(w, data); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
+}
+
+// SearchGame handles GET /search?q=... and returns raw JSON from IGDB.
+func (h *Handler) SearchGame(w http.ResponseWriter, r *http.Request) {
+	query := r.URL.Query().Get("q")
+	if query == "" {
+		http.Error(w, "Query parameter 'q' is required", http.StatusBadRequest)
+		return
+	}
+
+	clientID := os.Getenv("TWITCH_CLIENT_ID")
+	clientSecret := os.Getenv("TWITCH_CLIENT_SECRET")
+
+	if clientID == "" || clientSecret == "" {
+		http.Error(w, "IGDB credentials not configured", http.StatusServiceUnavailable)
+		return
+	}
+
+	token, err := igdb.GetAccessToken(clientID, clientSecret)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Failed to get IGDB token: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	games, err := igdb.SearchGame(clientID, token.AccessToken, query)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Failed to search IGDB: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(games)
 }
 
 // GetGame handles GET /games/{id}.
