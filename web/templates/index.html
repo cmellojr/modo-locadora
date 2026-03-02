@@ -8,51 +8,52 @@
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
     <!-- NES.css CDN -->
     <link href="https://unpkg.com/nes.css@2.3.0/css/nes.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="/static/css/retro.css">
     <style>
         body {
-            background-color: #212529;
-            color: white;
             font-family: 'Press Start 2P', cursive;
-            padding: 2rem;
             display: flex;
             justify-content: center;
             align-items: center;
             min-height: 100vh;
+            padding: 10px;
         }
         .container-wrapper {
-            max-width: 600px;
+            max-width: 500px;
             width: 100%;
         }
-        .nes-container.is-rounded {
-            background-color: white;
-            color: #212529;
-        }
         .input-group {
-            margin-top: 2rem;
-            margin-bottom: 2rem;
+            margin-top: 1.5rem;
+            margin-bottom: 1.5rem;
         }
         .btn-group {
-            text-align: center;
+            text-align: right;
         }
     </style>
 </head>
 <body>
     <div class="container-wrapper">
-        <section class="nes-container with-title is-rounded is-centered">
-            <h3 class="title">Balcão da Locadora</h3>
-            <p>"Sopre a fita e respeite o tempo."</p>
+        <div class="forum-block">
+            <header class="forum-header">
+                <span class="pixel-aligned-title">Modo Locadora V3.0</span>
+                <span style="font-size: 8px;">[LOGIN]</span>
+            </header>
+            <div class="forum-body">
+                <p style="font-size: 10px; color: #FFFFFF; margin-bottom: 20px;">Bem-vindo ao Balcão da Locadora. Por favor, identifique-se para acessar o acervo.</p>
 
-            <form action="/login" method="POST">
-                <div class="input-group nes-field">
-                    <label for="member_name">Nome do Sócio</label>
-                    <input type="text" id="member_name" name="member_name" class="nes-input" placeholder="Digite seu nome..." required>
-                </div>
+                <form action="/login" method="POST">
+                    <div class="input-group nes-field">
+                        <label for="member_name">Nome de Usuário (Sócio)</label>
+                        <input type="text" id="member_name" name="member_name" class="nes-input" placeholder="Seu nome aqui..." required>
+                    </div>
 
-                <div class="btn-group">
-                    <button type="submit" class="nes-btn is-primary">Entrar no Modo Locadora</button>
-                </div>
-            </form>
-        </section>
+                    <div class="btn-group">
+                        <button type="submit" class="nes-btn forum-btn">ENTRAR NO SISTEMA</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <p style="font-size: 8px; text-align: center; margin-top: 10px; color: #555;">© 2024 NES ARCHIVE FORUM. TODOS OS DIREITOS RESERVADOS.</p>
     </div>
 </body>
 </html>
