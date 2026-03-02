@@ -49,10 +49,10 @@ func (s *PostgresStore) CreateMember(ctx context.Context, m *models.Member) erro
 
 // GetGameByID retrieves a game by its ID.
 func (s *PostgresStore) GetGameByID(ctx context.Context, id uuid.UUID) (*models.Game, error) {
-	query := `SELECT id, title, igdb_id, platform, summary FROM games WHERE id = $1`
+	query := `SELECT id, title, igdb_id, platform, summary, cover_url, source_magazine, acquired_at FROM games WHERE id = $1`
 
 	var g models.Game
-	err := s.pool.QueryRow(ctx, query, id).Scan(&g.ID, &g.Title, &g.IgdbID, &g.Platform, &g.Summary)
+	err := s.pool.QueryRow(ctx, query, id).Scan(&g.ID, &g.Title, &g.IgdbID, &g.Platform, &g.Summary, &g.CoverURL, &g.SourceMagazine, &g.AcquiredAt)
 	if err != nil {
 		if err == pgx.ErrNoRows {
 			return nil, nil // Or a specific error like ErrNotFound
@@ -60,6 +60,40 @@ func (s *PostgresStore) GetGameByID(ctx context.Context, id uuid.UUID) (*models.
 		return nil, fmt.Errorf("failed to get game: %w", err)
 	}
 	return &g, nil
+}
+
+// AddGame persists a new game in the database.
+func (s *PostgresStore) AddGame(ctx context.Context, g *models.Game) error {
+	query := `
+		INSERT INTO games (id, title, igdb_id, platform, summary, cover_url, source_magazine, acquired_at)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`
+
+	_, err := s.pool.Exec(ctx, query, g.ID, g.Title, g.IgdbID, g.Platform, g.Summary, g.CoverURL, g.SourceMagazine, g.AcquiredAt)
+	if err != nil {
+		return fmt.Errorf("failed to add game: %w", err)
+	}
+	return nil
+}
+
+// ListGames retrieves all games from the database.
+func (s *PostgresStore) ListGames(ctx context.Context) ([]models.Game, error) {
+	query := `SELECT id, title, igdb_id, platform, summary, cover_url, source_magazine, acquired_at FROM games ORDER BY acquired_at DESC`
+
+	rows, err := s.pool.Query(ctx, query)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query games: %w", err)
+	}
+	defer rows.Close()
+
+	var games []models.Game
+	for rows.Next() {
+		var g models.Game
+		if err := rows.Scan(&g.ID, &g.Title, &g.IgdbID, &g.Platform, &g.Summary, &g.CoverURL, &g.SourceMagazine, &g.AcquiredAt); err != nil {
+			return nil, fmt.Errorf("failed to scan game: %w", err)
+		}
+		games = append(games, g)
+	}
+	return games, nil
 }
 
 // RegisterRental records a new rental transaction.

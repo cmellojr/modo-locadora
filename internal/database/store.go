@@ -15,6 +15,12 @@ type Store interface {
 	// GetGameByID retrieves a game by its ID.
 	GetGameByID(ctx context.Context, id uuid.UUID) (*models.Game, error)
 
+	// AddGame persists a new game in the database.
+	AddGame(ctx context.Context, game *models.Game) error
+
+	// ListGames retrieves all games from the database.
+	ListGames(ctx context.Context) ([]models.Game, error)
+
 	// RegisterRental records a new rental transaction.
 	RegisterRental(ctx context.Context, rental *models.Rental) error
 }
