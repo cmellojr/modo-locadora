@@ -11,11 +11,14 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/cmellojr/modo-locadora/internal/config"
 	"github.com/cmellojr/modo-locadora/internal/database"
 	"github.com/cmellojr/modo-locadora/internal/handlers"
 )
 
 func main() {
+	config.LoadConfig()
+
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer cancel()
 
