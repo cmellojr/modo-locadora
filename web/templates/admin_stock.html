@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="pt-br">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -16,38 +17,47 @@
             display: flex;
             justify-content: center;
         }
+
         .container-wrapper {
             max-width: 800px;
             width: 100%;
         }
+
         .admin-header {
             text-align: center;
             margin-bottom: 2rem;
         }
+
         .input-group {
             margin-bottom: 1rem;
         }
+
         .search-results {
             margin-top: 2rem;
         }
+
         .search-item {
             margin-bottom: 15px;
             display: flex;
             gap: 15px;
             align-items: flex-start;
         }
+
         .search-item img {
             width: 80px;
             border: 1px solid #333;
         }
+
         .search-form {
             flex-grow: 1;
         }
+
         .nes-textarea {
             font-size: 8px !important;
         }
     </style>
 </head>
+
 <body>
     <div class="container-wrapper">
         <header class="admin-header">
@@ -55,23 +65,25 @@
             <p class="pixel-aligned-subtitle">[INTERFACE DO TIO DA LOCADORA]</p>
         </header>
 
-        <div class="forum-block">
-            <header class="forum-header">
-                <span>[ADICIONAR NOVO LOTE]</span>
-                <span style="font-size: 8px;">ESTOQUE</span>
-            </header>
+        <div class="nes-container with-title is-dark">
+            <p class="title">
+                <span style="font-size: 14px;">[ADICIONAR NOVO LOTE]</span>
+                <span style="font-size: 8px; margin-left: 10px;">ESTOQUE</span>
+            </p>
             <div class="forum-body">
                 <form action="/admin/stock" method="GET">
                     <div class="input-group nes-field">
                         <label for="magazine">Revista / Edição</label>
-                        <input type="text" id="magazine" name="magazine" class="nes-input" value="{{.Magazine}}" placeholder="Ex: Super Game Power #45">
+                        <input type="text" id="magazine" name="magazine" class="nes-input" value="{{.Magazine}}"
+                            placeholder="Ex: Super Game Power #45">
                     </div>
                     <div class="input-group nes-field">
                         <label for="q">Buscar Jogo no Acervo Global (IGDB)</label>
-                        <input type="text" id="q" name="q" class="nes-input" value="{{.Query}}" placeholder="Nome do jogo...">
+                        <input type="text" id="q" name="q" class="nes-input" value="{{.Query}}"
+                            placeholder="Nome do jogo...">
                     </div>
                     <div style="text-align: right; margin-top: 1rem;">
-                        <button type="submit" class="forum-btn">PESQUISAR</button>
+                        <button type="submit" class="nes-btn is-primary" style="font-size: 10px;">PESQUISAR</button>
                     </div>
                 </form>
             </div>
@@ -80,11 +92,11 @@
         {{if .Results}}
         <div class="search-results">
             {{range .Results}}
-            <div class="forum-block">
-                <header class="forum-header">
-                    <span>{{.Name}}</span>
-                    <span style="font-size: 8px;">ID: {{.ID}}</span>
-                </header>
+            <div class="nes-container with-title is-dark">
+                <p class="title">
+                    <span style="font-size: 14px;">{{.Name}}</span>
+                    <span style="font-size: 8px; margin-left: 10px;">ID: {{.ID}}</span>
+                </p>
                 <div class="forum-body search-item">
                     <img src="{{.Cover.URL}}" alt="{{.Name}}">
                     <form action="/admin/purchase" method="POST" class="search-form">
@@ -95,11 +107,13 @@
 
                         <div class="nes-field">
                             <label for="summary_{{.ID}}">Resumo para a Ficha do Jogo (PT-BR)</label>
-                            <textarea id="summary_{{.ID}}" name="summary" class="nes-textarea" rows="3">{{.Summary}}</textarea>
+                            <textarea id="summary_{{.ID}}" name="summary" class="nes-textarea"
+                                rows="3">{{.Summary}}</textarea>
                         </div>
 
                         <div style="text-align: right; margin-top: 1rem;">
-                            <button type="submit" class="forum-btn">ADQUIRIR PARA A LOCADORA</button>
+                            <button type="submit" class="nes-btn is-primary" style="font-size: 10px;">ADQUIRIR PARA A
+                                LOCADORA</button>
                         </div>
                     </form>
                 </div>
@@ -109,10 +123,12 @@
         {{end}}
 
         <div style="margin-top: 2rem; display: flex; justify-content: space-between;">
-            <a href="/games" class="forum-btn">VOLTAR PARA A PRATELEIRA</a>
+            <a href="/games" class="nes-btn is-primary" style="font-size: 10px;">VOLTAR PARA A PRATELEIRA</a>
         </div>
 
-        <p style="font-size: 8px; text-align: center; margin-top: 40px; color: #555;">© 1991-2026 Modo Locadora - Sob licença GPLv3. Criado pelo Tio da Locadora.</p>
+        <p style="font-size: 8px; text-align: center; margin-top: 40px; color: #555;">© 1991-2026 Modo Locadora - Sob
+            licença GPLv3. Criado pelo Tio da Locadora.</p>
     </div>
 </body>
+
 </html>

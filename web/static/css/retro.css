@@ -11,36 +11,21 @@ html, body {
     padding: 0;
 }
 
-/* Forum Block Structure */
-.forum-block {
-    border: 1px solid #000;
-    margin-bottom: 20px;
-    box-shadow: 2px 2px 0px rgba(0,0,0,0.5);
+/* NES.css Theme Overrides - Modo Locadora Theme */
+.nes-container.is-dark {
+    background-color: #121212 !important; /* Dark Gray/Black Body */
+    border-color: #3498DB !important;
 }
 
-.forum-header {
+.nes-container.is-dark > .title {
     background-color: #1F3A5F !important; /* Medium Blue Header */
-    border-top: 2px solid #3498DB; /* Lighter Blue top accent */
-    padding: 10px 15px;
-    color: #FFFFFF !important;
-    font-size: 12px;
-    text-transform: uppercase;
+    border-bottom: 2px solid #3498DB;
     display: flex;
     justify-content: space-between;
     align-items: center;
-}
-
-.forum-body {
-    background-color: #121212 !important; /* Dark Gray/Black Body */
-    padding: 20px;
-    border-top: 1px solid #000;
-}
-
-/* Generic Retro Border - Replacing nes-rpg-border */
-.nes-forum-container {
-    background-color: transparent !important;
-    border: none !important;
-    padding: 0 !important;
+    padding: 10px 15px;
+    margin-top: -30px; /* pull title up */
+    margin-bottom: 20px;
 }
 
 /* Links and Hover Effects */
@@ -54,25 +39,23 @@ a:hover {
     text-decoration: underline;
 }
 
-/* Forum Buttons */
-.forum-btn {
+/* NES Primary Button Custom Theme */
+.nes-btn.is-primary {
     background-color: #1F3A5F !important;
     color: #FFFFFF !important;
-    border: 1px solid #3498DB !important;
-    padding: 8px 12px;
-    font-size: 8px;
-    cursor: pointer;
 }
 
-.forum-btn:hover {
+.nes-btn.is-primary::after {
+    box-shadow: inset -4px -4px #102A4A !important;
+}
+
+.nes-btn.is-primary:hover {
     background-color: #3498DB !important;
+    color: #FFFFFF !important;
 }
 
-.forum-btn.is-disabled {
-    background-color: #333 !important;
-    border-color: #555 !important;
-    color: #777 !important;
-    cursor: not-allowed;
+.nes-btn.is-primary:hover::after {
+    box-shadow: inset -4px -4px #217DBB !important;
 }
 
 /* Forms and Inputs */

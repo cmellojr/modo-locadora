@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="pt-br">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -18,26 +19,31 @@
             display: flex;
             justify-content: center;
         }
+
         .container-wrapper {
             max-width: 900px;
             width: 100%;
         }
+
         .header-bar {
             display: flex;
             justify-content: space-between;
             align-items: center;
             margin-bottom: 20px;
         }
+
         .greeting {
             font-size: 8px;
             color: #3498DB;
         }
+
         .shelf-container {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
             gap: 15px;
             padding: 15px;
         }
+
         .back-link {
             text-align: left;
             margin-top: 20px;
@@ -45,6 +51,7 @@
         }
     </style>
 </head>
+
 <body>
     <div class="container-wrapper">
         <div class="header-bar">
@@ -53,18 +60,21 @@
         </div>
 
         <!-- PRATELEIRA: LANÇAMENTOS -->
-        <div class="forum-block">
-            <header class="forum-header">
-                <span>[LANÇAMENTOS DA SEMANA]</span>
-                <span style="font-size: 8px;">SEÇÃO: NOVIDADES</span>
-            </header>
+        <div class="nes-container with-title is-dark">
+            <p class="title">
+                <span style="font-size: 14px;">[LANÇAMENTOS DA SEMANA]</span>
+                <span style="font-size: 8px; margin-left: 10px;">SEÇÃO: NOVIDADES</span>
+            </p>
             <div class="forum-body">
                 <div class="shelf-container">
                     {{range .Releases}}
                     <div class="forum-game-card">
                         <img src="{{.CoverURL}}" alt="{{.Title}}" class="game-cover-mini">
                         <p class="game-title">{{.Title}}</p>
-                        <button type="button" class="forum-btn {{if eq .CopiesAvailable 0}}is-disabled{{end}}" {{if eq .CopiesAvailable 0}}disabled{{end}}>
+                        <button type="button"
+                            class="nes-btn {{if eq .CopiesAvailable 0}}is-disabled{{else}}is-primary{{end}}"
+                            style="font-size: 10px; padding: 6px; width: 100%; box-sizing: border-box;" {{if eq
+                            .CopiesAvailable 0}}disabled{{end}}>
                             {{if eq .CopiesAvailable 0}}INDISPONÍVEL{{else}}ALUGAR{{end}}
                         </button>
                     </div>
@@ -74,18 +84,21 @@
         </div>
 
         <!-- PRATELEIRA: CATÁLOGO -->
-        <div class="forum-block">
-            <header class="forum-header">
-                <span>[ACERVO DE CARTUCHOS]</span>
-                <span style="font-size: 8px;">SEÇÃO: CATÁLOGO GERAL</span>
-            </header>
+        <div class="nes-container with-title is-dark">
+            <p class="title">
+                <span style="font-size: 14px;">[ACERVO DE CARTUCHOS]</span>
+                <span style="font-size: 8px; margin-left: 10px;">SEÇÃO: CATÁLOGO GERAL</span>
+            </p>
             <div class="forum-body">
                 <div class="shelf-container">
                     {{range .Catalog}}
                     <div class="forum-game-card">
                         <img src="{{.CoverURL}}" alt="{{.Title}}" class="game-cover-mini">
                         <p class="game-title">{{.Title}}</p>
-                        <button type="button" class="forum-btn {{if eq .CopiesAvailable 0}}is-disabled{{end}}" {{if eq .CopiesAvailable 0}}disabled{{end}}>
+                        <button type="button"
+                            class="nes-btn {{if eq .CopiesAvailable 0}}is-disabled{{else}}is-primary{{end}}"
+                            style="font-size: 10px; padding: 6px; width: 100%; box-sizing: border-box;" {{if eq
+                            .CopiesAvailable 0}}disabled{{end}}>
                             {{if eq .CopiesAvailable 0}}INDISPONÍVEL{{else}}ALUGAR{{end}}
                         </button>
                     </div>
@@ -95,10 +108,12 @@
         </div>
 
         <div class="back-link">
-            <a href="/" class="forum-btn">VOLTAR AO BALCÃO</a>
+            <a href="/" class="nes-btn is-primary" style="font-size: 10px;">VOLTAR AO BALCÃO</a>
         </div>
 
-        <p style="font-size: 8px; text-align: center; margin-top: 20px; color: #555;">© 1991-2026 Modo Locadora - Sob licença GPLv3. Criado pelo Tio da Locadora.</p>
+        <p style="font-size: 8px; text-align: center; margin-top: 20px; color: #555;">© 1991-2026 Modo Locadora - Sob
+            licença GPLv3. Criado pelo Tio da Locadora.</p>
     </div>
 </body>
+
 </html>
