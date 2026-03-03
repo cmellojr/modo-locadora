@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Acervo de Jogos - Modo Locadora</title>
+    <title>Prateleira de Jogos - Modo Locadora</title>
     <!-- Google Fonts: Press Start 2P -->
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
     <!-- NES.css CDN -->
@@ -48,15 +48,15 @@
 <body>
     <div class="container-wrapper">
         <div class="header-bar">
-            <h2 class="pixel-aligned-title">ACERVO DE JOGOS</h2>
-            <p class="greeting">AUTENTICADO: {{.MemberName}}</p>
+            <h2 class="pixel-aligned-title">PRATELEIRA DE JOGOS</h2>
+            <p class="greeting">AUTENTICADO: Sócio {{.MemberName}}</p>
         </div>
 
-        <!-- LANÇAMENTOS SECTION -->
+        <!-- PRATELEIRA: LANÇAMENTOS -->
         <div class="forum-block">
             <header class="forum-header">
-                <span>[NOVIDADES DA SEMANA]</span>
-                <span style="font-size: 8px;">SUB-FORUM: LANÇAMENTOS</span>
+                <span>[LANÇAMENTOS DA SEMANA]</span>
+                <span style="font-size: 8px;">SEÇÃO: NOVIDADES</span>
             </header>
             <div class="forum-body">
                 <div class="shelf-container">
@@ -65,7 +65,7 @@
                         <img src="{{.CoverURL}}" alt="{{.Title}}" class="game-cover-mini">
                         <p class="game-title">{{.Title}}</p>
                         <button type="button" class="forum-btn {{if eq .CopiesAvailable 0}}is-disabled{{end}}" {{if eq .CopiesAvailable 0}}disabled{{end}}>
-                            {{if eq .CopiesAvailable 0}}INDISPONÍVEL{{else}}RESERVAR{{end}}
+                            {{if eq .CopiesAvailable 0}}INDISPONÍVEL{{else}}ALUGAR{{end}}
                         </button>
                     </div>
                     {{end}}
@@ -73,11 +73,11 @@
             </div>
         </div>
 
-        <!-- CATÁLOGO SECTION -->
+        <!-- PRATELEIRA: CATÁLOGO -->
         <div class="forum-block">
             <header class="forum-header">
-                <span>[ARQUIVO HISTÓRICO]</span>
-                <span style="font-size: 8px;">SUB-FORUM: CATÁLOGO GERAL</span>
+                <span>[ACERVO DE CARTUCHOS]</span>
+                <span style="font-size: 8px;">SEÇÃO: CATÁLOGO GERAL</span>
             </header>
             <div class="forum-body">
                 <div class="shelf-container">
@@ -86,7 +86,7 @@
                         <img src="{{.CoverURL}}" alt="{{.Title}}" class="game-cover-mini">
                         <p class="game-title">{{.Title}}</p>
                         <button type="button" class="forum-btn {{if eq .CopiesAvailable 0}}is-disabled{{end}}" {{if eq .CopiesAvailable 0}}disabled{{end}}>
-                            {{if eq .CopiesAvailable 0}}INDISPONÍVEL{{else}}RESERVAR{{end}}
+                            {{if eq .CopiesAvailable 0}}INDISPONÍVEL{{else}}ALUGAR{{end}}
                         </button>
                     </div>
                     {{end}}
@@ -98,7 +98,7 @@
             <a href="/" class="forum-btn">VOLTAR AO BALCÃO</a>
         </div>
 
-        <p style="font-size: 8px; text-align: center; margin-top: 20px; color: #555;">© 2024 NES ARCHIVE FORUM. TODOS OS DIREITOS RESERVADOS.</p>
+        <p style="font-size: 8px; text-align: center; margin-top: 20px; color: #555;">© 1991-2026 Modo Locadora - Sob licença GPLv3. Criado pelo Tio da Locadora.</p>
     </div>
 </body>
 </html>
