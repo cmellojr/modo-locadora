@@ -5,24 +5,26 @@ import (
 	"fmt"
 	"html/template"
 	"net/http"
+	"os"
 	"time"
 
-	"os"
-
+	"github.com/cmellojr/modo-locadora/internal/auth"
 	"github.com/cmellojr/modo-locadora/internal/database"
 	"github.com/cmellojr/modo-locadora/internal/igdb"
 	"github.com/cmellojr/modo-locadora/internal/models"
 	"github.com/google/uuid"
+	"golang.org/x/crypto/bcrypt"
 )
 
 // Handler handles HTTP requests for the system.
 type Handler struct {
-	store database.Store
+	store        database.Store
+	cookieSecret string
 }
 
-// NewHandler creates a new Handler with the provided store.
-func NewHandler(store database.Store) *Handler {
-	return &Handler{store: store}
+// NewHandler creates a new Handler with the provided store and cookie secret.
+func NewHandler(store database.Store, cookieSecret string) *Handler {
+	return &Handler{store: store, cookieSecret: cookieSecret}
 }
 
 // CreateMemberRequest defines the input for member registration.
@@ -51,11 +53,22 @@ func (h *Handler) CreateMember(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if req.Password == "" {
+		http.Error(w, "Password is required", http.StatusBadRequest)
+		return
+	}
+
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
+	if err != nil {
+		http.Error(w, "Failed to process password", http.StatusInternalServerError)
+		return
+	}
+
 	member := &models.Member{
 		ID:              uuid.New(),
 		ProfileName:     req.ProfileName,
 		Email:           req.Email,
-		PasswordHash:    req.Password, // TODO: Hash password properly
+		PasswordHash:    string(hashedPassword),
 		FavoriteConsole: req.FavoriteConsole,
 		JoinedAt:        time.Now(),
 	}
@@ -65,31 +78,52 @@ func (h *Handler) CreateMember(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Do not expose the password hash in the response.
+	member.PasswordHash = ""
+
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(member)
 }
 
-// Login handles POST /login, setting a cookie with the member name.
+// Login handles POST /login, validating credentials and setting a signed cookie.
 func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
 
-	memberName := r.FormValue("member_name")
-	if memberName == "" {
-		http.Error(w, "Member name is required", http.StatusBadRequest)
+	profileName := r.FormValue("profile_name")
+	password := r.FormValue("password")
+
+	if profileName == "" || password == "" {
+		http.Error(w, "Nome e senha são obrigatórios", http.StatusBadRequest)
 		return
 	}
 
-	http.SetCookie(w, &http.Cookie{
-		Name:     "session_member",
-		Value:    memberName,
-		Path:     "/",
-		HttpOnly: true,
-	})
+	// If store is not available, deny login (no way to validate).
+	if h.store == nil {
+		http.Error(w, "Database not configured", http.StatusServiceUnavailable)
+		return
+	}
 
+	member, err := h.store.GetMemberByProfileName(r.Context(), profileName)
+	if err != nil {
+		http.Error(w, "Failed to authenticate", http.StatusInternalServerError)
+		return
+	}
+
+	if member == nil {
+		http.Error(w, "Nome ou senha inválidos", http.StatusUnauthorized)
+		return
+	}
+
+	if err := bcrypt.CompareHashAndPassword([]byte(member.PasswordHash), []byte(password)); err != nil {
+		http.Error(w, "Nome ou senha inválidos", http.StatusUnauthorized)
+		return
+	}
+
+	auth.SetSessionCookie(w, member.ID.String(), h.cookieSecret)
 	http.Redirect(w, r, "/games", http.StatusSeeOther)
 }
 
@@ -104,10 +138,17 @@ type GameView struct {
 
 // ListGames handles GET /games and renders the games shelf.
 func (h *Handler) ListGames(w http.ResponseWriter, r *http.Request, tmpl *template.Template) {
-	memberCookie, err := r.Cookie("session_member")
 	memberName := "Visitante"
-	if err == nil {
-		memberName = memberCookie.Value
+
+	memberID := auth.GetSessionMemberID(r, h.cookieSecret)
+	if memberID != "" && h.store != nil {
+		id, err := uuid.Parse(memberID)
+		if err == nil {
+			member, err := h.store.GetMemberByID(r.Context(), id)
+			if err == nil && member != nil {
+				memberName = member.ProfileName
+			}
+		}
 	}
 
 	var dbGames []models.Game

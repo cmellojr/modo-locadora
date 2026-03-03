@@ -47,6 +47,36 @@ func (s *PostgresStore) CreateMember(ctx context.Context, m *models.Member) erro
 	return nil
 }
 
+// GetMemberByID retrieves a member by their UUID.
+func (s *PostgresStore) GetMemberByID(ctx context.Context, id uuid.UUID) (*models.Member, error) {
+	query := `SELECT id, profile_name, email, password_hash, favorite_console, joined_at FROM members WHERE id = $1`
+
+	var m models.Member
+	err := s.pool.QueryRow(ctx, query, id).Scan(&m.ID, &m.ProfileName, &m.Email, &m.PasswordHash, &m.FavoriteConsole, &m.JoinedAt)
+	if err != nil {
+		if err == pgx.ErrNoRows {
+			return nil, nil
+		}
+		return nil, fmt.Errorf("failed to get member by id: %w", err)
+	}
+	return &m, nil
+}
+
+// GetMemberByProfileName retrieves a member by their profile name.
+func (s *PostgresStore) GetMemberByProfileName(ctx context.Context, name string) (*models.Member, error) {
+	query := `SELECT id, profile_name, email, password_hash, favorite_console, joined_at FROM members WHERE profile_name = $1`
+
+	var m models.Member
+	err := s.pool.QueryRow(ctx, query, name).Scan(&m.ID, &m.ProfileName, &m.Email, &m.PasswordHash, &m.FavoriteConsole, &m.JoinedAt)
+	if err != nil {
+		if err == pgx.ErrNoRows {
+			return nil, nil
+		}
+		return nil, fmt.Errorf("failed to get member by profile name: %w", err)
+	}
+	return &m, nil
+}
+
 // GetGameByID retrieves a game by its ID.
 func (s *PostgresStore) GetGameByID(ctx context.Context, id uuid.UUID) (*models.Game, error) {
 	query := `SELECT id, title, igdb_id, platform, summary, cover_url, source_magazine, acquired_at FROM games WHERE id = $1`

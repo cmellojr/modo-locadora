@@ -14,6 +14,7 @@ import (
 	"github.com/cmellojr/modo-locadora/internal/config"
 	"github.com/cmellojr/modo-locadora/internal/database"
 	"github.com/cmellojr/modo-locadora/internal/handlers"
+	"github.com/cmellojr/modo-locadora/internal/middleware"
 )
 
 func main() {
@@ -35,7 +36,18 @@ func main() {
 		log.Println("No DATABASE_URL provided. Proceeding without database.")
 	}
 
-	h := handlers.NewHandler(store)
+	cookieSecret := os.Getenv("COOKIE_SECRET")
+	if cookieSecret == "" {
+		log.Println("Warning: COOKIE_SECRET not set. Using insecure default. Set it in production!")
+		cookieSecret = "modo-locadora-dev-secret-change-me"
+	}
+
+	adminEmail := os.Getenv("ADMIN_EMAIL")
+	if adminEmail == "" {
+		log.Println("Warning: ADMIN_EMAIL not set. Admin routes will be inaccessible.")
+	}
+
+	h := handlers.NewHandler(store, cookieSecret)
 
 	indexTmpl, err := template.ParseFiles("web/templates/index.html")
 	if err != nil {
@@ -63,10 +75,12 @@ func main() {
 		h.ListGames(w, r, gamesTmpl)
 	})
 	mux.HandleFunc("GET /search", h.SearchGame)
-	mux.HandleFunc("GET /admin/stock", func(w http.ResponseWriter, r *http.Request) {
+
+	// Admin routes — protected by RequireAdmin middleware.
+	mux.HandleFunc("GET /admin/stock", middleware.RequireAdmin(cookieSecret, adminEmail, store, func(w http.ResponseWriter, r *http.Request) {
 		h.AdminStock(w, r, adminStockTmpl)
-	})
-	mux.HandleFunc("POST /admin/purchase", h.PurchaseGame)
+	}))
+	mux.HandleFunc("POST /admin/purchase", middleware.RequireAdmin(cookieSecret, adminEmail, store, h.PurchaseGame))
 
 	// Serve static files from web/static
 	fileServer := http.FileServer(http.Dir("web/static"))
