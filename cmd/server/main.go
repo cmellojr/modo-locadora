@@ -118,6 +118,7 @@ func main() {
 		h.Carteirinha(w, r, carteirinhaTmpl)
 	}))
 	mux.HandleFunc("POST /rent", middleware.RequireAuth(cookieSecret, h.RentGame))
+	mux.HandleFunc("POST /carteirinha/notes", middleware.RequireAuth(cookieSecret, h.SavePasswordNotes))
 
 	// Serve static files from web/static
 	fileServer := http.FileServer(http.Dir("web/static"))

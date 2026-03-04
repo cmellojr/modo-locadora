@@ -7,11 +7,12 @@ import (
 	"github.com/google/uuid"
 )
 
-// GameAvailability holds a game and its rental status for shelf display.
+// GameAvailability holds a game and its copy/rental status for shelf display.
 type GameAvailability struct {
-	Game       models.Game
-	Available  bool
-	RenterName string // Non-empty when rented.
+	Game            models.Game
+	TotalCopies     int
+	AvailableCopies int
+	RenterName      string // Non-empty when all copies are rented.
 }
 
 // ActiveRental holds rental info joined with game and member data for the admin returns page.
@@ -63,4 +64,10 @@ type Store interface {
 
 	// RegisterRental records a new rental transaction.
 	RegisterRental(ctx context.Context, rental *models.Rental) error
+
+	// UpdateMemberNotes saves the member's password notebook text.
+	UpdateMemberNotes(ctx context.Context, memberID uuid.UUID, notes string) error
+
+	// GetMemberRentalStats returns counts of active and overdue rentals for a member.
+	GetMemberRentalStats(ctx context.Context, memberID uuid.UUID) (activeCount, overdueCount int, err error)
 }

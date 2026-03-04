@@ -16,5 +16,6 @@ type Member struct {
 	MembershipNumber string
 	Address          string
 	Phone            string
+	PasswordNotes    string
 	JoinedAt         time.Time
 }

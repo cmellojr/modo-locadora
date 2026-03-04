@@ -3,10 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Modo Locadora - Bem-vindo ao Balcão</title>
-    <!-- Google Fonts: Press Start 2P -->
+    <title>Modo Locadora - Bem-vindo ao Balc&atilde;o</title>
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
-    <!-- NES.css CDN -->
     <link href="https://unpkg.com/nes.css@2.3.0/css/nes.min.css" rel="stylesheet" />
     <link rel="stylesheet" href="/static/css/retro.css">
     <style>
@@ -16,11 +14,32 @@
             justify-content: center;
             align-items: center;
             min-height: 100vh;
-            padding: 10px;
+            padding: 20px;
         }
         .container-wrapper {
-            max-width: 500px;
+            max-width: 820px;
             width: 100%;
+        }
+        .balcao-layout {
+            display: flex;
+            gap: 20px;
+            align-items: flex-start;
+        }
+        .balcao-main {
+            flex: 1;
+            min-width: 0;
+        }
+        .balcao-sidebar {
+            width: 260px;
+            flex-shrink: 0;
+        }
+        @media (max-width: 700px) {
+            .balcao-layout {
+                flex-direction: column;
+            }
+            .balcao-sidebar {
+                width: 100%;
+            }
         }
         .input-group {
             margin-top: 1.5rem;
@@ -29,36 +48,75 @@
         .btn-group {
             text-align: right;
         }
+        .manifesto-text {
+            font-size: 9px;
+            color: #f7d51d;
+            line-height: 1.8;
+            margin-bottom: 1.5rem;
+            padding: 12px;
+            border-left: 4px solid #f7d51d;
+        }
+        .statute-text {
+            font-size: 8px;
+            color: #92cc41;
+            line-height: 2;
+        }
+        .statute-text p {
+            margin-bottom: 12px;
+        }
     </style>
 </head>
 <body>
     <div class="container-wrapper">
-        <div class="nes-container with-title is-dark">
-            <p class="title">
-                <span class="pixel-aligned-title"> Modo Locadora</span>
-                <span style="font-size: 8px; margin-left: 10px;">[CARTEIRINHA]</span>
-            </p>
-            <div class="forum-body">
-                <p style="font-size: 10px; color: #FFFFFF; margin-bottom: 20px;">Bem-vindo ao Balcão da Locadora. "Sopre a fita e respeite o tempo."</p>
+        <div class="balcao-layout">
+            <div class="balcao-main">
+                <div class="nes-container with-title is-dark">
+                    <p class="title">
+                        <span class="pixel-aligned-title">Modo Locadora</span>
+                        <span style="font-size: 8px; margin-left: 10px;">[BALC&Atilde;O]</span>
+                    </p>
+                    <div class="forum-body">
+                        <div class="manifesto-text">
+                            &ldquo;Aqui n&atilde;o h&aacute; lugar para pirataria desenfreada ou abandono de cl&aacute;ssicos. Escolha sua fita, sopre os contatos e jogue at&eacute; o fim. Honre sua carteirinha!&rdquo;
+                        </div>
 
-                <form action="/login" method="POST">
-                    <div class="input-group nes-field">
-                        <label for="profile_name">Nome do Sócio</label>
-                        <input type="text" id="profile_name" name="profile_name" class="nes-input" placeholder="Seu nome aqui..." required>
-                    </div>
+                        <p style="font-size: 9px; color: #FFFFFF; margin-bottom: 20px;">Identifique-se no balc&atilde;o para acessar a prateleira.</p>
 
-                    <div class="input-group nes-field">
-                        <label for="password">Senha</label>
-                        <input type="password" id="password" name="password" class="nes-input" placeholder="Sua senha..." required>
-                    </div>
+                        <form action="/login" method="POST">
+                            <div class="input-group nes-field">
+                                <label for="profile_name">Nome do S&oacute;cio</label>
+                                <input type="text" id="profile_name" name="profile_name" class="nes-input" placeholder="Seu nome aqui..." required>
+                            </div>
 
-                    <div class="btn-group">
-                        <button type="submit" class="nes-btn is-primary" style="font-size: 10px;">ENTRAR NO MODO LOCADORA</button>
+                            <div class="input-group nes-field">
+                                <label for="password">Senha</label>
+                                <input type="password" id="password" name="password" class="nes-input" placeholder="Sua senha..." required>
+                            </div>
+
+                            <div class="btn-group">
+                                <button type="submit" class="nes-btn is-primary" style="font-size: 10px;">ENTRAR NO MODO LOCADORA</button>
+                            </div>
+                        </form>
                     </div>
-                </form>
+                </div>
+            </div>
+
+            <div class="balcao-sidebar">
+                <div class="nes-container with-title is-dark">
+                    <p class="title">
+                        <span style="font-size: 10px;">Estatuto</span>
+                    </p>
+                    <div class="statute-text">
+                        <p><i class="nes-icon trophy is-small"></i> Os jogos deste acervo s&atilde;o para serem deliciados como um bom vinho. Sem pressa, sem desperd&iacute;cio.</p>
+                        <p><i class="nes-icon star is-small"></i> Cada fita &eacute; &uacute;nica. Se todas as c&oacute;pias estiverem alugadas, aguarde sua vez com paci&ecirc;ncia.</p>
+                        <p><i class="nes-icon heart is-small"></i> Devolva no prazo. O pr&oacute;ximo s&oacute;cio conta com voc&ecirc;.</p>
+                        <p><i class="nes-icon like is-small"></i> Anote seus passwords no caderninho. N&atilde;o abandone um cl&aacute;ssico pela metade.</p>
+                    </div>
+                </div>
             </div>
         </div>
-        <p style="font-size: 8px; text-align: center; margin-top: 10px; color: #555;">© 1991-2026 Modo Locadora - Sob licença GPLv3. Criado pelo Tio da Locadora.</p>
+
+        <p style="font-size: 8px; text-align: center; margin-top: 20px; color: #555;">&copy; 1991-2026 Modo Locadora - Sob licen&ccedil;a GPLv3. Criado pelo Tio da Locadora.</p>
     </div>
 </body>
 </html>

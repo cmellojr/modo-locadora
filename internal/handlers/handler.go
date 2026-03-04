@@ -136,12 +136,15 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 
 // GameView represents a game for display in the shelf.
 type GameView struct {
-	ID         string
-	Title      string
-	Platform   string
-	CoverURL   string
-	Available  bool
-	RenterName string
+	ID              string
+	Title           string
+	Platform        string
+	CoverURL        string
+	Summary         string
+	SourceMagazine  string
+	TotalCopies     int
+	AvailableCopies int
+	RenterName      string
 }
 
 // ListGames handles GET /games and renders the games shelf.
@@ -170,12 +173,15 @@ func (h *Handler) ListGames(w http.ResponseWriter, r *http.Request, tmpl *templa
 		if err == nil && len(gamesAvail) > 0 {
 			for _, ga := range gamesAvail {
 				games = append(games, GameView{
-					ID:         ga.Game.ID.String(),
-					Title:      ga.Game.Title,
-					Platform:   ga.Game.Platform,
-					CoverURL:   ga.Game.CoverURL,
-					Available:  ga.Available,
-					RenterName: ga.RenterName,
+					ID:              ga.Game.ID.String(),
+					Title:           ga.Game.Title,
+					Platform:        ga.Game.Platform,
+					CoverURL:        ga.Game.CoverURL,
+					Summary:         ga.Game.Summary,
+					SourceMagazine:  ga.Game.SourceMagazine,
+					TotalCopies:     ga.TotalCopies,
+					AvailableCopies: ga.AvailableCopies,
+					RenterName:      ga.RenterName,
 				})
 			}
 		}
@@ -184,11 +190,13 @@ func (h *Handler) ListGames(w http.ResponseWriter, r *http.Request, tmpl *templa
 	if len(games) == 0 {
 		games = []GameView{
 			{ID: "00000000-0000-0000-0000-000000000001", Title: "Chrono Trigger", Platform: "SNES",
-				CoverURL: "https://images.igdb.com/igdb/image/upload/t_cover_big/co1v9x.jpg", Available: true},
+				CoverURL: "https://images.igdb.com/igdb/image/upload/t_cover_big/co1v9x.jpg", TotalCopies: 1, AvailableCopies: 1,
+				Summary: "Um RPG epico sobre viagem no tempo.", SourceMagazine: "Super Game Power #12"},
 			{ID: "00000000-0000-0000-0000-000000000002", Title: "Top Gear", Platform: "SNES",
-				CoverURL: "https://images.igdb.com/igdb/image/upload/t_cover_big/co2607.jpg", Available: false, RenterName: "Player1"},
+				CoverURL: "https://images.igdb.com/igdb/image/upload/t_cover_big/co2607.jpg", TotalCopies: 1, AvailableCopies: 0, RenterName: "Player1"},
 			{ID: "00000000-0000-0000-0000-000000000003", Title: "Super Metroid", Platform: "SNES",
-				CoverURL: "https://images.igdb.com/igdb/image/upload/t_cover_big/co1tpz.jpg", Available: true},
+				CoverURL: "https://images.igdb.com/igdb/image/upload/t_cover_big/co1tpz.jpg", TotalCopies: 1, AvailableCopies: 1,
+				Summary: "Explore o planeta Zebes nesta aventura sci-fi.", SourceMagazine: "Acao Games #55"},
 		}
 	}
 
@@ -234,15 +242,67 @@ func (h *Handler) Carteirinha(w http.ResponseWriter, r *http.Request, tmpl *temp
 		return
 	}
 
+	activeCount, overdueCount, _ := h.store.GetMemberRentalStats(r.Context(), id)
+
+	statusLabel := "Jogador Honesto"
+	statusBadge := "is-success"
+	if overdueCount > 0 {
+		statusLabel = "Socio em Debito com o Tio"
+		statusBadge = "is-error"
+	} else if activeCount > 0 {
+		statusLabel = "Jogador Ativo"
+		statusBadge = "is-primary"
+	}
+
+	successMsg := r.URL.Query().Get("success")
+
 	data := struct {
-		Member *models.Member
+		Member        *models.Member
+		ActiveRentals int
+		OverdueCount  int
+		StatusLabel   string
+		StatusBadge   string
+		Success       string
 	}{
-		Member: member,
+		Member:        member,
+		ActiveRentals: activeCount,
+		OverdueCount:  overdueCount,
+		StatusLabel:   statusLabel,
+		StatusBadge:   statusBadge,
+		Success:       successMsg,
 	}
 
 	if err := tmpl.Execute(w, data); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
+}
+
+// SavePasswordNotes handles POST /carteirinha/notes.
+func (h *Handler) SavePasswordNotes(w http.ResponseWriter, r *http.Request) {
+	if h.store == nil {
+		http.Error(w, "Database not configured", http.StatusServiceUnavailable)
+		return
+	}
+
+	rawMemberID := auth.GetSessionMemberID(r, h.cookieSecret)
+	if rawMemberID == "" {
+		http.Redirect(w, r, "/", http.StatusSeeOther)
+		return
+	}
+
+	memberID, err := uuid.Parse(rawMemberID)
+	if err != nil {
+		http.Redirect(w, r, "/", http.StatusSeeOther)
+		return
+	}
+
+	notes := r.FormValue("notes")
+	if err := h.store.UpdateMemberNotes(r.Context(), memberID, notes); err != nil {
+		http.Error(w, "Falha ao salvar notas: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	http.Redirect(w, r, "/carteirinha?success=1", http.StatusSeeOther)
 }
 
 // RentGame handles POST /rent.
