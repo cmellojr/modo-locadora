@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Acervo - Modo Locadora</title>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <link href="https://unpkg.com/nes.css@2.3.0/css/nes.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="/static/css/retro.css">
+    <style>
+        body {
+            font-family: 'Press Start 2P', cursive;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .container-wrapper {
+            max-width: 960px;
+            width: 100%;
+        }
+
+        .admin-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .inventory-table {
+            width: 100%;
+            font-size: 8px;
+        }
+
+        .inventory-table th {
+            font-size: 9px;
+            text-align: left;
+            white-space: nowrap;
+        }
+
+        .inventory-table td {
+            vertical-align: middle;
+        }
+
+        .inventory-table .cover-thumb {
+            width: 48px;
+            height: auto;
+            image-rendering: pixelated;
+            border: 1px solid #444;
+        }
+
+        .inventory-table .game-title {
+            font-size: 8px;
+            line-height: 1.5;
+        }
+
+        .inventory-table .game-magazine {
+            font-size: 7px;
+            color: #92cc41;
+        }
+
+        .success-balloon {
+            margin-bottom: 1.5rem;
+        }
+
+        .success-balloon .balloon-text {
+            font-size: 10px;
+        }
+
+        .nav-bar {
+            margin-top: 2rem;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 2rem;
+            font-size: 10px;
+            color: #888;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container-wrapper">
+        <header class="admin-header">
+            <h2 class="pixel-aligned-title">ACERVO DA LOCADORA</h2>
+            <p class="pixel-aligned-subtitle">[INVENT&Aacute;RIO COMPLETO]</p>
+        </header>
+
+        {{if .Success}}
+        <div class="success-balloon">
+            <div class="nes-balloon from-left is-dark">
+                <p class="balloon-text">Fita re-gravada com sucesso! "{{.Success}}" atualizado.</p>
+            </div>
+            <i class="nes-bcrikko"></i>
+        </div>
+        {{end}}
+
+        <div class="nes-container with-title is-dark">
+            <p class="title">
+                <span style="font-size: 14px;">JOGOS CADASTRADOS</span>
+                <span style="font-size: 8px; margin-left: 10px;">{{len .Games}} fitas</span>
+            </p>
+
+            {{if .Games}}
+            <div class="nes-table-responsive">
+                <table class="nes-table is-bordered is-dark inventory-table">
+                    <thead>
+                        <tr>
+                            <th>Capa</th>
+                            <th>T&iacute;tulo</th>
+                            <th>Revista</th>
+                            <th>A&ccedil;&otilde;es</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {{range .Games}}
+                        <tr>
+                            <td>
+                                {{if .CoverURL}}
+                                <img src="{{.CoverURL}}" alt="{{.Title}}" class="cover-thumb">
+                                {{else}}
+                                <span style="font-size: 6px; color: #666;">N/A</span>
+                                {{end}}
+                            </td>
+                            <td>
+                                <div class="game-title">{{.Title}}</div>
+                                <div class="game-magazine">{{.Platform}}</div>
+                            </td>
+                            <td>
+                                <span class="game-magazine">{{if .SourceMagazine}}{{.SourceMagazine}}{{else}}&mdash;{{end}}</span>
+                            </td>
+                            <td>
+                                <a href="/admin/edit/{{.ID}}" class="nes-btn is-warning"
+                                    style="font-size: 8px; padding: 4px 8px;">Editar</a>
+                            </td>
+                        </tr>
+                        {{end}}
+                    </tbody>
+                </table>
+            </div>
+            {{else}}
+            <div class="empty-state">
+                <p>Nenhuma fita no acervo ainda.</p>
+                <p style="margin-top: 1rem;">Use o <a href="/admin/stock">Abastecimento</a> para adicionar jogos.</p>
+            </div>
+            {{end}}
+        </div>
+
+        <div class="nav-bar">
+            <a href="/admin/stock" class="nes-btn is-primary" style="font-size: 10px;">ABASTECER PRATELEIRAS</a>
+            <a href="/games" class="nes-btn" style="font-size: 10px;">VOLTAR PARA A PRATELEIRA</a>
+        </div>
+
+        <p style="font-size: 8px; text-align: center; margin-top: 40px; color: #555;">&copy; 1991-2026 Modo Locadora -
+            Sob licen&ccedil;a GPLv3. Criado pelo Tio da Locadora.</p>
+    </div>
+</body>
+
+</html>

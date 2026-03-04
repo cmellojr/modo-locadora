@@ -6,6 +6,7 @@ import (
 	"html/template"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/cmellojr/modo-locadora/internal/auth"
@@ -64,13 +65,20 @@ func (h *Handler) CreateMember(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	membershipNumber, err := h.store.NextMembershipNumber(r.Context())
+	if err != nil {
+		http.Error(w, "Failed to generate membership number", http.StatusInternalServerError)
+		return
+	}
+
 	member := &models.Member{
-		ID:              uuid.New(),
-		ProfileName:     req.ProfileName,
-		Email:           req.Email,
-		PasswordHash:    string(hashedPassword),
-		FavoriteConsole: req.FavoriteConsole,
-		JoinedAt:        time.Now(),
+		ID:               uuid.New(),
+		ProfileName:      req.ProfileName,
+		Email:            req.Email,
+		PasswordHash:     string(hashedPassword),
+		FavoriteConsole:   req.FavoriteConsole,
+		MembershipNumber: membershipNumber,
+		JoinedAt:         time.Now(),
 	}
 
 	if err := h.store.CreateMember(r.Context(), member); err != nil {
@@ -101,7 +109,6 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// If store is not available, deny login (no way to validate).
 	if h.store == nil {
 		http.Error(w, "Database not configured", http.StatusServiceUnavailable)
 		return
@@ -129,91 +136,72 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 
 // GameView represents a game for display in the shelf.
 type GameView struct {
-	ID              string
-	Title           string
-	Platform        string
-	CoverURL        string
-	CopiesAvailable int
+	ID         string
+	Title      string
+	Platform   string
+	CoverURL   string
+	Available  bool
+	RenterName string
 }
 
 // ListGames handles GET /games and renders the games shelf.
 func (h *Handler) ListGames(w http.ResponseWriter, r *http.Request, tmpl *template.Template) {
 	memberName := "Visitante"
+	var memberID string
+	var isLoggedIn bool
 
-	memberID := auth.GetSessionMemberID(r, h.cookieSecret)
-	if memberID != "" && h.store != nil {
-		id, err := uuid.Parse(memberID)
+	rawMemberID := auth.GetSessionMemberID(r, h.cookieSecret)
+	if rawMemberID != "" && h.store != nil {
+		id, err := uuid.Parse(rawMemberID)
 		if err == nil {
 			member, err := h.store.GetMemberByID(r.Context(), id)
 			if err == nil && member != nil {
 				memberName = member.ProfileName
+				memberID = rawMemberID
+				isLoggedIn = true
 			}
 		}
 	}
 
-	var dbGames []models.Game
+	var games []GameView
+
 	if h.store != nil {
-		dbGames, _ = h.store.ListGames(r.Context())
+		gamesAvail, err := h.store.ListGamesWithAvailability(r.Context())
+		if err == nil && len(gamesAvail) > 0 {
+			for _, ga := range gamesAvail {
+				games = append(games, GameView{
+					ID:         ga.Game.ID.String(),
+					Title:      ga.Game.Title,
+					Platform:   ga.Game.Platform,
+					CoverURL:   ga.Game.CoverURL,
+					Available:  ga.Available,
+					RenterName: ga.RenterName,
+				})
+			}
+		}
 	}
 
-	// For now, let's mix mock data with DB data if DB is empty
-	var releases []GameView
-	var catalog []GameView
-
-	if len(dbGames) > 0 {
-		for _, g := range dbGames {
-			view := GameView{
-				ID:              g.ID.String(),
-				Title:           g.Title,
-				Platform:        g.Platform,
-				CoverURL:        g.CoverURL,
-				CopiesAvailable: 1, // Defaulting to 1 for now until copies are implemented
-			}
-			// Logic to separate: let's say last 2 are releases
-			if len(releases) < 2 {
-				releases = append(releases, view)
-			} else {
-				catalog = append(catalog, view)
-			}
-		}
-	} else {
-		// Mock data for testing
-		releases = []GameView{
-			{
-				ID:              "00000000-0000-0000-0000-000000000001",
-				Title:           "Chrono Trigger",
-				Platform:        "SNES",
-				CoverURL:        "https://images.igdb.com/igdb/image/upload/t_cover_big/co1v9x.jpg",
-				CopiesAvailable: 1,
-			},
-		}
-
-		catalog = []GameView{
-			{
-				ID:              "00000000-0000-0000-0000-000000000002",
-				Title:           "Top Gear",
-				Platform:        "SNES",
-				CoverURL:        "https://images.igdb.com/igdb/image/upload/t_cover_big/co2607.jpg",
-				CopiesAvailable: 0,
-			},
-			{
-				ID:              "00000000-0000-0000-0000-000000000003",
-				Title:           "Super Metroid",
-				Platform:        "SNES",
-				CoverURL:        "https://images.igdb.com/igdb/image/upload/t_cover_big/co1tpz.jpg",
-				CopiesAvailable: 2,
-			},
+	if len(games) == 0 {
+		games = []GameView{
+			{ID: "00000000-0000-0000-0000-000000000001", Title: "Chrono Trigger", Platform: "SNES",
+				CoverURL: "https://images.igdb.com/igdb/image/upload/t_cover_big/co1v9x.jpg", Available: true},
+			{ID: "00000000-0000-0000-0000-000000000002", Title: "Top Gear", Platform: "SNES",
+				CoverURL: "https://images.igdb.com/igdb/image/upload/t_cover_big/co2607.jpg", Available: false, RenterName: "Player1"},
+			{ID: "00000000-0000-0000-0000-000000000003", Title: "Super Metroid", Platform: "SNES",
+				CoverURL: "https://images.igdb.com/igdb/image/upload/t_cover_big/co1tpz.jpg", Available: true},
 		}
 	}
 
 	data := struct {
 		MemberName string
-		Releases   []GameView
-		Catalog    []GameView
+		MemberID   string
+		IsLoggedIn bool
+		Games      []GameView
 	}{
 		MemberName: memberName,
-		Releases:   releases,
-		Catalog:    catalog,
+		MemberID:   memberID,
+		IsLoggedIn: isLoggedIn,
+		Games:      games,
 	}
 
 	if err := tmpl.Execute(w, data); err != nil {
@@ -221,12 +209,134 @@ func (h *Handler) ListGames(w http.ResponseWriter, r *http.Request, tmpl *templa
 	}
 }
 
+// Carteirinha handles GET /carteirinha and renders the member's profile card.
+func (h *Handler) Carteirinha(w http.ResponseWriter, r *http.Request, tmpl *template.Template) {
+	if h.store == nil {
+		http.Error(w, "Database not configured", http.StatusServiceUnavailable)
+		return
+	}
+
+	rawMemberID := auth.GetSessionMemberID(r, h.cookieSecret)
+	if rawMemberID == "" {
+		http.Redirect(w, r, "/", http.StatusSeeOther)
+		return
+	}
+
+	id, err := uuid.Parse(rawMemberID)
+	if err != nil {
+		http.Redirect(w, r, "/", http.StatusSeeOther)
+		return
+	}
+
+	member, err := h.store.GetMemberByID(r.Context(), id)
+	if err != nil || member == nil {
+		http.Redirect(w, r, "/", http.StatusSeeOther)
+		return
+	}
+
+	data := struct {
+		Member *models.Member
+	}{
+		Member: member,
+	}
+
+	if err := tmpl.Execute(w, data); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+}
+
+// RentGame handles POST /rent.
+func (h *Handler) RentGame(w http.ResponseWriter, r *http.Request) {
+	if h.store == nil {
+		http.Error(w, "Database not configured", http.StatusServiceUnavailable)
+		return
+	}
+
+	rawMemberID := auth.GetSessionMemberID(r, h.cookieSecret)
+	if rawMemberID == "" {
+		http.Redirect(w, r, "/", http.StatusSeeOther)
+		return
+	}
+
+	memberID, err := uuid.Parse(rawMemberID)
+	if err != nil {
+		http.Error(w, "Sessão inválida", http.StatusBadRequest)
+		return
+	}
+
+	gameID, err := uuid.Parse(r.FormValue("game_id"))
+	if err != nil {
+		http.Error(w, "ID de jogo inválido", http.StatusBadRequest)
+		return
+	}
+
+	if err := h.store.RentGame(r.Context(), gameID, memberID); err != nil {
+		http.Error(w, "Falha ao alugar: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	http.Redirect(w, r, "/games", http.StatusSeeOther)
+}
+
+// AdminReturns handles GET /admin/returns and renders the active rentals for check-in.
+func (h *Handler) AdminReturns(w http.ResponseWriter, r *http.Request, tmpl *template.Template) {
+	if h.store == nil {
+		http.Error(w, "Database not configured", http.StatusServiceUnavailable)
+		return
+	}
+
+	successMsg := r.URL.Query().Get("success")
+
+	rentals, err := h.store.ListActiveRentals(r.Context())
+	if err != nil {
+		http.Error(w, "Failed to list rentals: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	data := struct {
+		Rentals []database.ActiveRental
+		Success string
+	}{
+		Rentals: rentals,
+		Success: successMsg,
+	}
+
+	if err := tmpl.Execute(w, data); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+}
+
+// ReturnGame handles POST /admin/return-game.
+func (h *Handler) ReturnGame(w http.ResponseWriter, r *http.Request) {
+	if h.store == nil {
+		http.Error(w, "Database not configured", http.StatusServiceUnavailable)
+		return
+	}
+
+	rentalID, err := uuid.Parse(r.FormValue("rental_id"))
+	if err != nil {
+		http.Error(w, "ID de aluguel inválido", http.StatusBadRequest)
+		return
+	}
+
+	if err := h.store.ReturnGame(r.Context(), rentalID); err != nil {
+		http.Error(w, "Falha ao devolver: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	http.Redirect(w, r, "/admin/returns?success=Fita+devolvida", http.StatusSeeOther)
+}
+
 // AdminStock handles GET /admin/stock and renders the IGDB search page.
 func (h *Handler) AdminStock(w http.ResponseWriter, r *http.Request, tmpl *template.Template) {
 	query := r.URL.Query().Get("q")
 	magazine := r.URL.Query().Get("magazine")
+	selectedIDStr := r.URL.Query().Get("selected")
+	successMsg := r.URL.Query().Get("success")
 
 	var results []igdb.GameData
+	var selected *igdb.GameData
+
 	if query != "" {
 		clientID := os.Getenv("TWITCH_CLIENT_ID")
 		clientSecret := os.Getenv("TWITCH_CLIENT_SECRET")
@@ -237,16 +347,31 @@ func (h *Handler) AdminStock(w http.ResponseWriter, r *http.Request, tmpl *templ
 				results, _ = igdb.SearchGame(clientID, token.AccessToken, query)
 			}
 		}
+
+		if selectedIDStr != "" {
+			selectedID := 0
+			fmt.Sscanf(selectedIDStr, "%d", &selectedID)
+			for i := range results {
+				if results[i].ID == selectedID {
+					selected = &results[i]
+					break
+				}
+			}
+		}
 	}
 
 	data := struct {
 		Query    string
 		Magazine string
 		Results  []igdb.GameData
+		Selected *igdb.GameData
+		Success  string
 	}{
 		Query:    query,
 		Magazine: magazine,
 		Results:  results,
+		Selected: selected,
+		Success:  successMsg,
 	}
 
 	if err := tmpl.Execute(w, data); err != nil {
@@ -261,13 +386,23 @@ func (h *Handler) PurchaseGame(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	platform := r.FormValue("platform")
+	if platform == "" {
+		platform = "N/A"
+	}
+
+	coverURL := r.FormValue("cover_url")
+	if strings.Contains(coverURL, "t_thumb") {
+		coverURL = strings.Replace(coverURL, "t_thumb", "t_cover_big", 1)
+	}
+
 	game := &models.Game{
 		ID:             uuid.New(),
 		Title:          r.FormValue("title"),
 		IgdbID:         r.FormValue("igdb_id"),
-		Platform:       "SNES", // Default for now
+		Platform:       platform,
 		Summary:        r.FormValue("summary"),
-		CoverURL:       r.FormValue("cover_url"),
+		CoverURL:       coverURL,
 		SourceMagazine: r.FormValue("magazine"),
 		AcquiredAt:     time.Now(),
 	}
@@ -277,7 +412,113 @@ func (h *Handler) PurchaseGame(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	http.Redirect(w, r, "/games", http.StatusSeeOther)
+	http.Redirect(w, r, "/admin/edit/"+game.ID.String(), http.StatusSeeOther)
+}
+
+// AdminInventory handles GET /admin/inventory and renders the game list table.
+func (h *Handler) AdminInventory(w http.ResponseWriter, r *http.Request, tmpl *template.Template) {
+	if h.store == nil {
+		http.Error(w, "Database not configured", http.StatusServiceUnavailable)
+		return
+	}
+
+	successMsg := r.URL.Query().Get("success")
+
+	games, err := h.store.ListGames(r.Context())
+	if err != nil {
+		http.Error(w, "Failed to list games: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	data := struct {
+		Games   []models.Game
+		Success string
+	}{
+		Games:   games,
+		Success: successMsg,
+	}
+
+	if err := tmpl.Execute(w, data); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+}
+
+// EditGame handles GET /admin/edit/{id} and renders the edit form for a game.
+func (h *Handler) EditGame(w http.ResponseWriter, r *http.Request, tmpl *template.Template) {
+	if h.store == nil {
+		http.Error(w, "Database not configured", http.StatusServiceUnavailable)
+		return
+	}
+
+	idStr := r.PathValue("id")
+	id, err := uuid.Parse(idStr)
+	if err != nil {
+		http.Error(w, "ID de jogo inválido", http.StatusBadRequest)
+		return
+	}
+
+	game, err := h.store.GetGameByID(r.Context(), id)
+	if err != nil {
+		http.Error(w, "Failed to retrieve game", http.StatusInternalServerError)
+		return
+	}
+	if game == nil {
+		http.Error(w, "Jogo não encontrado", http.StatusNotFound)
+		return
+	}
+
+	data := struct {
+		Game *models.Game
+	}{
+		Game: game,
+	}
+
+	if err := tmpl.Execute(w, data); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+}
+
+// UpdateGame handles POST /admin/update-game and updates game fields in the database.
+func (h *Handler) UpdateGame(w http.ResponseWriter, r *http.Request) {
+	if h.store == nil {
+		http.Error(w, "Database not configured", http.StatusServiceUnavailable)
+		return
+	}
+
+	idStr := r.FormValue("id")
+	id, err := uuid.Parse(idStr)
+	if err != nil {
+		http.Error(w, "ID de jogo inválido", http.StatusBadRequest)
+		return
+	}
+
+	game, err := h.store.GetGameByID(r.Context(), id)
+	if err != nil || game == nil {
+		http.Error(w, "Jogo não encontrado", http.StatusNotFound)
+		return
+	}
+
+	game.Title = r.FormValue("title")
+	game.Platform = r.FormValue("platform")
+	game.Summary = r.FormValue("summary")
+	game.SourceMagazine = r.FormValue("magazine")
+
+	coverURL := r.FormValue("cover_url")
+	if coverURL != "" {
+		if strings.Contains(coverURL, "t_thumb") {
+			coverURL = strings.Replace(coverURL, "t_thumb", "t_cover_big", 1)
+		}
+		game.CoverURL = coverURL
+	}
+
+	if err := h.store.UpdateGame(r.Context(), game); err != nil {
+		http.Error(w, "Failed to update game: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	redirectURL := fmt.Sprintf("/admin/inventory?success=%s",
+		template.URLQueryEscaper(game.Title))
+	http.Redirect(w, r, redirectURL, http.StatusSeeOther)
 }
 
 // SearchGame handles GET /search?q=... and returns raw JSON from IGDB.
@@ -319,14 +560,6 @@ func (h *Handler) GetGame(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if r.Method != http.MethodGet {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-		return
-	}
-
-	// Assuming the ID is passed as a query parameter "id" for now,
-	// as stdlib's default ServeMux doesn't support path parameters easily before Go 1.22.
-	// Since we are on Go 1.24.3, we can use the new path parameter syntax if we want.
 	idStr := r.PathValue("id")
 	if idStr == "" {
 		idStr = r.URL.Query().Get("id")

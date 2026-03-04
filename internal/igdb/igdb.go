@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strings"
 	"time"
 )
 
@@ -18,17 +19,56 @@ type TwitchToken struct {
 
 // GameData represents the game metadata from IGDB.
 type GameData struct {
-	ID               int      `json:"id"`
-	Name             string   `json:"name"`
-	Summary          string   `json:"summary"`
-	FirstReleaseDate int64    `json:"first_release_date"`
-	Cover            Cover    `json:"cover"`
+	ID               int        `json:"id"`
+	Name             string     `json:"name"`
+	Summary          string     `json:"summary"`
+	FirstReleaseDate int64      `json:"first_release_date"`
+	Cover            Cover      `json:"cover"`
+	Platforms        []Platform `json:"platforms"`
+}
+
+// ReleaseYear returns the 4-digit year from the Unix timestamp, or "N/A".
+func (g GameData) ReleaseYear() string {
+	if g.FirstReleaseDate == 0 {
+		return "N/A"
+	}
+	return time.Unix(g.FirstReleaseDate, 0).UTC().Format("2006")
+}
+
+// PlatformNames returns a comma-separated list of platform abbreviations.
+func (g GameData) PlatformNames() string {
+	if len(g.Platforms) == 0 {
+		return "N/A"
+	}
+	names := make([]string, len(g.Platforms))
+	for i, p := range g.Platforms {
+		names[i] = p.Abbreviation
+		if names[i] == "" {
+			names[i] = p.Name
+		}
+	}
+	return strings.Join(names, ", ")
 }
 
 // Cover represents the cover metadata from IGDB.
 type Cover struct {
 	ID  int    `json:"id"`
 	URL string `json:"url"`
+}
+
+// BigCoverURL returns the cover URL resized to t_cover_big (264x374).
+func (c Cover) BigCoverURL() string {
+	if c.URL == "" {
+		return ""
+	}
+	return strings.Replace(c.URL, "t_thumb", "t_cover_big", 1)
+}
+
+// Platform represents a game platform from IGDB.
+type Platform struct {
+	ID           int    `json:"id"`
+	Name         string `json:"name"`
+	Abbreviation string `json:"abbreviation"`
 }
 
 // GetAccessToken retrieves a new access token from Twitch using client credentials.
@@ -60,7 +100,7 @@ func SearchGame(clientID, accessToken, query string) ([]GameData, error) {
 
 	// IGDB Query Language (Apex)
 	// We want ID, Name, Summary, Cover (URL), First Release Date
-	q := fmt.Sprintf(`search "%s"; fields name, summary, first_release_date, cover.url; limit 5;`, query)
+	q := fmt.Sprintf(`search "%s"; fields name, summary, first_release_date, cover.url, platforms.name, platforms.abbreviation; limit 10;`, query)
 
 	req, err := http.NewRequest("POST", url, bytes.NewBufferString(q))
 	if err != nil {

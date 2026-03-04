@@ -6,7 +6,7 @@ This guide walks you through setting up the Modo Locadora project for local deve
 
 | Tool       | Version | Purpose                        |
 |------------|---------|--------------------------------|
-| Go         | 1.22+   | Backend language               |
+| Go         | 1.24+   | Backend language               |
 | PostgreSQL | 15+     | Database                       |
 | Docker     | 20+     | Database container (optional)  |
 | Git        | 2.x     | Version control                |
@@ -73,11 +73,12 @@ createdb -U your_user modo_locadora
 
 ## 4. Run Database Migrations
 
-Migrations are in `internal/database/migrations/` and must be applied manually:
+Migrations are in `internal/database/migrations/` and must be applied manually in order:
 
 ```bash
 psql $DATABASE_URL -f internal/database/migrations/001_initial_schema.sql
 psql $DATABASE_URL -f internal/database/migrations/002_update_games_table.sql
+psql $DATABASE_URL -f internal/database/migrations/003_membership_and_rental_support.sql
 ```
 
 On Windows with Docker:
@@ -85,7 +86,16 @@ On Windows with Docker:
 ```bash
 docker exec -i modo_locadora_db psql -U tio_da_locadora -d modo_locadora < internal/database/migrations/001_initial_schema.sql
 docker exec -i modo_locadora_db psql -U tio_da_locadora -d modo_locadora < internal/database/migrations/002_update_games_table.sql
+docker exec -i modo_locadora_db psql -U tio_da_locadora -d modo_locadora < internal/database/migrations/003_membership_and_rental_support.sql
 ```
+
+### What Each Migration Does
+
+| Migration | Description |
+|-----------|-------------|
+| `001_initial_schema.sql` | Creates base tables: `members`, `games`, `game_copies`, `rentals` |
+| `002_update_games_table.sql` | Adds `cover_url`, `source_magazine`, `acquired_at` columns to `games` |
+| `003_membership_and_rental_support.sql` | Adds `membership_number`, `address`, `phone` to `members`; creates `membership_seq` sequence; backfills existing data; creates `game_copies` for existing games |
 
 ## 5. Install Dependencies
 
@@ -116,12 +126,14 @@ The application requires a registered member to log in. Use the API to create on
 curl -X POST http://localhost:8080/members \
   -H "Content-Type: application/json" \
   -d '{
-    "profile_name": "Player1",
-    "email": "player1@locadora.com",
+    "profile_name": "Tio da Locadora",
+    "email": "your_admin_email@example.com",
     "password": "your_password",
-    "favorite_console": "SNES"
+    "favorite_console": "Mega Drive"
   }'
 ```
+
+The member will automatically receive a membership number (e.g., `1991-001`).
 
 To access admin routes, set the member's email to match the `ADMIN_EMAIL` value in `.env`.
 
@@ -131,8 +143,11 @@ To access admin routes, set the member's email to match the `ADMIN_EMAIL` value 
 |------------------------------|------------------------------------------|
 | `http://localhost:8080`      | Login page (Balcao) loads                |
 | Login with member + password | Redirects to `/games` shelf              |
-| `http://localhost:8080/games`| Games shelf with mock or DB data         |
+| `http://localhost:8080/games`| Games shelf with availability status     |
+| `/carteirinha` (logged in)   | Membership card with `1991-XXX` number   |
 | `/admin/stock` (as admin)    | IGDB search page loads                   |
+| `/admin/inventory` (as admin)| Full catalog table with edit buttons     |
+| `/admin/returns` (as admin)  | Active rentals list                      |
 | `/admin/stock` (no login)    | Redirected to `/`                        |
 
 ## Project Structure
@@ -146,7 +161,7 @@ modo-locadora/
 │   ├── database/
 │   │   ├── store.go                # Store interface
 │   │   ├── postgres.go             # PostgreSQL implementation
-│   │   └── migrations/             # SQL migration files
+│   │   └── migrations/             # SQL migration files (001-003)
 │   ├── handlers/handler.go         # HTTP handlers
 │   ├── igdb/igdb.go                # IGDB API client
 │   ├── middleware/middleware.go     # Auth & admin middleware
@@ -158,6 +173,13 @@ modo-locadora/
 ├── web/
 │   ├── static/css/retro.css        # NES-style theme
 │   └── templates/                  # Go HTML templates (PT-BR)
+│       ├── index.html              # Login page (Balcao)
+│       ├── games.html              # Game shelf with rental status
+│       ├── carteirinha.html        # Membership card
+│       ├── admin_stock.html        # IGDB search & purchase
+│       ├── admin_inventory.html    # Catalog listing
+│       ├── admin_edit.html         # Game edit form
+│       └── admin_returns.html      # Active rentals check-in
 ├── docs/                           # Project documentation
 ├── docker-compose.yml              # PostgreSQL container
 ├── .env.example                    # Environment template
@@ -169,11 +191,15 @@ modo-locadora/
 
 ### "No DATABASE_URL provided"
 
-The server can start without a database (it uses mock data), but login and admin features require it. Make sure `DATABASE_URL` is set in your `.env`.
+The server can start without a database (it uses mock data), but login, rental, and admin features require it. Make sure `DATABASE_URL` is set in your `.env`.
 
 ### "COOKIE_SECRET not set"
 
-The server falls back to an insecure default in development. For production, always set a strong random value.
+The server falls back to an insecure default in development. For production, always set a strong random value (at least 32 characters).
+
+### "ADMIN_EMAIL not set"
+
+Admin routes (`/admin/*`) will be inaccessible if `ADMIN_EMAIL` is not configured. Set it to the email address of the member who should have admin access.
 
 ### IGDB search returns no results
 
@@ -181,4 +207,17 @@ Verify your Twitch credentials are valid. You can test token retrieval manually:
 
 ```bash
 curl -X POST "https://id.twitch.tv/oauth2/token?client_id=YOUR_ID&client_secret=YOUR_SECRET&grant_type=client_credentials"
+```
+
+### Port 8080 already in use
+
+Kill the existing process:
+
+```bash
+# Linux/Mac
+lsof -ti:8080 | xargs kill -9
+
+# Windows
+netstat -ano | findstr :8080
+taskkill /F /PID <pid>
 ```

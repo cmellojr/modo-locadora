@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Devolu&ccedil;&otilde;es - Modo Locadora</title>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <link href="https://unpkg.com/nes.css@2.3.0/css/nes.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="/static/css/retro.css">
+    <style>
+        body {
+            font-family: 'Press Start 2P', cursive;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .container-wrapper {
+            max-width: 900px;
+            width: 100%;
+        }
+
+        .admin-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .returns-table {
+            width: 100%;
+            font-size: 8px;
+        }
+
+        .returns-table th {
+            font-size: 9px;
+            text-align: left;
+        }
+
+        .returns-table td {
+            vertical-align: middle;
+        }
+
+        .returns-table .cover-thumb {
+            width: 40px;
+            height: auto;
+            image-rendering: pixelated;
+            border: 1px solid #444;
+        }
+
+        .success-balloon {
+            margin-bottom: 1.5rem;
+        }
+
+        .success-balloon .balloon-text {
+            font-size: 10px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 2rem;
+            font-size: 10px;
+            color: #888;
+        }
+
+        .nav-bar {
+            margin-top: 2rem;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container-wrapper">
+        <header class="admin-header">
+            <h2 class="pixel-aligned-title">BALC&Atilde;O DE DEVOLU&Ccedil;&Otilde;ES</h2>
+            <p class="pixel-aligned-subtitle">[DAR BAIXA NAS FITAS]</p>
+        </header>
+
+        {{if .Success}}
+        <div class="success-balloon">
+            <div class="nes-balloon from-left is-dark">
+                <p class="balloon-text">{{.Success}} com sucesso! Fita de volta na prateleira.</p>
+            </div>
+            <i class="nes-bcrikko"></i>
+        </div>
+        {{end}}
+
+        <div class="nes-container with-title is-dark">
+            <p class="title">
+                <span style="font-size: 14px;">FITAS ALUGADAS</span>
+                <span style="font-size: 8px; margin-left: 10px;">{{len .Rentals}} pendentes</span>
+            </p>
+
+            {{if .Rentals}}
+            <div class="nes-table-responsive">
+                <table class="nes-table is-bordered is-dark returns-table">
+                    <thead>
+                        <tr>
+                            <th>Capa</th>
+                            <th>Jogo</th>
+                            <th>S&oacute;cio</th>
+                            <th>Alugado em</th>
+                            <th>A&ccedil;&atilde;o</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {{range .Rentals}}
+                        <tr>
+                            <td>
+                                {{if .CoverURL}}
+                                <img src="{{.CoverURL}}" alt="{{.GameTitle}}" class="cover-thumb">
+                                {{else}}
+                                <span style="font-size: 6px; color: #666;">N/A</span>
+                                {{end}}
+                            </td>
+                            <td>{{.GameTitle}}</td>
+                            <td>{{.MemberName}}</td>
+                            <td>{{.RentedAt}}</td>
+                            <td>
+                                <form action="/admin/return-game" method="POST" style="display: inline;">
+                                    <input type="hidden" name="rental_id" value="{{.RentalID}}">
+                                    <button type="submit" class="nes-btn is-success"
+                                        style="font-size: 8px; padding: 4px 8px;">Devolver</button>
+                                </form>
+                            </td>
+                        </tr>
+                        {{end}}
+                    </tbody>
+                </table>
+            </div>
+            {{else}}
+            <div class="empty-state">
+                <p>Nenhuma fita alugada no momento.</p>
+                <p style="margin-top: 1rem;">Todas as fitas est&atilde;o na prateleira!</p>
+            </div>
+            {{end}}
+        </div>
+
+        <div class="nav-bar">
+            <a href="/admin/inventory" class="nes-btn is-warning" style="font-size: 10px;">ACERVO</a>
+            <a href="/admin/stock" class="nes-btn is-primary" style="font-size: 10px;">ABASTECER</a>
+            <a href="/games" class="nes-btn" style="font-size: 10px;">PRATELEIRA</a>
+        </div>
+
+        <p style="font-size: 8px; text-align: center; margin-top: 40px; color: #555;">&copy; 1991-2026 Modo Locadora -
+            Sob licen&ccedil;a GPLv3. Criado pelo Tio da Locadora.</p>
+    </div>
+</body>
+
+</html>

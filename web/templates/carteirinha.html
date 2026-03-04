@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Carteirinha - Modo Locadora</title>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <link href="https://unpkg.com/nes.css@2.3.0/css/nes.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="/static/css/retro.css">
+    <style>
+        body {
+            font-family: 'Press Start 2P', cursive;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .container-wrapper {
+            max-width: 600px;
+            width: 100%;
+        }
+
+        .card-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .member-card {
+            position: relative;
+        }
+
+        .card-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+            font-size: 8px;
+        }
+
+        .card-row .label {
+            color: #92cc41;
+            min-width: 120px;
+        }
+
+        .card-row .value {
+            color: #fff;
+            text-align: right;
+            flex: 1;
+        }
+
+        .membership-number {
+            text-align: center;
+            font-size: 18px;
+            color: #f7d51d;
+            margin: 1.5rem 0;
+            letter-spacing: 4px;
+        }
+
+        .badge-area {
+            text-align: center;
+            margin-top: 1.5rem;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container-wrapper">
+        <header class="card-header">
+            <h2 class="pixel-aligned-title">CARTEIRINHA DE S&Oacute;CIO</h2>
+            <p class="pixel-aligned-subtitle">[MODO LOCADORA &mdash; DESDE 1991]</p>
+        </header>
+
+        <div class="nes-container with-title is-dark member-card">
+            <p class="title">
+                <span style="font-size: 14px;">{{.Member.ProfileName}}</span>
+            </p>
+
+            <div class="membership-number">
+                {{.Member.MembershipNumber}}
+            </div>
+
+            <div class="card-row">
+                <span class="label">NOME:</span>
+                <span class="value">{{.Member.ProfileName}}</span>
+            </div>
+
+            <div class="card-row">
+                <span class="label">EMAIL:</span>
+                <span class="value">{{.Member.Email}}</span>
+            </div>
+
+            <div class="card-row">
+                <span class="label">CONSOLE FAVORITO:</span>
+                <span class="value">{{if .Member.FavoriteConsole}}{{.Member.FavoriteConsole}}{{else}}&mdash;{{end}}</span>
+            </div>
+
+            <div class="card-row">
+                <span class="label">S&Oacute;CIO DESDE:</span>
+                <span class="value">{{.Member.JoinedAt.Format "02/01/2006"}}</span>
+            </div>
+
+            <div class="badge-area">
+                <span class="nes-badge">
+                    <span class="is-warning">S&oacute;cio de Honra</span>
+                </span>
+            </div>
+        </div>
+
+        <div style="margin-top: 2rem; display: flex; gap: 10px;">
+            <a href="/games" class="nes-btn is-primary" style="font-size: 10px;">PRATELEIRA</a>
+            <a href="/" class="nes-btn" style="font-size: 10px;">BALC&Atilde;O</a>
+        </div>
+
+        <p style="font-size: 8px; text-align: center; margin-top: 40px; color: #555;">&copy; 1991-2026 Modo Locadora -
+            Sob licen&ccedil;a GPLv3. Criado pelo Tio da Locadora.</p>
+    </div>
+</body>
+
+</html>

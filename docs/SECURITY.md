@@ -38,8 +38,14 @@ This project implements the following security practices:
 - Forged or tampered cookies are automatically rejected.
 
 ### Authorization
-- Admin routes (`/admin/*`) are protected by middleware that verifies both authentication and admin role (checked against the `ADMIN_EMAIL` environment variable).
-- Unauthenticated requests to admin routes are redirected to the login page.
+- **Member routes** (`/carteirinha`, `POST /rent`) are protected by `RequireAuth` middleware that verifies a valid signed session cookie.
+- **Admin routes** (`/admin/*`) are protected by `RequireAdmin` middleware that verifies both authentication and admin role (checked against the `ADMIN_EMAIL` environment variable).
+- Unauthenticated requests to protected routes are redirected to the login page.
+- Non-admin users accessing admin routes receive a `403 Forbidden` response.
+
+### Data Integrity
+- Rental and return operations use **database transactions** to ensure atomicity (find copy, update status, create/update rental record).
+- Game purchases atomically create both the game record and a physical copy in a single transaction.
 
 ### Environment & Secrets
 - Sensitive credentials are loaded from environment variables (`.env` file).
@@ -49,6 +55,7 @@ This project implements the following security practices:
 ## Best Practices for Deployment
 
 - **Always set a strong, random `COOKIE_SECRET`** in production (at least 32 characters).
+- **Set `ADMIN_EMAIL`** to restrict admin access to a specific member.
 - **Rotate the Twitch API credentials** if you suspect they have been compromised.
 - **Use HTTPS** in production to protect cookies and form data in transit.
 - **Restrict database access** to the application server only (do not expose PostgreSQL publicly).

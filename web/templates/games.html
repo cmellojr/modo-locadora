@@ -5,9 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Prateleira de Jogos - Modo Locadora</title>
-    <!-- Google Fonts: Press Start 2P -->
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
-    <!-- NES.css CDN -->
     <link href="https://unpkg.com/nes.css@2.3.0/css/nes.min.css" rel="stylesheet" />
     <link rel="stylesheet" href="/static/css/retro.css">
     <style>
@@ -30,6 +28,8 @@
             justify-content: space-between;
             align-items: center;
             margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 10px;
         }
 
         .greeting {
@@ -44,9 +44,18 @@
             padding: 15px;
         }
 
-        .back-link {
-            text-align: left;
-            margin-top: 20px;
+        .renter-tag {
+            font-size: 7px;
+            color: #e74c3c;
+            margin-top: 4px;
+            display: block;
+        }
+
+        .nav-bar {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 2rem;
             margin-bottom: 40px;
         }
     </style>
@@ -56,63 +65,59 @@
     <div class="container-wrapper">
         <div class="header-bar">
             <h2 class="pixel-aligned-title">PRATELEIRA DE JOGOS</h2>
-            <p class="greeting">AUTENTICADO: Sócio {{.MemberName}}</p>
+            <p class="greeting">AUTENTICADO: S&oacute;cio {{.MemberName}}</p>
         </div>
 
-        <!-- PRATELEIRA: LANÇAMENTOS -->
-        <div class="nes-container with-title is-dark">
-            <p class="title">
-                <span style="font-size: 14px;">[LANÇAMENTOS DA SEMANA]</span>
-                <span style="font-size: 8px; margin-left: 10px;">SEÇÃO: NOVIDADES</span>
-            </p>
-            <div class="forum-body">
-                <div class="shelf-container">
-                    {{range .Releases}}
-                    <div class="forum-game-card">
-                        <img src="{{.CoverURL}}" alt="{{.Title}}" class="game-cover-mini">
-                        <p class="game-title">{{.Title}}</p>
-                        <button type="button"
-                            class="nes-btn {{if eq .CopiesAvailable 0}}is-disabled{{else}}is-primary{{end}}"
-                            style="font-size: 10px; padding: 6px; width: 100%; box-sizing: border-box;" {{if eq
-                            .CopiesAvailable 0}}disabled{{end}}>
-                            {{if eq .CopiesAvailable 0}}INDISPONÍVEL{{else}}ALUGAR{{end}}
-                        </button>
-                    </div>
-                    {{end}}
-                </div>
-            </div>
-        </div>
-
-        <!-- PRATELEIRA: CATÁLOGO -->
         <div class="nes-container with-title is-dark">
             <p class="title">
                 <span style="font-size: 14px;">[ACERVO DE CARTUCHOS]</span>
-                <span style="font-size: 8px; margin-left: 10px;">SEÇÃO: CATÁLOGO GERAL</span>
+                <span style="font-size: 8px; margin-left: 10px;">{{len .Games}} fitas</span>
             </p>
             <div class="forum-body">
                 <div class="shelf-container">
-                    {{range .Catalog}}
+                    {{range .Games}}
                     <div class="forum-game-card">
+                        {{if .CoverURL}}
                         <img src="{{.CoverURL}}" alt="{{.Title}}" class="game-cover-mini">
+                        {{end}}
                         <p class="game-title">{{.Title}}</p>
-                        <button type="button"
-                            class="nes-btn {{if eq .CopiesAvailable 0}}is-disabled{{else}}is-primary{{end}}"
-                            style="font-size: 10px; padding: 6px; width: 100%; box-sizing: border-box;" {{if eq
-                            .CopiesAvailable 0}}disabled{{end}}>
-                            {{if eq .CopiesAvailable 0}}INDISPONÍVEL{{else}}ALUGAR{{end}}
-                        </button>
+                        {{if .Available}}
+                            {{if $.IsLoggedIn}}
+                            <form action="/rent" method="POST" style="margin: 0;">
+                                <input type="hidden" name="game_id" value="{{.ID}}">
+                                <button type="submit" class="nes-btn is-success"
+                                    style="font-size: 8px; padding: 4px 6px; width: 100%; box-sizing: border-box;">
+                                    ALUGAR
+                                </button>
+                            </form>
+                            {{else}}
+                            <button type="button" class="nes-btn is-primary"
+                                style="font-size: 8px; padding: 4px 6px; width: 100%; box-sizing: border-box;" disabled>
+                                DISPON&Iacute;VEL
+                            </button>
+                            {{end}}
+                        {{else}}
+                            <button type="button" class="nes-btn is-disabled"
+                                style="font-size: 7px; padding: 4px 6px; width: 100%; box-sizing: border-box;" disabled>
+                                ALUGADO
+                            </button>
+                            <span class="renter-tag">Com o S&oacute;cio: {{.RenterName}}</span>
+                        {{end}}
                     </div>
                     {{end}}
                 </div>
             </div>
         </div>
 
-        <div class="back-link">
-            <a href="/" class="nes-btn is-primary" style="font-size: 10px;">VOLTAR AO BALCÃO</a>
+        <div class="nav-bar">
+            {{if .IsLoggedIn}}
+            <a href="/carteirinha" class="nes-btn is-warning" style="font-size: 10px;">CARTEIRINHA</a>
+            {{end}}
+            <a href="/" class="nes-btn is-primary" style="font-size: 10px;">VOLTAR AO BALC&Atilde;O</a>
         </div>
 
-        <p style="font-size: 8px; text-align: center; margin-top: 20px; color: #555;">© 1991-2026 Modo Locadora - Sob
-            licença GPLv3. Criado pelo Tio da Locadora.</p>
+        <p style="font-size: 8px; text-align: center; margin-top: 20px; color: #555;">&copy; 1991-2026 Modo Locadora -
+            Sob licen&ccedil;a GPLv3. Criado pelo Tio da Locadora.</p>
     </div>
 </body>
 

@@ -64,6 +64,26 @@ func main() {
 		log.Fatalf("failed to parse admin stock template: %v", err)
 	}
 
+	adminInventoryTmpl, err := template.ParseFiles("web/templates/admin_inventory.html")
+	if err != nil {
+		log.Fatalf("failed to parse admin inventory template: %v", err)
+	}
+
+	adminEditTmpl, err := template.ParseFiles("web/templates/admin_edit.html")
+	if err != nil {
+		log.Fatalf("failed to parse admin edit template: %v", err)
+	}
+
+	carteirinhaTmpl, err := template.ParseFiles("web/templates/carteirinha.html")
+	if err != nil {
+		log.Fatalf("failed to parse carteirinha template: %v", err)
+	}
+
+	adminReturnsTmpl, err := template.ParseFiles("web/templates/admin_returns.html")
+	if err != nil {
+		log.Fatalf("failed to parse admin returns template: %v", err)
+	}
+
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /{$}", func(w http.ResponseWriter, r *http.Request) {
 		if err := indexTmpl.Execute(w, nil); err != nil {
@@ -81,6 +101,23 @@ func main() {
 		h.AdminStock(w, r, adminStockTmpl)
 	}))
 	mux.HandleFunc("POST /admin/purchase", middleware.RequireAdmin(cookieSecret, adminEmail, store, h.PurchaseGame))
+	mux.HandleFunc("GET /admin/inventory", middleware.RequireAdmin(cookieSecret, adminEmail, store, func(w http.ResponseWriter, r *http.Request) {
+		h.AdminInventory(w, r, adminInventoryTmpl)
+	}))
+	mux.HandleFunc("GET /admin/edit/{id}", middleware.RequireAdmin(cookieSecret, adminEmail, store, func(w http.ResponseWriter, r *http.Request) {
+		h.EditGame(w, r, adminEditTmpl)
+	}))
+	mux.HandleFunc("POST /admin/update-game", middleware.RequireAdmin(cookieSecret, adminEmail, store, h.UpdateGame))
+	mux.HandleFunc("GET /admin/returns", middleware.RequireAdmin(cookieSecret, adminEmail, store, func(w http.ResponseWriter, r *http.Request) {
+		h.AdminReturns(w, r, adminReturnsTmpl)
+	}))
+	mux.HandleFunc("POST /admin/return-game", middleware.RequireAdmin(cookieSecret, adminEmail, store, h.ReturnGame))
+
+	// Member routes — protected by RequireAuth middleware.
+	mux.HandleFunc("GET /carteirinha", middleware.RequireAuth(cookieSecret, func(w http.ResponseWriter, r *http.Request) {
+		h.Carteirinha(w, r, carteirinhaTmpl)
+	}))
+	mux.HandleFunc("POST /rent", middleware.RequireAuth(cookieSecret, h.RentGame))
 
 	// Serve static files from web/static
 	fileServer := http.FileServer(http.Dir("web/static"))

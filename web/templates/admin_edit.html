@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Editar Jogo - Modo Locadora</title>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <link href="https://unpkg.com/nes.css@2.3.0/css/nes.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="/static/css/retro.css">
+    <style>
+        body {
+            font-family: 'Press Start 2P', cursive;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .container-wrapper {
+            max-width: 800px;
+            width: 100%;
+        }
+
+        .admin-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .edit-panel .cover-preview {
+            float: left;
+            margin-right: 15px;
+            margin-bottom: 10px;
+        }
+
+        .edit-panel .cover-preview img {
+            width: 132px;
+            image-rendering: pixelated;
+            border: 2px solid #444;
+        }
+
+        .edit-panel .nes-textarea {
+            font-size: 8px !important;
+            width: 100%;
+        }
+
+        .field-row {
+            margin-bottom: 1rem;
+        }
+
+        .no-cover {
+            width: 132px;
+            height: 180px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #222;
+            border: 2px solid #444;
+            color: #666;
+            font-size: 7px;
+        }
+
+        .meta-info {
+            font-size: 7px;
+            color: #888;
+            margin-bottom: 1rem;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container-wrapper">
+        <header class="admin-header">
+            <h2 class="pixel-aligned-title">EDITAR FICHA DO JOGO</h2>
+            <p class="pixel-aligned-subtitle">[CURADORIA DO TIO DA LOCADORA]</p>
+        </header>
+
+        <div class="edit-panel">
+            <div class="nes-container with-title is-dark">
+                <p class="title">
+                    <span style="font-size: 14px;">FICHA DO JOGO</span>
+                    <span style="font-size: 8px; margin-left: 10px;">IGDB #{{.Game.IgdbID}}</span>
+                </p>
+                <div class="forum-body" style="overflow: hidden;">
+                    <div class="cover-preview">
+                        {{if .Game.CoverURL}}
+                        <img src="{{.Game.CoverURL}}" alt="{{.Game.Title}}">
+                        {{else}}
+                        <div class="no-cover">SEM CAPA</div>
+                        {{end}}
+                    </div>
+
+                    <form action="/admin/update-game" method="POST">
+                        <input type="hidden" name="id" value="{{.Game.ID}}">
+                        <input type="hidden" name="cover_url" value="{{.Game.CoverURL}}">
+
+                        <div class="field-row nes-field">
+                            <label for="title">T&iacute;tulo</label>
+                            <input type="text" id="title" name="title" class="nes-input"
+                                value="{{.Game.Title}}">
+                        </div>
+
+                        <div class="field-row nes-field">
+                            <label for="platform">Plataforma</label>
+                            <input type="text" id="platform" name="platform" class="nes-input"
+                                value="{{.Game.Platform}}">
+                        </div>
+
+                        <div class="field-row nes-field">
+                            <label for="magazine">Revista / Edi&ccedil;&atilde;o</label>
+                            <input type="text" id="magazine" name="magazine" class="nes-input"
+                                value="{{.Game.SourceMagazine}}"
+                                placeholder="Ex: A&ccedil;&atilde;o Games n&ordm; 1">
+                        </div>
+
+                        <div class="field-row nes-field">
+                            <label for="summary">Resumo (PT-BR) &mdash; Toque do Tio</label>
+                            <textarea id="summary" name="summary" class="nes-textarea"
+                                rows="6" placeholder="Traduza e adapte o resumo com sua nostalgia...">{{.Game.Summary}}</textarea>
+                        </div>
+
+                        <div class="meta-info" style="clear: both;">
+                            Adquirido em: {{.Game.AcquiredAt.Format "02/01/2006"}}
+                        </div>
+
+                        <div style="text-align: right; clear: both;">
+                            <a href="/admin/inventory" class="nes-btn"
+                                style="font-size: 10px;">CANCELAR</a>
+                            <button type="submit" class="nes-btn is-success"
+                                style="font-size: 10px;">RE-GRAVAR FITA</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <p style="font-size: 8px; text-align: center; margin-top: 40px; color: #555;">&copy; 1991-2026 Modo Locadora -
+            Sob licen&ccedil;a GPLv3. Criado pelo Tio da Locadora.</p>
+    </div>
+</body>
+
+</html>

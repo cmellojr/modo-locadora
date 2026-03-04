@@ -59,18 +59,26 @@ Feature requests are welcome. Open an issue with the `enhancement` label and des
 ### Project Structure
 
 ```
-cmd/server/         → Application entrypoint
+cmd/server/         -> Application entrypoint
 internal/
-  auth/             → Authentication utilities (cookie signing)
-  config/           → Environment configuration loader
-  database/         → Store interface and PostgreSQL implementation
-  handlers/         → HTTP request handlers
-  igdb/             → IGDB API client
-  middleware/        → HTTP middleware (auth, admin)
-  models/           → Domain entities (Member, Game, GameCopy, Rental)
+  auth/             -> Authentication utilities (cookie signing)
+  config/           -> Environment configuration loader
+  database/         -> Store interface and PostgreSQL implementation
+    migrations/     -> SQL migration files (001-003)
+  handlers/         -> HTTP request handlers
+  igdb/             -> IGDB API client
+  middleware/        -> HTTP middleware (auth, admin)
+  models/           -> Domain entities (Member, Game, GameCopy, Rental)
 web/
-  static/css/       → Stylesheets
-  templates/        → Go HTML templates (PT-BR)
+  static/css/       -> Stylesheets
+  templates/        -> Go HTML templates (PT-BR)
+    index.html          Login page (Balcao)
+    games.html          Game shelf with rental status
+    carteirinha.html    Membership card
+    admin_stock.html    IGDB search & game purchase
+    admin_inventory.html Catalog listing with edit buttons
+    admin_edit.html     Game edit form
+    admin_returns.html  Active rentals check-in
 ```
 
 ### Commit Messages
@@ -88,8 +96,9 @@ refactor: extract cookie signing to auth package
 ### Database Migrations
 
 - Place new migrations in `internal/database/migrations/`.
-- Name them with an incremental prefix: `003_description.sql`, `004_description.sql`.
+- Name them with an incremental prefix: `004_description.sql`, `005_description.sql`.
 - Migrations are applied manually — document what each one does.
+- Current migrations: `001` (initial schema), `002` (games table update), `003` (membership and rental support).
 
 ## Development Setup
 
