@@ -1,0 +1,27 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(go get:*)",
+      "Bash(go build:*)",
+      "Bash(go vet:*)",
+      "Bash(git pull:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(wsl -e bash -c \"hostname -I | awk ''{print $1}''\")",
+      "Bash(wsl:*)",
+      "Bash(taskkill:*)",
+      "Bash(netstat:*)",
+      "Bash(go run:*)",
+      "Bash(curl:*)",
+      "Bash(python3:*)",
+      "Bash(git checkout:*)",
+      "Bash(gh pr create:*)",
+      "Bash(where:*)",
+      "Bash(\"/c/Program Files/GitHub:*)",
+      "Bash(git merge:*)",
+      "Bash(/tmp/modo-locadora)",
+      "WebFetch(domain:jules.google)"
+    ]
+  }
+}
