@@ -21,7 +21,9 @@
       "Bash(\"/c/Program Files/GitHub:*)",
       "Bash(git merge:*)",
       "Bash(/tmp/modo-locadora)",
-      "WebFetch(domain:jules.google)"
+      "WebFetch(domain:jules.google)",
+      "Bash(git stash:*)",
+      "Bash(git stash pop:*)"
     ]
   }
 }

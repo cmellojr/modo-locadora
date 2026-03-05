@@ -8,78 +8,73 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- **Membership system:** Members now receive a sequential membership number in `1991-XXX` format upon registration.
-- **Carteirinha page (`GET /carteirinha`):** Digital membership card showing member number, name, email, favorite console, and join date. Protected by `RequireAuth`.
-- **Rental system:** Members can rent available games directly from the shelf via `POST /rent`. Games are marked as rented with the member's name displayed.
-- **Returns dashboard (`GET /admin/returns`):** Admin page listing all active rentals with a [Devolver] button for each. Protected by `RequireAdmin`.
-- **Return game flow (`POST /admin/return-game`):** Processes a game return, marking the copy as available again.
-- **Admin inventory page (`GET /admin/inventory`):** Full catalog listing in a NES-style table with [Editar] buttons for each game. Protected by `RequireAdmin`.
-- **Game edit page (`GET /admin/edit/{id}`):** Form to edit game title, platform, summary, and source magazine. Useful for translating IGDB data to Portuguese.
-- **Game update flow (`POST /admin/update-game`):** Saves edited game fields to the database.
-- **Migration `003_membership_and_rental_support.sql`:** Adds `membership_number`, `address`, and `phone` columns to members; creates `membership_seq` sequence; backfills existing members with membership numbers; creates `game_copies` for existing games.
-- `NextMembershipNumber`, `ListGamesWithAvailability`, `RentGame`, `ReturnGame`, and `ListActiveRentals` methods to the `Store` interface.
-- `GameAvailability` and `ActiveRental` structs for rental display data.
-- `UpdateGame` and `GetGameByID` methods to the `Store` interface.
-- IGDB search now returns platform data (`platforms.name`, `platforms.abbreviation`).
-- IGDB search limit increased from 5 to 10 results.
+- **Password notebook** (`Caderno de Passwords`): Members can save game codes and passwords on their membership card. Migration `004_password_notes.sql`.
+- **NES.css component expansion**: `nes-badge` for status indicators, `nes-progress` for copy availability bars, `nes-list` for statute rules, `nes-avatar` on membership card, `nes-dialog` for acquisition confirmation, `nes-text` for semantic colored text.
+- **CLAUDE.md**: AI agent guidance file for Claude Code.
+- **AGENTS.md**: AI agent guidance file following Jules/Google specification.
+
+### Changed
+- **Unified success notifications**: All pages now use `nes-balloon` + `nes-bcrikko` pattern instead of mixed approaches.
+- **Font sizes increased globally**: Body 12px, labels 12px, titles 18px, buttons 12px for better readability.
+- **Container width standardized**: All pages use 960px max-width via `.container-wrapper` class.
+- **Cover thumbnails enlarged**: Inventory 90px, returns 70px, shelf 120x155px, edit 160px.
+- **Game status indicators**: Replaced disabled buttons with semantic `nes-badge` elements (`is-primary` for available, `is-error` for rented).
+- **Platform display**: Uses native `nes-badge is-primary` instead of custom styled spans.
+- **Inline styles consolidated**: ~15+ repeated inline styles moved to reusable CSS classes in `retro.css` (`.btn-nav`, `.btn-sm`, `.title-main`, `.title-sub`, `.footer-copyright`, `.nav-bar`, `.form-actions`, `.empty-state`, `.success-balloon`).
+- **Landing page**: Statute rules use `nes-list is-disc`, columns bottom-aligned with flexbox.
+- **Membership card**: Added `nes-avatar`, increased to 750px max-width.
+- **Documentation rewrite**: README.md rewritten with nostalgic tone (PT-BR). All docs/ files revised to eliminate redundancy.
+
+## [0.3.0] - 2026-03-04
+
+### Added
+- **Membership system**: Sequential membership numbers in `1991-XXX` format.
+- **Carteirinha page** (`GET /carteirinha`): Digital membership card with member number, name, email, favorite console, and join date.
+- **Rental system**: Members rent games from the shelf via `POST /rent`. Rented games show the member's name.
+- **Returns dashboard** (`GET /admin/returns`): Admin page listing active rentals with return buttons.
+- **Admin inventory** (`GET /admin/inventory`): Full catalog table with edit links.
+- **Game edit** (`GET /admin/edit/{id}`): Form for editing game details (title, platform, summary, magazine).
+- **Migration `003`**: Membership fields, `membership_seq` sequence, auto-created copies for existing games.
 - `RequireAuth` middleware for member-only routes.
-- `AddGame` now atomically creates a `game_copy` record in the same transaction.
-- Navigation links between admin pages (ACERVO, ABASTECER, PRATELEIRA, DEVOLVER).
-- `internal/auth` package with HMAC-SHA256 signed cookies for session management.
-- `internal/middleware` package with `RequireAuth` and `RequireAdmin` middleware.
-- Password hashing with bcrypt (`golang.org/x/crypto/bcrypt`) on member registration.
-- Real login validation: profile name + password verified against the database.
-- `GetMemberByID` and `GetMemberByProfileName` methods to the `Store` interface.
-- `COOKIE_SECRET` and `ADMIN_EMAIL` environment variables for security configuration.
-- `.env.example` file with placeholder values for all required environment variables.
+- `internal/auth` package with HMAC-SHA256 signed cookies.
+- `internal/middleware` package with `RequireAuth` and `RequireAdmin`.
+- bcrypt password hashing on registration.
+- `.env.example` with placeholder values.
 - `docs/` directory with project documentation.
 
 ### Changed
-- Games shelf (`/games`) now displays real-time availability: [ALUGAR] for available games (logged in), [DISPONIVEL] for available games (not logged in), and [ALUGADO - Com o Socio: Nome] for rented games.
-- Games shelf uses a single unified catalog view instead of separate Releases/Catalog sections.
-- `POST /admin/purchase` now redirects to the edit page (`/admin/edit/{id}`) instead of back to stock, allowing immediate translation of IGDB data.
-- Login form now requires both "Nome do Socio" (profile name) and password.
-- Session cookie now stores a signed member UUID instead of a plain-text name.
-- Session cookie now includes `MaxAge`, `SameSite=Strict`, and `HttpOnly` flags.
-- `NewHandler` constructor now accepts a `cookieSecret` parameter.
-- `CreateMember` now auto-assigns a membership number and response no longer exposes the password hash.
-
-### Security
-- **Passwords are now hashed with bcrypt** before being stored in the database.
-- **Cookies are now HMAC-signed** — forged cookies are rejected automatically.
-- **Admin routes (`/admin/*`) are protected** by `RequireAdmin` middleware that checks authentication and verifies the member's email against `ADMIN_EMAIL`.
-- **Member routes (`/carteirinha`, `/rent`) are protected** by `RequireAuth` middleware.
+- Game shelf displays real-time availability with [ALUGAR], [DISPONIVEL], and [ALUGADO] states.
+- `POST /admin/purchase` redirects to edit page for immediate translation.
+- Login requires profile name + password (was name-only).
+- Session cookie stores signed UUID instead of plain-text name.
+- Cookie includes `MaxAge`, `SameSite=Strict`, `HttpOnly` flags.
 
 ## [0.2.0] - 2026-03-03
 
 ### Added
-- Docker Compose configuration for PostgreSQL 15 (Alpine).
-- Admin stock management page (`/admin/stock`) with IGDB search integration.
-- Purchase game flow (`POST /admin/purchase`) to add games to the catalog.
-- `GET /search` endpoint returning raw JSON from the IGDB API.
-- `GET /games/{id}` endpoint returning a single game as JSON.
-- `POST /members` endpoint for member registration (JSON API).
-- Retro NES-style CSS theme (`web/static/css/retro.css`) inspired by forum aesthetics.
-- `DATABASE_URL` environment variable support for PostgreSQL connection.
+- Docker Compose configuration for PostgreSQL 15.
+- Admin stock page (`/admin/stock`) with IGDB search.
+- Purchase game flow (`POST /admin/purchase`).
+- `GET /search` and `GET /games/{id}` JSON endpoints.
+- `POST /members` registration endpoint.
+- NES-style CSS theme (`retro.css`).
+- `DATABASE_URL` environment variable support.
 
 ### Changed
-- Migrated UI to "Nes Archive Forum V3" visual style with dark navy background.
-- Games shelf uses a responsive CSS grid layout.
-- Games table schema extended with `cover_url`, `source_magazine`, and `acquired_at` columns (migration `002`).
+- UI migrated to dark navy NES theme.
+- Games shelf uses responsive CSS grid.
+- Games table extended with `cover_url`, `source_magazine`, `acquired_at` (migration `002`).
 
 ## [0.1.0] - 2026-03-03
 
 ### Added
-- Initial Go project structure (`cmd/server`, `internal/` packages).
-- Core data models: `Member`, `Game`, `GameCopy`, `Rental`.
-- PostgreSQL database layer with `pgx/v5` connection pool.
-- `Store` interface for decoupled data access.
-- Database migration `001_initial_schema.sql` with `members`, `games`, `game_copies`, and `rentals` tables.
-- IGDB API client (`internal/igdb`) with Twitch OAuth2 token retrieval and game search.
-- Environment configuration loader using `godotenv`.
-- Landing page (Balcao) with login form.
-- Games shelf page (`/games`) with mock data fallback.
-- Server-Side Rendering with `html/template` and NES.css + Press Start 2P font.
+- Initial Go project structure.
+- Core models: `Member`, `Game`, `GameCopy`, `Rental`.
+- PostgreSQL layer with `pgx/v5` and `Store` interface.
+- Migration `001_initial_schema.sql`.
+- IGDB API client with Twitch OAuth2.
+- Environment config loader (godotenv).
+- Landing page and games shelf with SSR.
 - Graceful shutdown with OS signal handling.
-- `ARCHITECTURE.md` defining the project's vision, tech stack, and design principles.
+- `ARCHITECTURE.md`.
 - GPL v3 license.

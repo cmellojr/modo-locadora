@@ -6,56 +6,58 @@
 |---------|--------------------|
 | main    | :white_check_mark: |
 
-Only the latest version on the `main` branch receives security updates.
+Only the latest version on `main` receives security updates.
 
 ## Reporting a Vulnerability
 
-**Please do not open a public issue for security vulnerabilities.**
+**Do not open a public issue for security vulnerabilities.**
 
-Instead, report them privately by emailing the project maintainer or using [GitHub's private vulnerability reporting](https://docs.github.com/en/code-security/security-advisories/guidance-on-reporting-and-writing-information-about-vulnerabilities/privately-reporting-a-security-vulnerability) feature on this repository.
+Report privately via email to the project maintainer or use [GitHub's private vulnerability reporting](https://docs.github.com/en/code-security/security-advisories/guidance-on-reporting-and-writing-information-about-vulnerabilities/privately-reporting-a-security-vulnerability).
 
-When reporting, please include:
+Include: description, steps to reproduce, potential impact, and any suggested fix.
 
-- A description of the vulnerability.
-- Steps to reproduce or a proof of concept.
-- The potential impact.
-- Any suggested fix (optional but appreciated).
+## Authentication
 
-You should receive an acknowledgment within **48 hours**. We will work with you to understand the issue and coordinate a fix before any public disclosure.
+- Passwords are hashed with **bcrypt** (default cost) before storage. Never logged or exposed in API responses.
+- Login requires profile name + password, validated against the database.
 
-## Security Measures
+## Session Management
 
-This project implements the following security practices:
+Sessions use a signed cookie (`session_member`):
 
-### Authentication
-- Passwords are hashed using **bcrypt** with the default cost factor before storage.
-- Login requires both profile name and password, validated against the database.
-- Passwords are never logged or exposed in API responses.
+| Property | Value |
+|----------|-------|
+| Format | `{member_uuid}.{hmac_sha256_hex}` |
+| HttpOnly | `true` |
+| SameSite | `Strict` |
+| MaxAge | 604800 (7 days) |
+| Path | `/` |
 
-### Session Management
-- Session cookies are **HMAC-SHA256 signed** using a server-side secret (`COOKIE_SECRET`).
-- Cookies are set with `HttpOnly`, `SameSite=Strict`, and a `MaxAge` of 7 days.
-- Forged or tampered cookies are automatically rejected.
+The cookie is signed using HMAC-SHA256 with the `COOKIE_SECRET` environment variable. Forged or tampered cookies are rejected.
 
-### Authorization
-- **Member routes** (`/carteirinha`, `POST /rent`) are protected by `RequireAuth` middleware that verifies a valid signed session cookie.
-- **Admin routes** (`/admin/*`) are protected by `RequireAdmin` middleware that verifies both authentication and admin role (checked against the `ADMIN_EMAIL` environment variable).
-- Unauthenticated requests to protected routes are redirected to the login page.
-- Non-admin users accessing admin routes receive a `403 Forbidden` response.
+## Authorization
 
-### Data Integrity
-- Rental and return operations use **database transactions** to ensure atomicity (find copy, update status, create/update rental record).
-- Game purchases atomically create both the game record and a physical copy in a single transaction.
+| Scope | Middleware | Check |
+|-------|-----------|-------|
+| Member routes (`/carteirinha`, `/rent`) | `RequireAuth` | Valid signed cookie |
+| Admin routes (`/admin/*`) | `RequireAdmin` | Valid cookie + email matches `ADMIN_EMAIL` |
 
-### Environment & Secrets
-- Sensitive credentials are loaded from environment variables (`.env` file).
-- The `.env` file is listed in `.gitignore` and is never committed to version control.
-- A `.env.example` file with placeholder values is provided for reference.
+Unauthenticated requests redirect to `/`. Non-admin users receive `403 Forbidden`.
 
-## Best Practices for Deployment
+## Data Integrity
 
-- **Always set a strong, random `COOKIE_SECRET`** in production (at least 32 characters).
-- **Set `ADMIN_EMAIL`** to restrict admin access to a specific member.
-- **Rotate the Twitch API credentials** if you suspect they have been compromised.
-- **Use HTTPS** in production to protect cookies and form data in transit.
-- **Restrict database access** to the application server only (do not expose PostgreSQL publicly).
+- Rental and return operations use **database transactions** for atomicity (find copy, update status, create/update rental record).
+- Game purchases atomically create both the game and a copy in a single transaction.
+
+## Environment & Secrets
+
+- Credentials loaded from `.env` (never committed — listed in `.gitignore`).
+- `.env.example` provided with placeholder values.
+
+## Deployment Checklist
+
+- Set a strong, random `COOKIE_SECRET` (minimum 32 characters).
+- Set `ADMIN_EMAIL` to restrict admin access.
+- Use **HTTPS** in production to protect cookies and form data.
+- Restrict database access to the application server only.
+- Rotate Twitch API credentials if compromised.

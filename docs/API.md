@@ -1,86 +1,54 @@
 # API Reference
 
-Modo Locadora exposes a mix of server-rendered pages (HTML) and JSON API endpoints.
+Modo Locadora exposes server-rendered pages (HTML) and JSON API endpoints. For authentication and security details, see [SECURITY.md](SECURITY.md).
 
 ## Pages (SSR)
 
-These routes return HTML rendered via Go's `html/template`.
+All page routes return HTML rendered via Go's `html/template`.
 
 ### `GET /`
 
-**Landing page (Balcao).** Displays the login form with profile name and password fields.
-
-- No authentication required.
+Landing page (Balcao) with login form. No authentication required.
 
 ### `GET /games`
 
-**Games shelf (Prateleira).** Displays the catalog with real-time availability status.
-
-- Shows the authenticated member's name if logged in, otherwise "Visitante".
-- Available games show [ALUGAR] button (logged in) or [DISPONIVEL] (not logged in).
-- Rented games show [ALUGADO] with "Com o Socio: Nome" tag.
-- Falls back to mock data if the database is unavailable or empty.
-- Includes link to `/carteirinha` for logged-in members.
+Game shelf (Prateleira) with real-time availability. Shows [ALUGAR] button for logged-in members, [DISPONIVEL] badge otherwise. Rented games display the renter's name.
 
 ### `GET /carteirinha`
 
-**Membership card (Carteirinha).** Displays the member's digital membership card.
-
-- **Requires authentication** (`RequireAuth` middleware).
-- Shows: membership number (`1991-XXX`), profile name, email, favorite console, join date.
-- Redirects to `/` if not authenticated.
+Digital membership card. Requires authentication. Shows membership number, profile, and password notebook.
 
 ### `GET /admin/stock`
 
-**Admin stock management page.** Search the IGDB database and add games to the catalog.
+IGDB search and game acquisition page. Requires admin role.
 
-- **Requires authentication** and **admin role** (`ADMIN_EMAIL`).
-- Accepts optional query parameters:
-  - `q` — Search term for IGDB.
-  - `magazine` — Magazine/edition label to associate with the purchase.
-  - `selected` — IGDB game ID to show confirmation form.
+Query parameters: `q` (search term), `magazine` (edition label), `selected` (IGDB game ID for confirmation).
 
 ### `GET /admin/inventory`
 
-**Admin catalog listing.** Full table of all games in the database with edit buttons.
+Full catalog table with edit buttons. Requires admin role.
 
-- **Requires authentication** and **admin role**.
-- Shows: cover, title, platform, magazine for each game.
-- Each row has an [Editar] link to `/admin/edit/{id}`.
-- Accepts optional query parameter:
-  - `success` — Game title to show in success balloon after an edit.
+Query parameter: `success` (game title for success notification).
 
 ### `GET /admin/edit/{id}`
 
-**Admin game edit form.** Pre-filled form for editing a game's details.
-
-- **Requires authentication** and **admin role**.
-- Editable fields: title, platform, source magazine, summary, cover URL.
-- Path parameter: `id` (UUID of the game).
+Game edit form. Requires admin role. Path parameter: `id` (game UUID).
 
 ### `GET /admin/returns`
 
-**Admin returns dashboard (Balcao de Devolucoes).** Lists all active (unreturned) rentals.
+Active rentals dashboard with return buttons. Requires admin role.
 
-- **Requires authentication** and **admin role**.
-- Shows: cover thumbnail, game title, member name, rental date for each active rental.
-- Each row has a [Devolver] button (POST form).
-- Accepts optional query parameter:
-  - `success` — Message shown in success balloon after a return.
+Query parameter: `success` (notification message after return).
 
 ---
 
 ## JSON API
 
-These routes return `application/json` responses.
-
 ### `POST /members`
 
-**Register a new member.**
+Register a new member. No authentication required.
 
-- **Auth:** None required.
-
-**Request body:**
+**Request:**
 
 ```json
 {
@@ -101,86 +69,73 @@ These routes return `application/json` responses.
   "PasswordHash": "",
   "FavoriteConsole": "SNES",
   "MembershipNumber": "1991-001",
-  "Address": "",
-  "Phone": "",
   "JoinedAt": "2026-03-03T12:00:00Z"
 }
 ```
 
-> Note: `PasswordHash` is always empty in the response for security. `MembershipNumber` is auto-assigned sequentially.
+`PasswordHash` is always empty in responses. `MembershipNumber` is auto-assigned.
 
-**Errors:**
-
-| Status | Reason                        |
-|--------|-------------------------------|
-| 400    | Missing or invalid JSON body  |
-| 400    | Password is empty             |
-| 503    | Database not configured       |
+| Status | Reason |
+|--------|--------|
+| 400 | Missing or invalid JSON body |
+| 400 | Empty password |
+| 503 | Database not configured |
 
 ---
 
 ### `POST /login`
 
-**Authenticate a member and set a session cookie.**
+Authenticate and set session cookie. Content-Type: `application/x-www-form-urlencoded`.
 
-- **Content-Type:** `application/x-www-form-urlencoded`
+| Field | Required | Description |
+|-------|----------|-------------|
+| `profile_name` | Yes | Member profile name |
+| `password` | Yes | Member password |
 
-**Form fields:**
+**Success:** 303 redirect to `/games`, sets `session_member` cookie.
 
-| Field          | Type   | Required | Description         |
-|----------------|--------|----------|---------------------|
-| `profile_name` | string | Yes      | Member profile name |
-| `password`     | string | Yes      | Member password     |
-
-**Success:** Redirects to `/games` with a `303 See Other` and sets the `session_member` cookie (HMAC-signed, HttpOnly, SameSite=Strict, 7-day expiry).
-
-**Errors:**
-
-| Status | Reason                          |
-|--------|---------------------------------|
-| 400    | Missing profile name or password|
-| 401    | Invalid credentials             |
-| 503    | Database not configured         |
+| Status | Reason |
+|--------|--------|
+| 400 | Missing fields |
+| 401 | Invalid credentials |
+| 503 | Database not configured |
 
 ---
 
 ### `POST /rent`
 
-**Rent a game.**
+Rent a game. Requires authentication. Content-Type: `application/x-www-form-urlencoded`.
 
-- **Auth:** Requires authentication (`RequireAuth` middleware).
-- **Content-Type:** `application/x-www-form-urlencoded`
+| Field | Required | Description |
+|-------|----------|-------------|
+| `game_id` | Yes | Game UUID |
 
-**Form fields:**
+**Success:** 303 redirect to `/games`.
 
-| Field     | Type   | Required | Description         |
-|-----------|--------|----------|---------------------|
-| `game_id` | UUID   | Yes      | The game's unique ID|
+| Status | Reason |
+|--------|--------|
+| 303 | Not authenticated (redirect to `/`) |
+| 400 | Invalid game ID |
+| 500 | No available copy or DB error |
+| 503 | Database not configured |
 
-**Success:** Redirects to `/games` with `303 See Other`. The game will now show as rented by the member.
+---
 
-**Errors:**
+### `POST /carteirinha/notes`
 
-| Status | Reason                          |
-|--------|---------------------------------|
-| 303    | Not authenticated (redirect to `/`) |
-| 400    | Invalid game ID                 |
-| 500    | No available copy or DB error   |
-| 503    | Database not configured         |
+Save password notebook. Requires authentication. Content-Type: `application/x-www-form-urlencoded`.
+
+| Field | Required | Description |
+|-------|----------|-------------|
+| `notes` | Yes | Password notes text |
+
+**Success:** 303 redirect to `/carteirinha`.
 
 ---
 
 ### `GET /games/{id}`
 
-**Retrieve a single game by UUID.**
-
-- **Auth:** None required.
-
-**Path parameters:**
-
-| Parameter | Type | Description            |
-|-----------|------|------------------------|
-| `id`      | UUID | The game's unique ID   |
+Retrieve a single game by UUID. No authentication required.
 
 **Response** `200 OK`:
 
@@ -197,28 +152,17 @@ These routes return `application/json` responses.
 }
 ```
 
-**Errors:**
-
-| Status | Reason               |
-|--------|----------------------|
-| 400    | Invalid UUID format  |
-| 404    | Game not found       |
-| 503    | Database not configured |
+| Status | Reason |
+|--------|--------|
+| 400 | Invalid UUID |
+| 404 | Not found |
+| 503 | Database not configured |
 
 ---
 
 ### `GET /search?q={query}`
 
-**Search games on the IGDB database.**
-
-- **Auth:** None required.
-- Returns raw IGDB results as JSON (up to 10 results).
-
-**Query parameters:**
-
-| Parameter | Type   | Required | Description          |
-|-----------|--------|----------|----------------------|
-| `q`       | string | Yes      | Search term          |
+Search IGDB database. No authentication required. Returns up to 10 results.
 
 **Response** `200 OK`:
 
@@ -228,132 +172,59 @@ These routes return `application/json` responses.
     "id": 1234,
     "name": "Chrono Trigger",
     "summary": "An epic RPG...",
-    "first_release_date": 795830400,
-    "cover": {
-      "id": 5678,
-      "url": "//images.igdb.com/igdb/image/upload/t_thumb/co1v9x.jpg"
-    },
-    "platforms": [
-      {"id": 19, "name": "Super Nintendo Entertainment System", "abbreviation": "SNES"}
-    ]
+    "cover": { "id": 5678, "url": "//images.igdb.com/..." },
+    "platforms": [{ "id": 19, "name": "Super Nintendo", "abbreviation": "SNES" }]
   }
 ]
 ```
 
-**Errors:**
-
-| Status | Reason                            |
-|--------|-----------------------------------|
-| 400    | Missing `q` parameter             |
-| 503    | IGDB credentials not configured   |
+| Status | Reason |
+|--------|--------|
+| 400 | Missing `q` parameter |
+| 503 | IGDB credentials not configured |
 
 ---
 
 ### `POST /admin/purchase`
 
-**Add a game from IGDB to the local catalog.**
+Add a game from IGDB to the catalog. Requires admin role. A `game_copy` is created atomically.
 
-- **Auth:** Requires admin role.
-- **Content-Type:** `application/x-www-form-urlencoded`
-- A `game_copy` record is automatically created in the same transaction.
+| Field | Required | Description |
+|-------|----------|-------------|
+| `title` | Yes | Game title |
+| `igdb_id` | Yes | IGDB game ID |
+| `platform` | No | Platform name |
+| `summary` | No | Game description |
+| `cover_url` | No | Cover image URL |
+| `magazine` | No | Source magazine label |
 
-**Form fields:**
-
-| Field      | Type   | Required | Description                    |
-|------------|--------|----------|--------------------------------|
-| `title`    | string | Yes      | Game title                     |
-| `igdb_id`  | string | Yes      | IGDB game ID                   |
-| `platform` | string | No       | Platform name (default: "N/A") |
-| `summary`  | string | No       | Game description               |
-| `cover_url`| string | No       | Cover image URL from IGDB      |
-| `magazine` | string | No       | Source magazine/edition label   |
-
-**Success:** Redirects to `/admin/edit/{id}` with `303 See Other` for immediate editing.
-
-**Errors:**
-
-| Status | Reason                 |
-|--------|------------------------|
-| 403    | Not an admin           |
-| 503    | Database not configured|
+**Success:** 303 redirect to `/admin/edit/{id}`.
 
 ---
 
 ### `POST /admin/update-game`
 
-**Update a game's details.**
+Update a game's details. Requires admin role.
 
-- **Auth:** Requires admin role.
-- **Content-Type:** `application/x-www-form-urlencoded`
+| Field | Required | Description |
+|-------|----------|-------------|
+| `id` | Yes | Game UUID |
+| `title` | Yes | Game title |
+| `platform` | Yes | Platform name |
+| `summary` | No | Description |
+| `magazine` | No | Source magazine |
+| `cover_url` | No | Cover image URL |
 
-**Form fields:**
-
-| Field      | Type   | Required | Description                    |
-|------------|--------|----------|--------------------------------|
-| `id`       | UUID   | Yes      | Game's unique ID               |
-| `title`    | string | Yes      | Game title                     |
-| `platform` | string | Yes      | Platform name                  |
-| `summary`  | string | No       | Game description               |
-| `magazine` | string | No       | Source magazine/edition label   |
-| `cover_url`| string | No       | Cover image URL (optional update)|
-
-**Success:** Redirects to `/admin/inventory?success={title}` with `303 See Other`.
-
-**Errors:**
-
-| Status | Reason                 |
-|--------|------------------------|
-| 400    | Invalid UUID format    |
-| 403    | Not an admin           |
-| 404    | Game not found         |
-| 503    | Database not configured|
+**Success:** 303 redirect to `/admin/inventory?success={title}`.
 
 ---
 
 ### `POST /admin/return-game`
 
-**Process a game return (check-in).**
+Process a game return. Requires admin role.
 
-- **Auth:** Requires admin role.
-- **Content-Type:** `application/x-www-form-urlencoded`
+| Field | Required | Description |
+|-------|----------|-------------|
+| `rental_id` | Yes | Rental UUID |
 
-**Form fields:**
-
-| Field      | Type   | Required | Description              |
-|------------|--------|----------|--------------------------|
-| `rental_id`| UUID   | Yes      | The rental's unique ID   |
-
-**Success:** Redirects to `/admin/returns?success=Fita+devolvida` with `303 See Other`. The game copy is marked as available.
-
-**Errors:**
-
-| Status | Reason                 |
-|--------|------------------------|
-| 400    | Invalid rental ID      |
-| 403    | Not an admin           |
-| 500    | Database error         |
-| 503    | Database not configured|
-
----
-
-## Authentication Flow
-
-```
-1. POST /members      -> Register (bcrypt hash stored, membership number assigned)
-2. POST /login        -> Validate credentials -> Set signed cookie (member UUID)
-3. GET  /games        -> Cookie verified -> Show rental buttons if logged in
-4. GET  /carteirinha  -> Cookie verified -> Show membership card
-5. POST /rent         -> Cookie verified -> Create rental record
-6. GET  /admin/*      -> Cookie verified -> Email checked against ADMIN_EMAIL
-```
-
-## Cookie Details
-
-| Property   | Value                           |
-|------------|---------------------------------|
-| Name       | `session_member`                |
-| Value      | `{member_uuid}.{hmac_sha256}`   |
-| HttpOnly   | `true`                          |
-| SameSite   | `Strict`                        |
-| MaxAge     | 604800 (7 days)                 |
-| Path       | `/`                             |
+**Success:** 303 redirect to `/admin/returns?success=Fita+devolvida`. Copy marked as available.

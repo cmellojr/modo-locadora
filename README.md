@@ -1,145 +1,115 @@
 # Modo Locadora
 
+```
+  ____  __  __  ___   ____    ___       _     ___    ____   ____  ____    ___   ____    ____
+ |    \|  ||  |/   \ |    \  /   \     | |   /   \  /    | /    ||    \  /   \ |    \  /    |
+ |  _  |  ||  |     ||  o  )|     |    | |  |     ||   __||  o  ||  D  )|     ||  D  )|  o  |
+ |  |  |  ||  |  O  ||   _/ |  O  |    | |  |  O  ||  |   |     ||    / |  O  ||    / |     |
+ |  |  |  ||  |     ||  |   |     |    | |  |     ||  |__ |  _  ||    \ |     ||    \ |  _  |
+ |  |  |  ||  |     ||  |   |     |    | |  |     ||     ||  |  ||  .  \|     ||  .  \|  |  |
+ |__|__|__||__|\_____/|__|    \___/     |_|   \___/ |_____||__|__||__|\_|\___/ |__|\_||__|__|
+```
+
 > **"Sopre a fita, pegue o controle e respeite o tempo."**
 
-O **Modo Locadora** e um sistema web open-source, desenvolvido em **Go**, projetado para gerenciar sessoes de jogos (jogatinas) simulando a experiencia das videolocadoras brasileiras dos anos 90.
+---
 
-Aqui, a escassez gera valor, o tempo é um compromisso e o conhecimento é compartilhado através do lendário "caderninho".
+Era sexta-feira. Voce corria da escola, passava no balcao, mostrava a carteirinha e rezava para aquele cartucho ainda estar na prateleira. O tio conferia o caderno, pegava a fita, soprava o conector e dizia: *"Devolve na segunda, hein?"*
+
+O **Modo Locadora** e uma homenagem a essa era dourada. Um sistema web que recria a experiencia das videolocadoras brasileiras dos anos 90 — onde a escassez gerava valor, o tempo era um compromisso, e o conhecimento era compartilhado num caderninho de passwords grudento de guarana.
+
+Este projeto e para quem ainda lembra do cheiro de plástico dos cartuchos, da emoção de encontrar a última cópia de Mega Man 2 na prateleira, e da comunidade que se formava em torno daquele balcao.
 
 ---
 
-## A Experiencia
+## A Locadora
 
-*   **O Balcao:** Um portal onde comunidades podem gerenciar suas proprias "unidades".
-*   **Fitas Fisicas Virtuais:** O acervo e limitado. Se a copia de um jogo estiver alugada, voce tera que esperar alguem devolver.
-*   **Prateleira:** Navegue pelo acervo de cartuchos em um layout que remete aos balcoes das locadoras.
-*   **Carteirinha de Socio:** Cada membro recebe um numero de socio no formato `1991-XXX` e pode consultar sua carteirinha digital.
-*   **O Caderninho:** Espaco pessoal para anotar passwords, codigos e mapas *(em breve)*.
-*   **Verso da Capa:** Deixe dicas publicas para os proximos jogadores ao devolver uma fita *(em breve)*.
-*   **Regra da Sexta:** Alugou na sexta? So precisa devolver na segunda!
+**O Balcao** — A tela de entrada. Voce chega, mostra sua carteirinha e entra.
 
----
+**A Prateleira** — O acervo de cartuchos, com capas pixeladas e status em tempo real. Se a fita estiver alugada, vai ter que esperar o proximo socio devolver.
 
-## Funcionalidades
+**A Carteirinha de Socio** — Cada membro recebe um numero no formato `1991-XXX`. E digital, mas carrega o espirito daquele cartao plastificado com foto 3x4.
 
-*   **Cadastro e Autenticacao de Socios:** Registro via API com senha bcrypt e login por nome + senha.
-*   **Carteirinha Digital (`/carteirinha`):** Cartao de socio com numero de matricula `1991-XXX`, console favorito e data de ingresso.
-*   **Prateleira de Jogos (`/games`):** Visualizacao do acervo com status de disponibilidade em tempo real. Socios autenticados podem alugar diretamente pela prateleira.
-*   **Sistema de Aluguel:** Botao [ALUGAR] para jogos disponiveis. Jogos alugados exibem "Com o Socio: Nome".
-*   **Balcao de Devolucoes (`/admin/returns`):** Area administrativa para dar baixa nas fitas alugadas.
-*   **Abastecer Prateleiras (`/admin/stock`):** Busca de metadados via API do IGDB e adicao de novos jogos ao acervo.
-*   **Acervo (`/admin/inventory`):** Listagem completa do catalogo com opcao de edicao para cada jogo.
-*   **Edicao de Jogos (`/admin/edit/{id}`):** Formulario para traduzir e ajustar dados importados do IGDB.
+**O Caderno de Passwords** — Espaco pessoal para anotar senhas, codigos e mapas. Porque ninguem merece perder o progresso do Metroid.
+
+**O Tio da Locadora** — O administrador. Ele abastece as prateleiras, cuida do acervo e da baixa nas devolucoes. Tudo pelo painel admin, como se estivesse atras do balcao.
 
 ---
 
-## Stack Tecnica
+## O Espirito da Coisa
 
-Este projeto preza pela simplicidade, performance e legibilidade.
+Este nao e um sistema generico de catalogo. E uma experiencia. Cada detalhe foi pensado para evocar aquela epoca:
 
-*   **Linguagem:** [Go](https://go.dev/) 1.24+ (seguindo o [Google Go Style Guide](https://google.github.io/styleguide/go/guide.html)).
-*   **Banco de Dados:** [PostgreSQL](https://www.postgresql.org/) 15+ (utilizando `pgx/v5`).
-*   **Interface:** Server-Side Rendering (SSR) com `html/template`.
-*   **Estilizacao:** [NES.css](https://nostalgic-css.github.io/NES.css/) para uma estetica 8-bit e fonte "Press Start 2P".
-*   **API de Dados:** [IGDB](https://api-docs.igdb.com/) para metadados e capas de jogos.
-*   **Seguranca:** bcrypt para senhas, HMAC-SHA256 para cookies, middleware de autorizacao.
+- **Escassez real** — Cada jogo tem copias limitadas. Se todas estiverem alugadas, o jogo fica indisponivel. Assim como era na locadora.
+- **Visual 8-bit** — Interface com [NES.css](https://nostalgic-css.github.io/NES.css/) e fonte Press Start 2P. Cada pixel no lugar.
+- **Sem JavaScript** — Renderizacao no servidor, como os sites de 1996. Rapido, limpo, sem frescura.
+- **Copyleft** — Licenciado sob GPL v3. O codigo e livre, como deveria ser.
 
 ---
 
-## Como Executar
+## Stack
+
+| Componente | Tecnologia |
+|------------|-----------|
+| Backend | [Go](https://go.dev/) 1.24+ |
+| Banco de dados | [PostgreSQL](https://www.postgresql.org/) 15+ |
+| Interface | Server-Side Rendering com `html/template` |
+| Estilo | [NES.css](https://nostalgic-css.github.io/NES.css/) 2.3.0 + Press Start 2P |
+| Dados de jogos | [IGDB](https://api-docs.igdb.com/) via Twitch OAuth2 |
+| Seguranca | bcrypt + HMAC-SHA256 + middleware de autorizacao |
+
+---
+
+## Comecar a Jogar
 
 ### Pre-requisitos
 
-*   **Go 1.24** ou superior.
-*   **Docker & Docker Compose** (para o banco de dados).
-*   **Credenciais da API do IGDB** (atraves do [Twitch Developer Portal](https://dev.twitch.tv/)).
+- Go 1.24+
+- Docker (para o PostgreSQL)
+- Credenciais da [API do IGDB](https://dev.twitch.tv/)
 
-### Configuracao
-
-Copie o arquivo de exemplo e preencha com seus valores:
+### Inicio rapido
 
 ```bash
-cp .env.example .env
+git clone https://github.com/cmellojr/modo-locadora.git
+cd modo-locadora
+cp .env.example .env        # preencha com seus valores
+docker compose up -d         # sobe o banco
+go run ./cmd/server          # abre a locadora em http://localhost:8080
 ```
 
-Variaveis necessarias:
-
-```env
-TWITCH_CLIENT_ID=seu_client_id
-TWITCH_CLIENT_SECRET=seu_client_secret
-DATABASE_URL=postgres://tio_da_locadora:sopre_a_fita@localhost:5432/modo_locadora?sslmode=disable
-COOKIE_SECRET=gere_uma_chave_secreta_aleatoria
-ADMIN_EMAIL=seu_email_de_admin@example.com
-```
-
-### Passo a Passo
-
-1.  **Subir o Banco de Dados:**
-    ```bash
-    docker compose up -d
-    ```
-
-2.  **Executar as Migracoes:**
-    ```bash
-    psql $DATABASE_URL -f internal/database/migrations/001_initial_schema.sql
-    psql $DATABASE_URL -f internal/database/migrations/002_update_games_table.sql
-    psql $DATABASE_URL -f internal/database/migrations/003_membership_and_rental_support.sql
-    ```
-
-3.  **Criar o Primeiro Socio (admin):**
-    ```bash
-    curl -X POST http://localhost:8080/members \
-      -H "Content-Type: application/json" \
-      -d '{
-        "profile_name": "Tio da Locadora",
-        "email": "seu_email_de_admin@example.com",
-        "password": "sua_senha",
-        "favorite_console": "Mega Drive"
-      }'
-    ```
-    O email deve coincidir com `ADMIN_EMAIL` para acesso as rotas administrativas.
-
-4.  **Iniciar o Servidor:**
-    ```bash
-    go run ./cmd/server
-    ```
-
-5.  **Acessar:**
-    Abra `http://localhost:8080` no seu navegador.
+Para o guia completo de configuracao (migracoes, primeiro socio, solucao de problemas), veja **[docs/SETUP.md](docs/SETUP.md)**.
 
 ---
 
-## Estrutura do Projeto
+## Documentacao
 
-```
-modo-locadora/
-├── cmd/server/main.go              # Ponto de entrada
-├── internal/
-│   ├── auth/                       # Assinatura de cookies (HMAC-SHA256)
-│   ├── config/                     # Carregamento de .env
-│   ├── database/
-│   │   ├── store.go                # Interface Store
-│   │   ├── postgres.go             # Implementacao PostgreSQL
-│   │   └── migrations/             # Migracoes SQL (001-003)
-│   ├── handlers/                   # Handlers HTTP
-│   ├── igdb/                       # Cliente IGDB
-│   ├── middleware/                 # Middleware de auth e admin
-│   └── models/                     # Entidades (Member, Game, GameCopy, Rental)
-├── web/
-│   ├── static/css/                 # Tema NES retro
-│   └── templates/                  # Templates HTML (PT-BR)
-├── docs/                           # Documentacao do projeto
-├── docker-compose.yml              # Container PostgreSQL
-├── .env.example                    # Template de variaveis de ambiente
-├── ARCHITECTURE.md                 # Arquitetura do sistema
-└── go.mod                          # Modulo Go
-```
+| Documento | Conteudo |
+|-----------|---------|
+| [ARCHITECTURE.md](ARCHITECTURE.md) | Visao geral da arquitetura, entidades e fluxos |
+| [docs/SETUP.md](docs/SETUP.md) | Guia completo de instalacao e configuracao |
+| [docs/API.md](docs/API.md) | Referencia de endpoints (SSR e JSON) |
+| [docs/SECURITY.md](docs/SECURITY.md) | Politica de seguranca e praticas |
+| [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md) | Como contribuir com o projeto |
+| [docs/CHANGELOG.md](docs/CHANGELOG.md) | Historico de mudancas |
+
+---
+
+## Funcionalidades Futuras
+
+- **Verso da Capa** — Deixe dicas publicas para os proximos jogadores ao devolver uma fita.
+- **Regra da Sexta** — Alugou na sexta? So precisa devolver na segunda!
+- **Ranking de Socios** — Quem mais alugou, quem mais devolveu no prazo.
+- **Colecao Pessoal** — Marque os jogos que voce ja zerou.
 
 ---
 
 ## Licenca
 
-Distribuido sob a licenca **GPL v3**. Veja `LICENSE` para mais informacoes.
+Distribuido sob a licenca **GPL v3**. Veja [LICENSE](LICENSE) para mais informacoes.
 
 ---
-*Desenvolvido pelo Tio da Locadora.*
+
+*Desenvolvido com nostalgia pelo Tio da Locadora.*
+
+*Em memoria de todas as locadoras que fecharam, mas nunca foram esquecidas.*
