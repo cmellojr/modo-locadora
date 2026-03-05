@@ -81,13 +81,11 @@
             line-height: 1.8;
         }
 
-        .cartridge-card .game-platform {
-            font-size: 7px;
-            color: #3498DB;
-            background-color: #0A0E1A;
-            padding: 2px 6px;
+        .cartridge-card .platform-badge {
             margin-bottom: 6px;
-            display: inline-block;
+        }
+        .cartridge-card .platform-badge .is-primary {
+            font-size: 7px;
         }
 
         .cartridge-card .game-summary {
@@ -110,7 +108,23 @@
         .cartridge-card .copy-count {
             font-size: 6px;
             color: #777;
+            margin-bottom: 4px;
+        }
+
+        .cartridge-card .nes-progress {
+            width: 100%;
+            height: 12px;
             margin-bottom: 6px;
+        }
+
+        .game-status-badge {
+            display: block;
+            width: 100%;
+            margin-top: 4px;
+        }
+        .game-status-badge .is-primary,
+        .game-status-badge .is-error {
+            font-size: 7px;
         }
 
         .renter-tag {
@@ -118,14 +132,6 @@
             color: #e74c3c;
             margin-top: 4px;
             display: block;
-        }
-
-        .nav-bar {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-            margin-top: 2rem;
-            margin-bottom: 40px;
         }
     </style>
 </head>
@@ -139,8 +145,8 @@
 
         <div class="nes-container with-title is-dark">
             <p class="title">
-                <span style="font-size: 14px;">[ACERVO DE CARTUCHOS]</span>
-                <span style="font-size: 8px; margin-left: 10px;">{{len .Games}} fitas no balc&atilde;o</span>
+                <span class="title-main">[ACERVO DE CARTUCHOS]</span>
+                <span class="title-sub">{{len .Games}} fitas no balc&atilde;o</span>
             </p>
             <div class="forum-body">
                 <div class="shelf-container">
@@ -150,31 +156,35 @@
                         <img src="{{.CoverURL}}" alt="{{.Title}}" class="game-cover-mini">
                         {{end}}
                         <p class="game-title">{{.Title}}</p>
-                        {{if .Platform}}<span class="game-platform">{{.Platform}}</span>{{end}}
+                        {{if .Platform}}
+                        <span class="nes-badge platform-badge">
+                            <span class="is-primary">{{.Platform}}</span>
+                        </span>
+                        {{end}}
                         {{if .Summary}}<p class="game-summary">{{.Summary}}</p>{{end}}
                         {{if .SourceMagazine}}<p class="source-magazine">Fonte: {{.SourceMagazine}}</p>{{end}}
                         <p class="copy-count">{{.AvailableCopies}} de {{.TotalCopies}} c&oacute;pias</p>
+                        <progress class="nes-progress {{if eq .AvailableCopies 0}}is-error{{else if eq .AvailableCopies .TotalCopies}}is-success{{else}}is-warning{{end}}"
+                            value="{{.AvailableCopies}}" max="{{.TotalCopies}}"></progress>
 
                         {{if gt .AvailableCopies 0}}
                             {{if $.IsLoggedIn}}
                             <form action="/rent" method="POST" style="margin: 0; width: 100%;">
                                 <input type="hidden" name="game_id" value="{{.ID}}">
-                                <button type="submit" class="nes-btn is-success"
-                                    style="font-size: 8px; padding: 4px 6px; width: 100%; box-sizing: border-box;">
+                                <button type="submit" class="nes-btn is-success btn-sm"
+                                    style="width: 100%; box-sizing: border-box;">
                                     ALUGAR
                                 </button>
                             </form>
                             {{else}}
-                            <button type="button" class="nes-btn is-primary"
-                                style="font-size: 8px; padding: 4px 6px; width: 100%; box-sizing: border-box;" disabled>
-                                DISPON&Iacute;VEL
-                            </button>
+                            <span class="nes-badge game-status-badge">
+                                <span class="is-primary">DISPON&Iacute;VEL</span>
+                            </span>
                             {{end}}
                         {{else}}
-                            <button type="button" class="nes-btn is-disabled"
-                                style="font-size: 7px; padding: 4px 6px; width: 100%; box-sizing: border-box;" disabled>
-                                ALUGADO
-                            </button>
+                            <span class="nes-badge game-status-badge">
+                                <span class="is-error">ALUGADO</span>
+                            </span>
                             {{if .RenterName}}<span class="renter-tag">Com o S&oacute;cio: {{.RenterName}}</span>{{end}}
                         {{end}}
                     </div>
@@ -185,13 +195,12 @@
 
         <div class="nav-bar">
             {{if .IsLoggedIn}}
-            <a href="/carteirinha" class="nes-btn is-warning" style="font-size: 10px;">CARTEIRINHA</a>
+            <a href="/carteirinha" class="nes-btn is-warning btn-nav">CARTEIRINHA</a>
             {{end}}
-            <a href="/" class="nes-btn is-primary" style="font-size: 10px;">VOLTAR AO BALC&Atilde;O</a>
+            <a href="/" class="nes-btn is-primary btn-nav">VOLTAR AO BALC&Atilde;O</a>
         </div>
 
-        <p style="font-size: 8px; text-align: center; margin-top: 20px; color: #555;">&copy; 1991-2026 Modo Locadora -
-            Sob licen&ccedil;a GPLv3. Criado pelo Tio da Locadora.</p>
+        <p class="footer-copyright">&copy; 1991-2026 Modo Locadora - Sob licen&ccedil;a GPLv3. Criado pelo Tio da Locadora.</p>
     </div>
 </body>
 

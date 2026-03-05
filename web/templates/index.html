@@ -56,12 +56,12 @@
             padding: 12px;
             border-left: 4px solid #f7d51d;
         }
-        .statute-text {
+        .statute-list {
             font-size: 8px;
             color: #92cc41;
             line-height: 2;
         }
-        .statute-text p {
+        .statute-list li {
             margin-bottom: 12px;
         }
     </style>
@@ -73,14 +73,14 @@
                 <div class="nes-container with-title is-dark">
                     <p class="title">
                         <span class="pixel-aligned-title">Modo Locadora</span>
-                        <span style="font-size: 8px; margin-left: 10px;">[BALC&Atilde;O]</span>
+                        <span class="title-sub">[BALC&Atilde;O]</span>
                     </p>
                     <div class="forum-body">
                         <div class="manifesto-text">
                             &ldquo;Aqui n&atilde;o h&aacute; lugar para pirataria desenfreada ou abandono de cl&aacute;ssicos. Escolha sua fita, sopre os contatos e jogue at&eacute; o fim. Honre sua carteirinha!&rdquo;
                         </div>
 
-                        <p style="font-size: 9px; color: #FFFFFF; margin-bottom: 20px;">Identifique-se no balc&atilde;o para acessar a prateleira.</p>
+                        <p class="nes-text is-primary" style="font-size: 9px; margin-bottom: 20px;">Identifique-se no balc&atilde;o para acessar a prateleira.</p>
 
                         <form action="/login" method="POST">
                             <div class="input-group nes-field">
@@ -94,7 +94,7 @@
                             </div>
 
                             <div class="btn-group">
-                                <button type="submit" class="nes-btn is-primary" style="font-size: 10px;">ENTRAR NO MODO LOCADORA</button>
+                                <button type="submit" class="nes-btn is-primary btn-nav">ENTRAR NO MODO LOCADORA</button>
                             </div>
                         </form>
                     </div>
@@ -104,19 +104,19 @@
             <div class="balcao-sidebar">
                 <div class="nes-container with-title is-dark">
                     <p class="title">
-                        <span style="font-size: 10px;">Estatuto</span>
+                        <span class="title-main">Estatuto</span>
                     </p>
-                    <div class="statute-text">
-                        <p><i class="nes-icon trophy is-small"></i> Os jogos deste acervo s&atilde;o para serem deliciados como um bom vinho. Sem pressa, sem desperd&iacute;cio.</p>
-                        <p><i class="nes-icon star is-small"></i> Cada fita &eacute; &uacute;nica. Se todas as c&oacute;pias estiverem alugadas, aguarde sua vez com paci&ecirc;ncia.</p>
-                        <p><i class="nes-icon heart is-small"></i> Devolva no prazo. O pr&oacute;ximo s&oacute;cio conta com voc&ecirc;.</p>
-                        <p><i class="nes-icon like is-small"></i> Anote seus passwords no caderninho. N&atilde;o abandone um cl&aacute;ssico pela metade.</p>
-                    </div>
+                    <ul class="nes-list is-disc statute-list">
+                        <li><i class="nes-icon trophy is-small"></i> Os jogos deste acervo s&atilde;o para serem deliciados como um bom vinho. Sem pressa, sem desperd&iacute;cio.</li>
+                        <li><i class="nes-icon star is-small"></i> Cada fita &eacute; &uacute;nica. Se todas as c&oacute;pias estiverem alugadas, aguarde sua vez com paci&ecirc;ncia.</li>
+                        <li><i class="nes-icon heart is-small"></i> Devolva no prazo. O pr&oacute;ximo s&oacute;cio conta com voc&ecirc;.</li>
+                        <li><i class="nes-icon like is-small"></i> Anote seus passwords no caderninho. N&atilde;o abandone um cl&aacute;ssico pela metade.</li>
+                    </ul>
                 </div>
             </div>
         </div>
 
-        <p style="font-size: 8px; text-align: center; margin-top: 20px; color: #555;">&copy; 1991-2026 Modo Locadora - Sob licen&ccedil;a GPLv3. Criado pelo Tio da Locadora.</p>
+        <p class="footer-copyright">&copy; 1991-2026 Modo Locadora - Sob licen&ccedil;a GPLv3. Criado pelo Tio da Locadora.</p>
     </div>
 </body>
 </html>

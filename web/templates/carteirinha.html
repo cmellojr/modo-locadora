@@ -111,15 +111,22 @@
         </header>
 
         {{if .Success}}
-        <div class="nes-container is-rounded" style="background-color: #92cc41; margin-bottom: 1.5rem; padding: 10px;">
-            <p style="font-size: 8px; color: #000; text-align: center;">Caderno de passwords salvo com sucesso!</p>
+        <div class="success-balloon">
+            <div class="nes-balloon from-left is-dark">
+                <p class="balloon-text">Caderno de passwords salvo com sucesso!</p>
+            </div>
+            <i class="nes-bcrikko"></i>
         </div>
         {{end}}
 
         <div class="nes-container with-title is-dark member-card">
             <p class="title">
-                <span style="font-size: 14px;">{{.Member.ProfileName}}</span>
+                <span class="title-main">{{.Member.ProfileName}}</span>
             </p>
+
+            <div class="member-avatar">
+                <i class="nes-avatar is-large is-rounded"></i>
+            </div>
 
             <div class="membership-number">
                 {{.Member.MembershipNumber}}
@@ -160,26 +167,25 @@
         <div class="notebook-section">
             <div class="nes-container with-title is-dark">
                 <p class="title">
-                    <span style="font-size: 10px;">Caderno de Passwords</span>
+                    <span class="title-main">Caderno de Passwords</span>
                 </p>
-                <p style="font-size: 7px; color: #777; margin-bottom: 12px;">Anote aqui seus c&oacute;digos, passwords e progressos. N&atilde;o abandone um cl&aacute;ssico pela metade!</p>
+                <p class="nes-text is-disabled" style="font-size: 7px; margin-bottom: 12px;">Anote aqui seus c&oacute;digos, passwords e progressos. N&atilde;o abandone um cl&aacute;ssico pela metade!</p>
                 <form action="/carteirinha/notes" method="POST">
                     <textarea name="notes" class="nes-textarea" rows="6"
                         placeholder="Ex: Mega Man 2 - Senha: A1 B3 C5 D2 E4&#10;Sonic 2 - Level Select: 19 65 09 17&#10;Metroid - JUSTIN BAILEY ------ ------">{{.Member.PasswordNotes}}</textarea>
-                    <div style="text-align: right; margin-top: 10px;">
-                        <button type="submit" class="nes-btn is-primary" style="font-size: 8px;">SALVAR NOTAS</button>
+                    <div class="form-actions" style="margin-top: 10px;">
+                        <button type="submit" class="nes-btn is-primary btn-sm">SALVAR NOTAS</button>
                     </div>
                 </form>
             </div>
         </div>
 
-        <div style="margin-top: 2rem; display: flex; gap: 10px;">
-            <a href="/games" class="nes-btn is-primary" style="font-size: 10px;">PRATELEIRA</a>
-            <a href="/" class="nes-btn" style="font-size: 10px;">BALC&Atilde;O</a>
+        <div class="nav-bar" style="margin-top: 2rem;">
+            <a href="/games" class="nes-btn is-primary btn-nav">PRATELEIRA</a>
+            <a href="/" class="nes-btn btn-nav">BALC&Atilde;O</a>
         </div>
 
-        <p style="font-size: 8px; text-align: center; margin-top: 40px; color: #555;">&copy; 1991-2026 Modo Locadora -
-            Sob licen&ccedil;a GPLv3. Criado pelo Tio da Locadora.</p>
+        <p class="footer-copyright">&copy; 1991-2026 Modo Locadora - Sob licen&ccedil;a GPLv3. Criado pelo Tio da Locadora.</p>
     </div>
 </body>
 
