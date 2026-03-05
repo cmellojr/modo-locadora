@@ -4,7 +4,7 @@
 
 O **Modo Locadora** e um sistema web open-source, desenvolvido em **Go**, projetado para gerenciar sessoes de jogos (jogatinas) simulando a experiencia das videolocadoras brasileiras dos anos 90.
 
-Aqui, a escassez gera valor, o tempo e um compromisso e o conhecimento e compartilhado atraves do lendario "caderninho".
+Aqui, a escassez gera valor, o tempo é um compromisso e o conhecimento é compartilhado através do lendário "caderninho".
 
 ---
 
