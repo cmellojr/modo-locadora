@@ -1,10 +1,4 @@
-# Modo Locadora
-
-```
- ╔╦╗╔═╗╔╦╗╔═╗  ╦  ╔═╗╔═╗╔═╗╔╦╗╔═╗╦═╗╔═╗
- ║║║║ ║ ║║║ ║  ║  ║ ║║  ╠═╣ ║║║ ║╠╦╝╠═╣
- ╩ ╩╚═╝═╩╝╚═╝  ╩═╝╚═╝╚═╝╩ ╩═╩╝╚═╝╩╚═╩ ╩
-```
+# Modo Locadora 
 
 > **"Sopre a fita, pegue o controle e respeite o tempo."**
 
