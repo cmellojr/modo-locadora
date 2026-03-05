@@ -37,12 +37,14 @@ func (s *PostgresStore) Close() {
 
 // memberColumns is the shared column list for member queries.
 const memberColumns = `id, profile_name, email, password_hash, favorite_console,
-	COALESCE(membership_number, ''), COALESCE(address, ''), COALESCE(phone, ''), joined_at`
+	COALESCE(membership_number, ''), COALESCE(address, ''), COALESCE(phone, ''),
+	COALESCE(password_notes, ''), joined_at`
 
 func scanMember(row pgx.Row) (*models.Member, error) {
 	var m models.Member
 	err := row.Scan(&m.ID, &m.ProfileName, &m.Email, &m.PasswordHash,
-		&m.FavoriteConsole, &m.MembershipNumber, &m.Address, &m.Phone, &m.JoinedAt)
+		&m.FavoriteConsole, &m.MembershipNumber, &m.Address, &m.Phone,
+		&m.PasswordNotes, &m.JoinedAt)
 	if err != nil {
 		if err == pgx.ErrNoRows {
 			return nil, nil
@@ -55,11 +57,11 @@ func scanMember(row pgx.Row) (*models.Member, error) {
 // CreateMember persists a new member in the database.
 func (s *PostgresStore) CreateMember(ctx context.Context, m *models.Member) error {
 	query := `
-		INSERT INTO members (id, profile_name, email, password_hash, favorite_console, membership_number, address, phone, joined_at)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`
+		INSERT INTO members (id, profile_name, email, password_hash, favorite_console, membership_number, address, phone, password_notes, joined_at)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`
 
 	_, err := s.pool.Exec(ctx, query, m.ID, m.ProfileName, m.Email, m.PasswordHash,
-		m.FavoriteConsole, m.MembershipNumber, m.Address, m.Phone, m.JoinedAt)
+		m.FavoriteConsole, m.MembershipNumber, m.Address, m.Phone, m.PasswordNotes, m.JoinedAt)
 	if err != nil {
 		return fmt.Errorf("failed to create member: %w", err)
 	}
@@ -174,16 +176,21 @@ func (s *PostgresStore) ListGames(ctx context.Context) ([]models.Game, error) {
 	return games, nil
 }
 
-// ListGamesWithAvailability returns all games with their current rental status.
+// ListGamesWithAvailability returns all games with copy counts and rental status.
 func (s *PostgresStore) ListGamesWithAvailability(ctx context.Context) ([]GameAvailability, error) {
 	query := `
 		SELECT g.id, g.title, g.igdb_id, g.platform, g.summary, g.cover_url, g.source_magazine, g.acquired_at,
-			CASE WHEN gc.status = 'available' THEN true ELSE false END AS available,
-			COALESCE(m.profile_name, '') AS renter_name
+			COUNT(gc.id) AS total_copies,
+			COUNT(gc.id) FILTER (WHERE gc.status = 'available') AS available_copies,
+			COALESCE(
+				(SELECT m.profile_name FROM rentals r2
+				 JOIN game_copies gc2 ON gc2.id = r2.copy_id
+				 JOIN members m ON m.id = r2.member_id
+				 WHERE gc2.game_id = g.id AND r2.returned_at IS NULL
+				 LIMIT 1), '') AS renter_name
 		FROM games g
 		LEFT JOIN game_copies gc ON gc.game_id = g.id
-		LEFT JOIN rentals r ON r.copy_id = gc.id AND r.returned_at IS NULL
-		LEFT JOIN members m ON m.id = r.member_id
+		GROUP BY g.id
 		ORDER BY g.acquired_at DESC`
 
 	rows, err := s.pool.Query(ctx, query)
@@ -198,7 +205,7 @@ func (s *PostgresStore) ListGamesWithAvailability(ctx context.Context) ([]GameAv
 		if err := rows.Scan(
 			&ga.Game.ID, &ga.Game.Title, &ga.Game.IgdbID, &ga.Game.Platform,
 			&ga.Game.Summary, &ga.Game.CoverURL, &ga.Game.SourceMagazine, &ga.Game.AcquiredAt,
-			&ga.Available, &ga.RenterName,
+			&ga.TotalCopies, &ga.AvailableCopies, &ga.RenterName,
 		); err != nil {
 			return nil, fmt.Errorf("failed to scan game availability: %w", err)
 		}
@@ -322,4 +329,30 @@ func (s *PostgresStore) RegisterRental(ctx context.Context, r *models.Rental) er
 		return fmt.Errorf("failed to register rental: %w", err)
 	}
 	return nil
+}
+
+// UpdateMemberNotes saves the member's password notebook text.
+func (s *PostgresStore) UpdateMemberNotes(ctx context.Context, memberID uuid.UUID, notes string) error {
+	tag, err := s.pool.Exec(ctx, `UPDATE members SET password_notes = $1 WHERE id = $2`, notes, memberID)
+	if err != nil {
+		return fmt.Errorf("failed to update member notes: %w", err)
+	}
+	if tag.RowsAffected() == 0 {
+		return fmt.Errorf("member not found: %s", memberID)
+	}
+	return nil
+}
+
+// GetMemberRentalStats returns counts of active and overdue rentals for a member.
+func (s *PostgresStore) GetMemberRentalStats(ctx context.Context, memberID uuid.UUID) (activeCount, overdueCount int, err error) {
+	query := `
+		SELECT
+			COUNT(*) FILTER (WHERE returned_at IS NULL) AS active,
+			COUNT(*) FILTER (WHERE returned_at IS NULL AND due_at < NOW()) AS overdue
+		FROM rentals WHERE member_id = $1`
+	err = s.pool.QueryRow(ctx, query, memberID).Scan(&activeCount, &overdueCount)
+	if err != nil {
+		return 0, 0, fmt.Errorf("failed to get rental stats: %w", err)
+	}
+	return activeCount, overdueCount, nil
 }

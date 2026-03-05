@@ -60,6 +60,46 @@
             text-align: center;
             margin-top: 1.5rem;
         }
+
+        .status-section {
+            text-align: center;
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 2px dashed #333;
+        }
+
+        .status-section .status-label {
+            font-size: 8px;
+            color: #777;
+            margin-bottom: 8px;
+        }
+
+        .rental-stats {
+            font-size: 7px;
+            color: #999;
+            margin-top: 8px;
+        }
+
+        .notebook-section {
+            margin-top: 2rem;
+        }
+
+        .notebook-section textarea {
+            width: 100%;
+            box-sizing: border-box;
+            font-family: 'Press Start 2P', cursive;
+            font-size: 8px;
+            background-color: #0A0E1A;
+            color: #f7d51d;
+            border: 2px solid #333;
+            padding: 10px;
+            line-height: 2;
+            resize: vertical;
+        }
+
+        .notebook-section textarea::placeholder {
+            color: #555;
+        }
     </style>
 </head>
 
@@ -69,6 +109,12 @@
             <h2 class="pixel-aligned-title">CARTEIRINHA DE S&Oacute;CIO</h2>
             <p class="pixel-aligned-subtitle">[MODO LOCADORA &mdash; DESDE 1991]</p>
         </header>
+
+        {{if .Success}}
+        <div class="nes-container is-rounded" style="background-color: #92cc41; margin-bottom: 1.5rem; padding: 10px;">
+            <p style="font-size: 8px; color: #000; text-align: center;">Caderno de passwords salvo com sucesso!</p>
+        </div>
+        {{end}}
 
         <div class="nes-container with-title is-dark member-card">
             <p class="title">
@@ -99,10 +145,31 @@
                 <span class="value">{{.Member.JoinedAt.Format "02/01/2006"}}</span>
             </div>
 
-            <div class="badge-area">
+            <div class="status-section">
+                <p class="status-label">STATUS DO S&Oacute;CIO</p>
                 <span class="nes-badge">
-                    <span class="is-warning">S&oacute;cio de Honra</span>
+                    <span class="{{.StatusBadge}}">{{.StatusLabel}}</span>
                 </span>
+                <p class="rental-stats">
+                    {{.ActiveRentals}} fita(s) alugada(s){{if gt .OverdueCount 0}} &mdash; {{.OverdueCount}} em atraso{{end}}
+                </p>
+            </div>
+        </div>
+
+        <!-- Caderno de Passwords -->
+        <div class="notebook-section">
+            <div class="nes-container with-title is-dark">
+                <p class="title">
+                    <span style="font-size: 10px;">Caderno de Passwords</span>
+                </p>
+                <p style="font-size: 7px; color: #777; margin-bottom: 12px;">Anote aqui seus c&oacute;digos, passwords e progressos. N&atilde;o abandone um cl&aacute;ssico pela metade!</p>
+                <form action="/carteirinha/notes" method="POST">
+                    <textarea name="notes" class="nes-textarea" rows="6"
+                        placeholder="Ex: Mega Man 2 - Senha: A1 B3 C5 D2 E4&#10;Sonic 2 - Level Select: 19 65 09 17&#10;Metroid - JUSTIN BAILEY ------ ------">{{.Member.PasswordNotes}}</textarea>
+                    <div style="text-align: right; margin-top: 10px;">
+                        <button type="submit" class="nes-btn is-primary" style="font-size: 8px;">SALVAR NOTAS</button>
+                    </div>
+                </form>
             </div>
         </div>
 

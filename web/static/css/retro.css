@@ -120,3 +120,21 @@ label {
     font-size: 8px !important;
     color: #3498DB !important;
 }
+
+/* NES Textarea Override */
+.nes-textarea {
+    background-color: #0A0E1A !important;
+    color: #f7d51d !important;
+    border-color: #333 !important;
+    font-family: 'Press Start 2P', cursive;
+    font-size: 8px;
+}
+
+.nes-textarea::placeholder {
+    color: #555 !important;
+}
+
+/* Force pixelated rendering on all images and icons */
+img, .nes-icon {
+    image-rendering: pixelated;
+}
