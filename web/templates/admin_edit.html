@@ -77,8 +77,8 @@
         <div class="edit-panel">
             <div class="nes-container with-title is-dark">
                 <p class="title">
-                    <span style="font-size: 14px;">FICHA DO JOGO</span>
-                    <span style="font-size: 8px; margin-left: 10px;">IGDB #{{.Game.IgdbID}}</span>
+                    <span class="title-main">FICHA DO JOGO</span>
+                    <span class="title-sub">IGDB #{{.Game.IgdbID}}</span>
                 </p>
                 <div class="forum-body" style="overflow: hidden;">
                     <div class="cover-preview">
@@ -122,19 +122,16 @@
                             Adquirido em: {{.Game.AcquiredAt.Format "02/01/2006"}}
                         </div>
 
-                        <div style="text-align: right; clear: both;">
-                            <a href="/admin/inventory" class="nes-btn"
-                                style="font-size: 10px;">CANCELAR</a>
-                            <button type="submit" class="nes-btn is-success"
-                                style="font-size: 10px;">RE-GRAVAR FITA</button>
+                        <div class="form-actions" style="clear: both;">
+                            <a href="/admin/inventory" class="nes-btn btn-nav">CANCELAR</a>
+                            <button type="submit" class="nes-btn is-success btn-nav">RE-GRAVAR FITA</button>
                         </div>
                     </form>
                 </div>
             </div>
         </div>
 
-        <p style="font-size: 8px; text-align: center; margin-top: 40px; color: #555;">&copy; 1991-2026 Modo Locadora -
-            Sob licen&ccedil;a GPLv3. Criado pelo Tio da Locadora.</p>
+        <p class="footer-copyright">&copy; 1991-2026 Modo Locadora - Sob licen&ccedil;a GPLv3. Criado pelo Tio da Locadora.</p>
     </div>
 </body>
 

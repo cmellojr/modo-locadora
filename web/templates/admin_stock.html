@@ -105,16 +105,6 @@
             margin-bottom: 1rem;
         }
 
-        .success-banner {
-            text-align: center;
-            padding: 10px;
-            margin-bottom: 1rem;
-        }
-
-        .success-banner .msg {
-            font-size: 10px;
-        }
-
         .no-cover {
             width: 100%;
             max-width: 132px;
@@ -138,17 +128,19 @@
         </header>
 
         {{if .Success}}
-        <div class="nes-container is-rounded is-dark success-banner">
-            <i class="nes-icon trophy is-small"></i>
-            <span class="msg">"{{.Success}}" adquirido com sucesso!</span>
+        <div class="success-balloon">
+            <div class="nes-balloon from-left is-dark">
+                <p class="balloon-text">"{{.Success}}" adquirido com sucesso!</p>
+            </div>
+            <i class="nes-bcrikko"></i>
         </div>
         {{end}}
 
         <!-- Search form -->
         <div class="nes-container with-title is-dark">
             <p class="title">
-                <span style="font-size: 14px;">[ADICIONAR NOVO LOTE]</span>
-                <span style="font-size: 8px; margin-left: 10px;">ESTOQUE</span>
+                <span class="title-main">[ADICIONAR NOVO LOTE]</span>
+                <span class="title-sub">ESTOQUE</span>
             </p>
             <div class="forum-body">
                 <form action="/admin/stock" method="GET">
@@ -162,22 +154,19 @@
                         <input type="text" id="q" name="q" class="nes-input" value="{{.Query}}"
                             placeholder="Nome do jogo...">
                     </div>
-                    <div style="text-align: right; margin-top: 1rem;">
-                        <button type="submit" class="nes-btn is-primary" style="font-size: 10px;">PESQUISAR</button>
+                    <div class="form-actions" style="margin-top: 1rem;">
+                        <button type="submit" class="nes-btn is-primary btn-nav">PESQUISAR</button>
                     </div>
                 </form>
             </div>
         </div>
 
         {{if .Selected}}
-        <!-- Confirmation form for the selected game -->
+        <!-- Confirmation dialog for the selected game -->
         <div class="confirm-panel">
-            <div class="nes-container with-title is-dark">
-                <p class="title">
-                    <span style="font-size: 14px;">FICHA DO JOGO</span>
-                    <span style="font-size: 8px; margin-left: 10px;">CONFIRMAR AQUISI&Ccedil;&Atilde;O</span>
-                </p>
-                <div class="forum-body" style="overflow: hidden;">
+            <dialog class="nes-dialog is-dark is-rounded" id="confirm-dialog" open style="width: 100%; max-width: 100%; position: relative;">
+                <p class="title-main" style="color: #f7d51d; margin-bottom: 1rem; text-align: center;">CONFIRMAR AQUISI&Ccedil;&Atilde;O</p>
+                <div style="overflow: hidden;">
                     <div class="cover-preview">
                         {{if .Selected.Cover.URL}}
                         <img src="{{.Selected.Cover.BigCoverURL}}" alt="{{.Selected.Name}}">
@@ -220,23 +209,21 @@
                                 rows="5" placeholder="Escreva sua vers&atilde;o do resumo...">{{.Selected.Summary}}</textarea>
                         </div>
 
-                        <div style="text-align: right; margin-top: 1rem; clear: both;">
-                            <a href="/admin/stock?q={{$.Query}}&magazine={{$.Magazine}}" class="nes-btn"
-                                style="font-size: 10px;">VOLTAR</a>
-                            <button type="submit" class="nes-btn is-success"
-                                style="font-size: 10px;">ADQUIRIR PARA A LOCADORA</button>
+                        <div class="form-actions" style="clear: both;">
+                            <a href="/admin/stock?q={{$.Query}}&magazine={{$.Magazine}}" class="nes-btn btn-nav">VOLTAR</a>
+                            <button type="submit" class="nes-btn is-success btn-nav">ADQUIRIR PARA A LOCADORA</button>
                         </div>
                     </form>
                 </div>
-            </div>
+            </dialog>
         </div>
 
         {{else if .Results}}
         <!-- Results grid -->
         <div class="nes-container with-title is-dark" style="margin-top: 1.5rem;">
             <p class="title">
-                <span style="font-size: 14px;">RESULTADOS</span>
-                <span style="font-size: 8px; margin-left: 10px;">{{len .Results}} encontrados</span>
+                <span class="title-main">RESULTADOS</span>
+                <span class="title-sub">{{len .Results}} encontrados</span>
             </p>
             <div class="results-grid">
                 {{range .Results}}
@@ -255,13 +242,12 @@
         </div>
         {{end}}
 
-        <div style="margin-top: 2rem; display: flex; gap: 10px; flex-wrap: wrap;">
-            <a href="/admin/inventory" class="nes-btn is-warning" style="font-size: 10px;">ACERVO</a>
-            <a href="/games" class="nes-btn is-primary" style="font-size: 10px;">VOLTAR PARA A PRATELEIRA</a>
+        <div class="nav-bar" style="margin-top: 2rem;">
+            <a href="/admin/inventory" class="nes-btn is-warning btn-nav">ACERVO</a>
+            <a href="/games" class="nes-btn is-primary btn-nav">VOLTAR PARA A PRATELEIRA</a>
         </div>
 
-        <p style="font-size: 8px; text-align: center; margin-top: 40px; color: #555;">&copy; 1991-2026 Modo Locadora -
-            Sob licen&ccedil;a GPLv3. Criado pelo Tio da Locadora.</p>
+        <p class="footer-copyright">&copy; 1991-2026 Modo Locadora - Sob licen&ccedil;a GPLv3. Criado pelo Tio da Locadora.</p>
     </div>
 </body>
 

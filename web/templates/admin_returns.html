@@ -46,28 +46,6 @@
             image-rendering: pixelated;
             border: 1px solid #444;
         }
-
-        .success-balloon {
-            margin-bottom: 1.5rem;
-        }
-
-        .success-balloon .balloon-text {
-            font-size: 10px;
-        }
-
-        .empty-state {
-            text-align: center;
-            padding: 2rem;
-            font-size: 10px;
-            color: #888;
-        }
-
-        .nav-bar {
-            margin-top: 2rem;
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-        }
     </style>
 </head>
 
@@ -89,8 +67,8 @@
 
         <div class="nes-container with-title is-dark">
             <p class="title">
-                <span style="font-size: 14px;">FITAS ALUGADAS</span>
-                <span style="font-size: 8px; margin-left: 10px;">{{len .Rentals}} pendentes</span>
+                <span class="title-main">FITAS ALUGADAS</span>
+                <span class="title-sub">{{len .Rentals}} pendentes</span>
             </p>
 
             {{if .Rentals}}
@@ -112,7 +90,7 @@
                                 {{if .CoverURL}}
                                 <img src="{{.CoverURL}}" alt="{{.GameTitle}}" class="cover-thumb">
                                 {{else}}
-                                <span style="font-size: 6px; color: #666;">N/A</span>
+                                <span class="nes-text is-disabled" style="font-size: 6px;">N/A</span>
                                 {{end}}
                             </td>
                             <td>{{.GameTitle}}</td>
@@ -121,8 +99,7 @@
                             <td>
                                 <form action="/admin/return-game" method="POST" style="display: inline;">
                                     <input type="hidden" name="rental_id" value="{{.RentalID}}">
-                                    <button type="submit" class="nes-btn is-success"
-                                        style="font-size: 8px; padding: 4px 8px;">Devolver</button>
+                                    <button type="submit" class="nes-btn is-success btn-sm">Devolver</button>
                                 </form>
                             </td>
                         </tr>
@@ -132,20 +109,19 @@
             </div>
             {{else}}
             <div class="empty-state">
-                <p>Nenhuma fita alugada no momento.</p>
-                <p style="margin-top: 1rem;">Todas as fitas est&atilde;o na prateleira!</p>
+                <p class="nes-text is-disabled">Nenhuma fita alugada no momento.</p>
+                <p class="nes-text is-success" style="margin-top: 1rem;">Todas as fitas est&atilde;o na prateleira!</p>
             </div>
             {{end}}
         </div>
 
         <div class="nav-bar">
-            <a href="/admin/inventory" class="nes-btn is-warning" style="font-size: 10px;">ACERVO</a>
-            <a href="/admin/stock" class="nes-btn is-primary" style="font-size: 10px;">ABASTECER</a>
-            <a href="/games" class="nes-btn" style="font-size: 10px;">PRATELEIRA</a>
+            <a href="/admin/inventory" class="nes-btn is-warning btn-nav">ACERVO</a>
+            <a href="/admin/stock" class="nes-btn is-primary btn-nav">ABASTECER</a>
+            <a href="/games" class="nes-btn btn-nav">PRATELEIRA</a>
         </div>
 
-        <p style="font-size: 8px; text-align: center; margin-top: 40px; color: #555;">&copy; 1991-2026 Modo Locadora -
-            Sob licen&ccedil;a GPLv3. Criado pelo Tio da Locadora.</p>
+        <p class="footer-copyright">&copy; 1991-2026 Modo Locadora - Sob licen&ccedil;a GPLv3. Criado pelo Tio da Locadora.</p>
     </div>
 </body>
 

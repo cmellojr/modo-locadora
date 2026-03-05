@@ -138,3 +138,89 @@ label {
 img, .nes-icon {
     image-rendering: pixelated;
 }
+
+/* NES text utility color overrides for dark theme */
+.nes-text.is-primary { color: #3498DB !important; }
+.nes-text.is-success { color: #92cc41 !important; }
+.nes-text.is-warning { color: #f7d51d !important; }
+.nes-text.is-error   { color: #e74c3c !important; }
+.nes-text.is-disabled { color: #555 !important; }
+
+/* NES dialog dark theme override */
+.nes-dialog.is-dark {
+    background-color: #121212;
+    border-color: #f7d51d;
+    color: #CCCCCC;
+}
+
+/* NES list dark theme override */
+.nes-list {
+    padding-left: 1.5rem;
+}
+
+/* Button size utilities */
+.nes-btn.btn-sm {
+    font-size: 8px;
+    padding: 4px 8px;
+}
+.nes-btn.btn-nav {
+    font-size: 10px;
+}
+
+/* Container title sizing */
+.title-main {
+    font-size: 14px;
+}
+.title-sub {
+    font-size: 8px;
+    margin-left: 10px;
+}
+
+/* Form layout utilities */
+.form-actions {
+    text-align: right;
+    margin-top: 1rem;
+}
+
+/* Navigation bar - shared across pages */
+.nav-bar {
+    margin-top: 2rem;
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+/* Empty state - shared across admin pages */
+.empty-state {
+    text-align: center;
+    padding: 2rem;
+    font-size: 10px;
+    color: #888;
+}
+
+/* Success balloon - shared notification pattern */
+.success-balloon {
+    margin-bottom: 1.5rem;
+}
+.success-balloon .balloon-text {
+    font-size: 10px;
+}
+
+/* Footer copyright - consistent across all templates */
+.footer-copyright {
+    font-size: 8px;
+    text-align: center;
+    margin-top: 40px;
+    color: #555;
+}
+
+/* Member avatar centering */
+.member-avatar {
+    text-align: center;
+    margin-bottom: 1rem;
+}
+
+/* NES progress bar size override for compact cards */
+.nes-progress.progress-sm {
+    height: 12px;
+}
