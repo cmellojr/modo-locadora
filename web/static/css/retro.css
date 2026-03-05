@@ -7,6 +7,7 @@ html, body {
     background-color: #0A0E1A !important; /* Dark Navy Blue background */
     color: #CCCCCC; /* Light Gray for general text */
     font-family: 'Press Start 2P', cursive;
+    font-size: 12px;
     margin: 0;
     padding: 0;
 }
@@ -71,7 +72,7 @@ a:hover {
 
 label {
     color: #3498DB !important;
-    font-size: 10px;
+    font-size: 12px;
     display: block;
     margin-bottom: 8px;
 }
@@ -103,7 +104,7 @@ label {
 }
 
 .game-title {
-    font-size: 8px;
+    font-size: 10px;
     color: #FFFFFF;
     margin-bottom: 10px;
     height: 30px;
@@ -112,12 +113,12 @@ label {
 
 /* Pixel alignment for titles */
 .pixel-aligned-title {
-    font-size: 14px !important;
+    font-size: 18px !important;
     color: #FFFFFF !important;
 }
 
 .pixel-aligned-subtitle {
-    font-size: 8px !important;
+    font-size: 10px !important;
     color: #3498DB !important;
 }
 
@@ -127,7 +128,7 @@ label {
     color: #f7d51d !important;
     border-color: #333 !important;
     font-family: 'Press Start 2P', cursive;
-    font-size: 8px;
+    font-size: 10px;
 }
 
 .nes-textarea::placeholder {
@@ -160,19 +161,19 @@ img, .nes-icon {
 
 /* Button size utilities */
 .nes-btn.btn-sm {
-    font-size: 8px;
-    padding: 4px 8px;
+    font-size: 10px;
+    padding: 6px 10px;
 }
 .nes-btn.btn-nav {
-    font-size: 10px;
+    font-size: 12px;
 }
 
 /* Container title sizing */
 .title-main {
-    font-size: 14px;
+    font-size: 16px;
 }
 .title-sub {
-    font-size: 8px;
+    font-size: 10px;
     margin-left: 10px;
 }
 
@@ -194,7 +195,7 @@ img, .nes-icon {
 .empty-state {
     text-align: center;
     padding: 2rem;
-    font-size: 10px;
+    font-size: 12px;
     color: #888;
 }
 
@@ -203,12 +204,12 @@ img, .nes-icon {
     margin-bottom: 1.5rem;
 }
 .success-balloon .balloon-text {
-    font-size: 10px;
+    font-size: 12px;
 }
 
 /* Footer copyright - consistent across all templates */
 .footer-copyright {
-    font-size: 8px;
+    font-size: 9px;
     text-align: center;
     margin-top: 40px;
     color: #555;
@@ -223,4 +224,10 @@ img, .nes-icon {
 /* NES progress bar size override for compact cards */
 .nes-progress.progress-sm {
     height: 12px;
+}
+
+/* Shared container wrapper - consistent max-width */
+.container-wrapper {
+    max-width: 960px;
+    width: 100%;
 }

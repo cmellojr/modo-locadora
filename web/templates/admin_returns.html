@@ -16,11 +16,6 @@
             justify-content: center;
         }
 
-        .container-wrapper {
-            max-width: 900px;
-            width: 100%;
-        }
-
         .admin-header {
             text-align: center;
             margin-bottom: 2rem;
@@ -28,11 +23,11 @@
 
         .returns-table {
             width: 100%;
-            font-size: 8px;
+            font-size: 11px;
         }
 
         .returns-table th {
-            font-size: 9px;
+            font-size: 12px;
             text-align: left;
         }
 
@@ -41,10 +36,10 @@
         }
 
         .returns-table .cover-thumb {
-            width: 40px;
+            width: 70px;
             height: auto;
             image-rendering: pixelated;
-            border: 1px solid #444;
+            border: 2px solid #444;
         }
     </style>
 </head>
@@ -90,7 +85,7 @@
                                 {{if .CoverURL}}
                                 <img src="{{.CoverURL}}" alt="{{.GameTitle}}" class="cover-thumb">
                                 {{else}}
-                                <span class="nes-text is-disabled" style="font-size: 6px;">N/A</span>
+                                <span class="nes-text is-disabled">N/A</span>
                                 {{end}}
                             </td>
                             <td>{{.GameTitle}}</td>

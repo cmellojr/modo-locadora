@@ -17,7 +17,7 @@
         }
 
         .container-wrapper {
-            max-width: 600px;
+            max-width: 750px;
             width: 100%;
         }
 
@@ -33,13 +33,13 @@
         .card-row {
             display: flex;
             justify-content: space-between;
-            margin-bottom: 1rem;
-            font-size: 8px;
+            margin-bottom: 1.2rem;
+            font-size: 11px;
         }
 
         .card-row .label {
             color: #92cc41;
-            min-width: 120px;
+            min-width: 160px;
         }
 
         .card-row .value {
@@ -50,7 +50,7 @@
 
         .membership-number {
             text-align: center;
-            font-size: 18px;
+            font-size: 22px;
             color: #f7d51d;
             margin: 1.5rem 0;
             letter-spacing: 4px;
@@ -69,15 +69,15 @@
         }
 
         .status-section .status-label {
-            font-size: 8px;
+            font-size: 10px;
             color: #777;
-            margin-bottom: 8px;
+            margin-bottom: 10px;
         }
 
         .rental-stats {
-            font-size: 7px;
+            font-size: 9px;
             color: #999;
-            margin-top: 8px;
+            margin-top: 10px;
         }
 
         .notebook-section {
@@ -88,7 +88,7 @@
             width: 100%;
             box-sizing: border-box;
             font-family: 'Press Start 2P', cursive;
-            font-size: 8px;
+            font-size: 10px;
             background-color: #0A0E1A;
             color: #f7d51d;
             border: 2px solid #333;
@@ -169,18 +169,18 @@
                 <p class="title">
                     <span class="title-main">Caderno de Passwords</span>
                 </p>
-                <p class="nes-text is-disabled" style="font-size: 7px; margin-bottom: 12px;">Anote aqui seus c&oacute;digos, passwords e progressos. N&atilde;o abandone um cl&aacute;ssico pela metade!</p>
+                <p class="nes-text is-disabled" style="margin-bottom: 12px;">Anote aqui seus c&oacute;digos, passwords e progressos. N&atilde;o abandone um cl&aacute;ssico pela metade!</p>
                 <form action="/carteirinha/notes" method="POST">
                     <textarea name="notes" class="nes-textarea" rows="6"
                         placeholder="Ex: Mega Man 2 - Senha: A1 B3 C5 D2 E4&#10;Sonic 2 - Level Select: 19 65 09 17&#10;Metroid - JUSTIN BAILEY ------ ------">{{.Member.PasswordNotes}}</textarea>
                     <div class="form-actions" style="margin-top: 10px;">
-                        <button type="submit" class="nes-btn is-primary btn-sm">SALVAR NOTAS</button>
+                        <button type="submit" class="nes-btn is-primary btn-nav">SALVAR NOTAS</button>
                     </div>
                 </form>
             </div>
         </div>
 
-        <div class="nav-bar" style="margin-top: 2rem;">
+        <div class="nav-bar">
             <a href="/games" class="nes-btn is-primary btn-nav">PRATELEIRA</a>
             <a href="/" class="nes-btn btn-nav">BALC&Atilde;O</a>
         </div>

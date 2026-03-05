@@ -16,22 +16,26 @@
             min-height: 100vh;
             padding: 20px;
         }
-        .container-wrapper {
-            max-width: 820px;
-            width: 100%;
-        }
         .balcao-layout {
             display: flex;
             gap: 20px;
-            align-items: flex-start;
+            align-items: stretch;
         }
         .balcao-main {
             flex: 1;
             min-width: 0;
+            display: flex;
+        }
+        .balcao-main > .nes-container {
+            flex: 1;
         }
         .balcao-sidebar {
-            width: 260px;
+            width: 320px;
             flex-shrink: 0;
+            display: flex;
+        }
+        .balcao-sidebar > .nes-container {
+            flex: 1;
         }
         @media (max-width: 700px) {
             .balcao-layout {
@@ -49,7 +53,7 @@
             text-align: right;
         }
         .manifesto-text {
-            font-size: 9px;
+            font-size: 11px;
             color: #f7d51d;
             line-height: 1.8;
             margin-bottom: 1.5rem;
@@ -57,12 +61,12 @@
             border-left: 4px solid #f7d51d;
         }
         .statute-list {
-            font-size: 8px;
+            font-size: 10px;
             color: #92cc41;
             line-height: 2;
         }
         .statute-list li {
-            margin-bottom: 12px;
+            margin-bottom: 14px;
         }
     </style>
 </head>
@@ -80,7 +84,7 @@
                             &ldquo;Aqui n&atilde;o h&aacute; lugar para pirataria desenfreada ou abandono de cl&aacute;ssicos. Escolha sua fita, sopre os contatos e jogue at&eacute; o fim. Honre sua carteirinha!&rdquo;
                         </div>
 
-                        <p class="nes-text is-primary" style="font-size: 9px; margin-bottom: 20px;">Identifique-se no balc&atilde;o para acessar a prateleira.</p>
+                        <p class="nes-text is-primary" style="margin-bottom: 20px;">Identifique-se no balc&atilde;o para acessar a prateleira.</p>
 
                         <form action="/login" method="POST">
                             <div class="input-group nes-field">

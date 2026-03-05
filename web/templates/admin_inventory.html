@@ -16,11 +16,6 @@
             justify-content: center;
         }
 
-        .container-wrapper {
-            max-width: 960px;
-            width: 100%;
-        }
-
         .admin-header {
             text-align: center;
             margin-bottom: 2rem;
@@ -28,11 +23,11 @@
 
         .inventory-table {
             width: 100%;
-            font-size: 8px;
+            font-size: 11px;
         }
 
         .inventory-table th {
-            font-size: 9px;
+            font-size: 12px;
             text-align: left;
             white-space: nowrap;
         }
@@ -42,20 +37,21 @@
         }
 
         .inventory-table .cover-thumb {
-            width: 48px;
+            width: 90px;
             height: auto;
             image-rendering: pixelated;
-            border: 1px solid #444;
+            border: 2px solid #444;
         }
 
         .inventory-table .game-title {
-            font-size: 8px;
+            font-size: 11px;
             line-height: 1.5;
         }
 
         .inventory-table .game-magazine {
-            font-size: 7px;
+            font-size: 9px;
             color: #92cc41;
+            margin-top: 4px;
         }
     </style>
 </head>
@@ -100,7 +96,7 @@
                                 {{if .CoverURL}}
                                 <img src="{{.CoverURL}}" alt="{{.Title}}" class="cover-thumb">
                                 {{else}}
-                                <span class="nes-text is-disabled" style="font-size: 6px;">N/A</span>
+                                <span class="nes-text is-disabled">N/A</span>
                                 {{end}}
                             </td>
                             <td>
