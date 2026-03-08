@@ -149,8 +149,9 @@ type GameView struct {
 	RenterName      string
 }
 
-// ListGames handles GET /games and renders the games shelf.
-func (h *Handler) ListGames(w http.ResponseWriter, r *http.Request, tmpl *template.Template) {
+// ListGames handles GET /games. Without ?platform= it shows the platform selection page.
+// With ?platform=X it shows the filtered games shelf for that platform.
+func (h *Handler) ListGames(w http.ResponseWriter, r *http.Request, platformsTmpl, gamesTmpl *template.Template) {
 	memberName := "Visitante"
 	var memberID string
 	var isLoggedIn bool
@@ -168,37 +169,48 @@ func (h *Handler) ListGames(w http.ResponseWriter, r *http.Request, tmpl *templa
 		}
 	}
 
+	platform := r.URL.Query().Get("platform")
+
+	// No platform filter → show platform selection page.
+	if platform == "" {
+		var platforms []database.PlatformSummary
+		if h.store != nil {
+			platforms, _ = h.store.ListPlatforms(r.Context())
+		}
+
+		data := struct {
+			MemberName string
+			IsLoggedIn bool
+			Platforms  []database.PlatformSummary
+		}{
+			MemberName: memberName,
+			IsLoggedIn: isLoggedIn,
+			Platforms:  platforms,
+		}
+
+		if err := platformsTmpl.Execute(w, data); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
+		return
+	}
+
+	// Platform filter present → show games for that platform.
 	var games []GameView
 
 	if h.store != nil {
-		gamesAvail, err := h.store.ListGamesWithAvailability(r.Context())
-		if err == nil && len(gamesAvail) > 0 {
+		gamesAvail, err := h.store.ListGamesWithAvailability(r.Context(), platform)
+		if err == nil {
 			for _, ga := range gamesAvail {
 				games = append(games, GameView{
 					ID:              ga.Game.ID.String(),
 					Title:           ga.Game.Title,
 					Platform:        ga.Game.Platform,
 					CoverURL:        ga.Game.CoverURL,
-					Summary:         ga.Game.Summary,
-					SourceMagazine:  ga.Game.SourceMagazine,
 					TotalCopies:     ga.TotalCopies,
 					AvailableCopies: ga.AvailableCopies,
 					RenterName:      ga.RenterName,
 				})
 			}
-		}
-	}
-
-	if len(games) == 0 {
-		games = []GameView{
-			{ID: "00000000-0000-0000-0000-000000000001", Title: "Chrono Trigger", Platform: "SNES",
-				CoverURL: "https://images.igdb.com/igdb/image/upload/t_cover_big/co1v9x.jpg", TotalCopies: 1, AvailableCopies: 1,
-				Summary: "Um RPG epico sobre viagem no tempo.", SourceMagazine: "Super Game Power #12"},
-			{ID: "00000000-0000-0000-0000-000000000002", Title: "Top Gear", Platform: "SNES",
-				CoverURL: "https://images.igdb.com/igdb/image/upload/t_cover_big/co2607.jpg", TotalCopies: 1, AvailableCopies: 0, RenterName: "Player1"},
-			{ID: "00000000-0000-0000-0000-000000000003", Title: "Super Metroid", Platform: "SNES",
-				CoverURL: "https://images.igdb.com/igdb/image/upload/t_cover_big/co1tpz.jpg", TotalCopies: 1, AvailableCopies: 1,
-				Summary: "Explore o planeta Zebes nesta aventura sci-fi.", SourceMagazine: "Acao Games #55"},
 		}
 	}
 
@@ -209,12 +221,65 @@ func (h *Handler) ListGames(w http.ResponseWriter, r *http.Request, tmpl *templa
 		MemberID   string
 		IsLoggedIn bool
 		Games      []GameView
+		Platform   string
 		DebtError  bool
 	}{
 		MemberName: memberName,
 		MemberID:   memberID,
 		IsLoggedIn: isLoggedIn,
 		Games:      games,
+		Platform:   platform,
+		DebtError:  debtError,
+	}
+
+	if err := gamesTmpl.Execute(w, data); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+}
+
+// GameDetailPage handles GET /games/{id} and renders the game detail page.
+func (h *Handler) GameDetailPage(w http.ResponseWriter, r *http.Request, tmpl *template.Template) {
+	if h.store == nil {
+		http.Error(w, "Database not configured", http.StatusServiceUnavailable)
+		return
+	}
+
+	idStr := r.PathValue("id")
+	id, err := uuid.Parse(idStr)
+	if err != nil {
+		http.Error(w, "ID de jogo inválido", http.StatusBadRequest)
+		return
+	}
+
+	detail, err := h.store.GetGameDetail(r.Context(), id)
+	if err != nil {
+		http.Error(w, "Falha ao carregar jogo: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+	if detail == nil {
+		http.Error(w, "Jogo não encontrado", http.StatusNotFound)
+		return
+	}
+
+	var memberID string
+	var isLoggedIn bool
+	rawMemberID := auth.GetSessionMemberID(r, h.cookieSecret)
+	if rawMemberID != "" {
+		memberID = rawMemberID
+		isLoggedIn = true
+	}
+
+	debtError := r.URL.Query().Get("error") == "em_debito"
+
+	data := struct {
+		Detail     *database.GameDetail
+		MemberID   string
+		IsLoggedIn bool
+		DebtError  bool
+	}{
+		Detail:     detail,
+		MemberID:   memberID,
+		IsLoggedIn: isLoggedIn,
 		DebtError:  debtError,
 	}
 
@@ -342,12 +407,14 @@ func (h *Handler) RentGame(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Falha ao verificar status: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
+	gameIDStr := r.FormValue("game_id")
+
 	if status == models.MemberStatusEmDebito {
-		http.Redirect(w, r, "/games?error=em_debito", http.StatusSeeOther)
+		http.Redirect(w, r, "/games/"+gameIDStr+"?error=em_debito", http.StatusSeeOther)
 		return
 	}
 
-	gameID, err := uuid.Parse(r.FormValue("game_id"))
+	gameID, err := uuid.Parse(gameIDStr)
 	if err != nil {
 		http.Error(w, "ID de jogo inválido", http.StatusBadRequest)
 		return
@@ -358,7 +425,7 @@ func (h *Handler) RentGame(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	http.Redirect(w, r, "/games", http.StatusSeeOther)
+	http.Redirect(w, r, "/games/"+gameID.String(), http.StatusSeeOther)
 }
 
 // AdminReturns handles GET /admin/returns and renders the active rentals for check-in.

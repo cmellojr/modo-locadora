@@ -30,6 +30,24 @@ type ShameEntry struct {
 	LateCount   int
 }
 
+// PlatformSummary holds summary data for a console/platform in the shelf.
+type PlatformSummary struct {
+	Platform  string
+	GameCount int
+	CoverURL  string // Cover of a representative game.
+}
+
+// GameDetail holds detailed info for a single game page.
+type GameDetail struct {
+	Game            models.Game
+	TotalCopies     int
+	AvailableCopies int
+	TotalRentals    int
+	TopRenterName   string
+	TopRenterCount  int
+	CurrentRenter   string
+}
+
 // Store defines the set of operations for the database layer.
 type Store interface {
 	// CreateMember persists a new member in the database.
@@ -56,8 +74,14 @@ type Store interface {
 	// ListGames retrieves all games from the database.
 	ListGames(ctx context.Context) ([]models.Game, error)
 
-	// ListGamesWithAvailability returns all games with their rental status.
-	ListGamesWithAvailability(ctx context.Context) ([]GameAvailability, error)
+	// ListGamesWithAvailability returns games with their rental status, optionally filtered by platform.
+	ListGamesWithAvailability(ctx context.Context, platform string) ([]GameAvailability, error)
+
+	// ListPlatforms returns a summary of each platform in the catalog.
+	ListPlatforms(ctx context.Context) ([]PlatformSummary, error)
+
+	// GetGameDetail returns detailed info for a single game including rental stats.
+	GetGameDetail(ctx context.Context, gameID uuid.UUID) (*GameDetail, error)
 
 	// RentGame creates a rental for the given game to the given member.
 	RentGame(ctx context.Context, gameID, memberID uuid.UUID) error

@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Prateleira de Jogos - Modo Locadora</title>
+    <title>{{.Platform}} - Modo Locadora</title>
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
     <link href="https://unpkg.com/nes.css@2.3.0/css/nes.min.css" rel="stylesheet" />
     <link rel="stylesheet" href="/static/css/retro.css">
@@ -34,12 +34,11 @@
 
         .shelf-container {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
             gap: 18px;
             padding: 15px;
         }
 
-        /* Cartridge Card Style */
         .cartridge-card {
             background-color: #1A1A1A;
             border: 2px solid #333;
@@ -50,7 +49,8 @@
             align-items: center;
             text-align: center;
             transition: border-color 0.2s, background-color 0.2s;
-            position: relative;
+            text-decoration: none;
+            color: inherit;
         }
 
         .cartridge-card:hover {
@@ -67,6 +67,19 @@
             object-fit: cover;
         }
 
+        .cartridge-card .no-cover {
+            width: 120px;
+            height: 155px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #222;
+            border: 2px solid #444;
+            color: #666;
+            font-size: 8px;
+            margin-bottom: 10px;
+        }
+
         .cartridge-card .game-title {
             font-size: 10px;
             color: #FFFFFF;
@@ -76,39 +89,9 @@
             line-height: 1.8;
         }
 
-        .cartridge-card .platform-badge {
-            margin-bottom: 8px;
-        }
-        .cartridge-card .platform-badge .is-primary {
-            font-size: 8px;
-        }
-
-        .cartridge-card .game-summary {
-            font-size: 8px;
-            color: #999;
-            line-height: 1.6;
-            margin-bottom: 8px;
-            height: 26px;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .cartridge-card .source-magazine {
-            font-size: 8px;
-            color: #92cc41;
-            font-style: italic;
-            margin-bottom: 8px;
-        }
-
         .cartridge-card .copy-count {
             font-size: 8px;
             color: #777;
-            margin-bottom: 4px;
-        }
-
-        .cartridge-card .nes-progress {
-            width: 100%;
-            height: 14px;
             margin-bottom: 8px;
         }
 
@@ -134,8 +117,8 @@
 <body>
     <div class="container-wrapper">
         <div class="header-bar">
-            <h2 class="pixel-aligned-title">PRATELEIRA DE JOGOS</h2>
-            <p class="greeting">AUTENTICADO: S&oacute;cio {{.MemberName}}</p>
+            <h2 class="pixel-aligned-title">PRATELEIRA: {{.Platform}}</h2>
+            <p class="greeting">S&oacute;cio {{.MemberName}}</p>
         </div>
 
         {{if .DebtError}}
@@ -150,59 +133,47 @@
 
         <div class="nes-container with-title is-dark">
             <p class="title">
-                <span class="title-main">[ACERVO DE CARTUCHOS]</span>
-                <span class="title-sub">{{len .Games}} fitas no balc&atilde;o</span>
+                <span class="title-main">[{{.Platform}}]</span>
+                <span class="title-sub">{{len .Games}} fitas</span>
             </p>
             <div class="forum-body">
+                {{if .Games}}
                 <div class="shelf-container">
                     {{range .Games}}
-                    <div class="cartridge-card">
+                    <a href="/games/{{.ID}}" class="cartridge-card">
                         {{if .CoverURL}}
                         <img src="{{.CoverURL}}" alt="{{.Title}}" class="game-cover-mini">
+                        {{else}}
+                        <div class="no-cover">SEM CAPA</div>
                         {{end}}
                         <p class="game-title">{{.Title}}</p>
-                        {{if .Platform}}
-                        <span class="nes-badge platform-badge">
-                            <span class="is-primary">{{.Platform}}</span>
-                        </span>
-                        {{end}}
-                        {{if .Summary}}<p class="game-summary">{{.Summary}}</p>{{end}}
-                        {{if .SourceMagazine}}<p class="source-magazine">Fonte: {{.SourceMagazine}}</p>{{end}}
                         <p class="copy-count">{{.AvailableCopies}} de {{.TotalCopies}} c&oacute;pias</p>
-                        <progress class="nes-progress {{if eq .AvailableCopies 0}}is-error{{else if eq .AvailableCopies .TotalCopies}}is-success{{else}}is-warning{{end}}"
-                            value="{{.AvailableCopies}}" max="{{.TotalCopies}}"></progress>
 
                         {{if gt .AvailableCopies 0}}
-                            {{if $.IsLoggedIn}}
-                            <form action="/rent" method="POST" style="margin: 0; width: 100%;">
-                                <input type="hidden" name="game_id" value="{{.ID}}">
-                                <button type="submit" class="nes-btn is-success btn-sm"
-                                    style="width: 100%; box-sizing: border-box;">
-                                    ALUGAR
-                                </button>
-                            </form>
-                            {{else}}
                             <span class="nes-badge game-status-badge">
                                 <span class="is-primary">DISPON&Iacute;VEL</span>
                             </span>
-                            {{end}}
                         {{else}}
                             <span class="nes-badge game-status-badge">
                                 <span class="is-error">ALUGADO</span>
                             </span>
-                            {{if .RenterName}}<span class="renter-tag">Com o S&oacute;cio: {{.RenterName}}</span>{{end}}
+                            {{if .RenterName}}<span class="renter-tag">Com: {{.RenterName}}</span>{{end}}
                         {{end}}
-                    </div>
+                    </a>
                     {{end}}
                 </div>
+                {{else}}
+                <p class="empty-state">Nenhuma fita deste console no acervo ainda.</p>
+                {{end}}
             </div>
         </div>
 
         <div class="nav-bar">
+            <a href="/games" class="nes-btn btn-nav">VOLTAR AOS CONSOLES</a>
             {{if .IsLoggedIn}}
             <a href="/carteirinha" class="nes-btn is-warning btn-nav">CARTEIRINHA</a>
             {{end}}
-            <a href="/" class="nes-btn is-primary btn-nav">VOLTAR AO BALC&Atilde;O</a>
+            <a href="/" class="nes-btn is-primary btn-nav">BALC&Atilde;O</a>
         </div>
 
         <p class="footer-copyright">&copy; 1991-2026 Modo Locadora - Sob licen&ccedil;a GPLv3. Criado pelo Tio da Locadora.</p>

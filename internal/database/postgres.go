@@ -177,8 +177,8 @@ func (s *PostgresStore) ListGames(ctx context.Context) ([]models.Game, error) {
 	return games, nil
 }
 
-// ListGamesWithAvailability returns all games with copy counts and rental status.
-func (s *PostgresStore) ListGamesWithAvailability(ctx context.Context) ([]GameAvailability, error) {
+// ListGamesWithAvailability returns games with copy counts and rental status, optionally filtered by platform.
+func (s *PostgresStore) ListGamesWithAvailability(ctx context.Context, platform string) ([]GameAvailability, error) {
 	query := `
 		SELECT g.id, g.title, g.igdb_id, g.platform, g.summary, g.cover_url, g.source_magazine, g.acquired_at,
 			COUNT(gc.id) AS total_copies,
@@ -190,11 +190,19 @@ func (s *PostgresStore) ListGamesWithAvailability(ctx context.Context) ([]GameAv
 				 WHERE gc2.game_id = g.id AND r2.returned_at IS NULL
 				 LIMIT 1), '') AS renter_name
 		FROM games g
-		LEFT JOIN game_copies gc ON gc.game_id = g.id
-		GROUP BY g.id
-		ORDER BY g.acquired_at DESC`
+		LEFT JOIN game_copies gc ON gc.game_id = g.id`
 
-	rows, err := s.pool.Query(ctx, query)
+	var args []interface{}
+	if platform != "" {
+		query += ` WHERE g.platform = $1`
+		args = append(args, platform)
+	}
+
+	query += `
+		GROUP BY g.id
+		ORDER BY g.title ASC`
+
+	rows, err := s.pool.Query(ctx, query, args...)
 	if err != nil {
 		return nil, fmt.Errorf("failed to query games with availability: %w", err)
 	}
@@ -213,6 +221,85 @@ func (s *PostgresStore) ListGamesWithAvailability(ctx context.Context) ([]GameAv
 		result = append(result, ga)
 	}
 	return result, nil
+}
+
+// ListPlatforms returns a summary of each platform in the catalog.
+func (s *PostgresStore) ListPlatforms(ctx context.Context) ([]PlatformSummary, error) {
+	query := `
+		SELECT g.platform, COUNT(*) AS game_count,
+			COALESCE((SELECT g2.cover_url FROM games g2 WHERE g2.platform = g.platform AND g2.cover_url != '' ORDER BY g2.acquired_at DESC LIMIT 1), '') AS cover_url
+		FROM games g
+		GROUP BY g.platform
+		ORDER BY g.platform ASC`
+
+	rows, err := s.pool.Query(ctx, query)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query platforms: %w", err)
+	}
+	defer rows.Close()
+
+	var result []PlatformSummary
+	for rows.Next() {
+		var ps PlatformSummary
+		if err := rows.Scan(&ps.Platform, &ps.GameCount, &ps.CoverURL); err != nil {
+			return nil, fmt.Errorf("failed to scan platform summary: %w", err)
+		}
+		result = append(result, ps)
+	}
+	return result, nil
+}
+
+// GetGameDetail returns detailed info for a single game including rental stats.
+func (s *PostgresStore) GetGameDetail(ctx context.Context, gameID uuid.UUID) (*GameDetail, error) {
+	// Base game + copy counts.
+	query := `
+		SELECT g.id, g.title, g.igdb_id, g.platform, g.summary, g.cover_url, g.source_magazine, g.acquired_at,
+			COUNT(gc.id) AS total_copies,
+			COUNT(gc.id) FILTER (WHERE gc.status = 'available') AS available_copies
+		FROM games g
+		LEFT JOIN game_copies gc ON gc.game_id = g.id
+		WHERE g.id = $1
+		GROUP BY g.id`
+
+	var gd GameDetail
+	err := s.pool.QueryRow(ctx, query, gameID).Scan(
+		&gd.Game.ID, &gd.Game.Title, &gd.Game.IgdbID, &gd.Game.Platform,
+		&gd.Game.Summary, &gd.Game.CoverURL, &gd.Game.SourceMagazine, &gd.Game.AcquiredAt,
+		&gd.TotalCopies, &gd.AvailableCopies,
+	)
+	if err != nil {
+		if err == pgx.ErrNoRows {
+			return nil, nil
+		}
+		return nil, fmt.Errorf("failed to get game detail: %w", err)
+	}
+
+	// Total rental count for this game.
+	s.pool.QueryRow(ctx, `
+		SELECT COUNT(*) FROM rentals r
+		JOIN game_copies gc ON gc.id = r.copy_id
+		WHERE gc.game_id = $1`, gameID).Scan(&gd.TotalRentals)
+
+	// Top renter for this game.
+	s.pool.QueryRow(ctx, `
+		SELECT m.profile_name, COUNT(*) AS cnt
+		FROM rentals r
+		JOIN game_copies gc ON gc.id = r.copy_id
+		JOIN members m ON m.id = r.member_id
+		WHERE gc.game_id = $1
+		GROUP BY m.profile_name
+		ORDER BY cnt DESC
+		LIMIT 1`, gameID).Scan(&gd.TopRenterName, &gd.TopRenterCount)
+
+	// Current renter (if any copy is currently rented).
+	s.pool.QueryRow(ctx, `
+		SELECT m.profile_name FROM rentals r
+		JOIN game_copies gc ON gc.id = r.copy_id
+		JOIN members m ON m.id = r.member_id
+		WHERE gc.game_id = $1 AND r.returned_at IS NULL
+		LIMIT 1`, gameID).Scan(&gd.CurrentRenter)
+
+	return &gd, nil
 }
 
 // RentGame creates a rental for the given game to the given member.

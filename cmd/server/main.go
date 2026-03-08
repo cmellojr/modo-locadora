@@ -60,9 +60,19 @@ func main() {
 		log.Fatalf("failed to parse index template: %v", err)
 	}
 
+	platformsTmpl, err := template.ParseFiles("web/templates/platforms.html")
+	if err != nil {
+		log.Fatalf("failed to parse platforms template: %v", err)
+	}
+
 	gamesTmpl, err := template.ParseFiles("web/templates/games.html")
 	if err != nil {
 		log.Fatalf("failed to parse games template: %v", err)
+	}
+
+	gameDetailTmpl, err := template.ParseFiles("web/templates/game_detail.html")
+	if err != nil {
+		log.Fatalf("failed to parse game detail template: %v", err)
 	}
 
 	adminStockTmpl, err := template.ParseFiles("web/templates/admin_stock.html")
@@ -96,7 +106,7 @@ func main() {
 	})
 	mux.HandleFunc("POST /login", h.Login)
 	mux.HandleFunc("GET /games", func(w http.ResponseWriter, r *http.Request) {
-		h.ListGames(w, r, gamesTmpl)
+		h.ListGames(w, r, platformsTmpl, gamesTmpl)
 	})
 	mux.HandleFunc("GET /search", h.SearchGame)
 
@@ -130,7 +140,9 @@ func main() {
 	mux.Handle("GET /static/", http.StripPrefix("/static", fileServer))
 
 	mux.HandleFunc("POST /members", h.CreateMember)
-	mux.HandleFunc("GET /games/{id}", h.GetGame)
+	mux.HandleFunc("GET /games/{id}", func(w http.ResponseWriter, r *http.Request) {
+		h.GameDetailPage(w, r, gameDetailTmpl)
+	})
 
 	port := os.Getenv("PORT")
 	if port == "" {
