@@ -4,8 +4,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"html/template"
+	"io"
 	"net/http"
 	"os"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -566,6 +568,11 @@ func (h *Handler) UpdateGame(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if err := r.ParseMultipartForm(10 << 20); err != nil {
+		http.Error(w, "Falha ao processar formulário", http.StatusBadRequest)
+		return
+	}
+
 	idStr := r.FormValue("id")
 	id, err := uuid.Parse(idStr)
 	if err != nil {
@@ -584,12 +591,40 @@ func (h *Handler) UpdateGame(w http.ResponseWriter, r *http.Request) {
 	game.Summary = r.FormValue("summary")
 	game.SourceMagazine = r.FormValue("magazine")
 
-	coverURL := r.FormValue("cover_url")
-	if coverURL != "" {
-		if strings.Contains(coverURL, "t_thumb") {
-			coverURL = strings.Replace(coverURL, "t_thumb", "t_cover_big", 1)
+	// Handle cover file upload.
+	file, header, err := r.FormFile("cover_file")
+	if err == nil {
+		defer file.Close()
+
+		ext := filepath.Ext(header.Filename)
+		if ext == "" {
+			ext = ".jpg"
 		}
-		game.CoverURL = coverURL
+		filename := id.String() + ext
+		savePath := filepath.Join("web", "static", "covers", filename)
+
+		dst, err := os.Create(savePath)
+		if err != nil {
+			http.Error(w, "Falha ao salvar capa: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+		defer dst.Close()
+
+		if _, err := io.Copy(dst, file); err != nil {
+			http.Error(w, "Falha ao gravar capa: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		game.CoverURL = "/static/covers/" + filename
+	} else {
+		// No upload — preserve existing cover_url from hidden field.
+		coverURL := r.FormValue("cover_url")
+		if coverURL != "" {
+			if strings.Contains(coverURL, "t_thumb") {
+				coverURL = strings.Replace(coverURL, "t_thumb", "t_cover_big", 1)
+			}
+			game.CoverURL = coverURL
+		}
 	}
 
 	if err := h.store.UpdateGame(r.Context(), game); err != nil {
@@ -635,7 +670,13 @@ func (h *Handler) SearchGame(w http.ResponseWriter, r *http.Request) {
 }
 
 // HandleIndex handles GET / and renders the landing page with the Wall of Shame.
+// Authenticated members are redirected straight to the shelf.
 func (h *Handler) HandleIndex(w http.ResponseWriter, r *http.Request, tmpl *template.Template) {
+	if memberID := auth.GetSessionMemberID(r, h.cookieSecret); memberID != "" {
+		http.Redirect(w, r, "/games", http.StatusSeeOther)
+		return
+	}
+
 	var shameEntries []database.ShameEntry
 	if h.store != nil {
 		entries, err := h.store.GetTopShameEntries(r.Context(), 5)

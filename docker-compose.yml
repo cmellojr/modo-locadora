@@ -12,6 +12,8 @@ services:
       - COOKIE_SECRET=${COOKIE_SECRET}
       - ADMIN_EMAIL=${ADMIN_EMAIL}
       - PORT=8080
+    volumes:
+      - covers_data:/app/web/static/covers
     depends_on:
       db:
         condition: service_healthy
@@ -36,3 +38,4 @@ services:
 
 volumes:
   postgres_data:
+  covers_data:

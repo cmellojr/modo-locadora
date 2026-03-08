@@ -79,9 +79,14 @@
                         {{end}}
                     </div>
 
-                    <form action="/admin/update-game" method="POST">
+                    <form action="/admin/update-game" method="POST" enctype="multipart/form-data">
                         <input type="hidden" name="id" value="{{.Game.ID}}">
                         <input type="hidden" name="cover_url" value="{{.Game.CoverURL}}">
+
+                        <div class="field-row nes-field">
+                            <label for="cover_file">Capa Brasileira (upload)</label>
+                            <input type="file" id="cover_file" name="cover_file" accept="image/*" class="nes-input" style="font-size: 9px; padding: 8px;">
+                        </div>
 
                         <div class="field-row nes-field">
                             <label for="title">T&iacute;tulo</label>
