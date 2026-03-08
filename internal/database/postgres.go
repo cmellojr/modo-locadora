@@ -38,13 +38,14 @@ func (s *PostgresStore) Close() {
 // memberColumns is the shared column list for member queries.
 const memberColumns = `id, profile_name, email, password_hash, favorite_console,
 	COALESCE(membership_number, ''), COALESCE(address, ''), COALESCE(phone, ''),
-	COALESCE(password_notes, ''), joined_at`
+	COALESCE(password_notes, ''), COALESCE(status, 'active'), COALESCE(late_count, 0),
+	joined_at`
 
 func scanMember(row pgx.Row) (*models.Member, error) {
 	var m models.Member
 	err := row.Scan(&m.ID, &m.ProfileName, &m.Email, &m.PasswordHash,
 		&m.FavoriteConsole, &m.MembershipNumber, &m.Address, &m.Phone,
-		&m.PasswordNotes, &m.JoinedAt)
+		&m.PasswordNotes, &m.Status, &m.LateCount, &m.JoinedAt)
 	if err != nil {
 		if err == pgx.ErrNoRows {
 			return nil, nil
@@ -355,4 +356,123 @@ func (s *PostgresStore) GetMemberRentalStats(ctx context.Context, memberID uuid.
 		return 0, 0, fmt.Errorf("failed to get rental stats: %w", err)
 	}
 	return activeCount, overdueCount, nil
+}
+
+// ProcessOverdueRentals auto-returns overdue rentals and penalizes members.
+func (s *PostgresStore) ProcessOverdueRentals(ctx context.Context) (int, error) {
+	tx, err := s.pool.Begin(ctx)
+	if err != nil {
+		return 0, fmt.Errorf("failed to begin transaction: %w", err)
+	}
+	defer tx.Rollback(ctx)
+
+	rows, err := tx.Query(ctx,
+		`SELECT r.id, r.copy_id, r.member_id
+		 FROM rentals r
+		 WHERE r.returned_at IS NULL AND r.due_at < NOW()
+		 FOR UPDATE`)
+	if err != nil {
+		return 0, fmt.Errorf("failed to query overdue rentals: %w", err)
+	}
+
+	type overdueRental struct {
+		rentalID uuid.UUID
+		copyID   uuid.UUID
+		memberID uuid.UUID
+	}
+	var overdue []overdueRental
+	for rows.Next() {
+		var o overdueRental
+		if err := rows.Scan(&o.rentalID, &o.copyID, &o.memberID); err != nil {
+			rows.Close()
+			return 0, fmt.Errorf("failed to scan overdue rental: %w", err)
+		}
+		overdue = append(overdue, o)
+	}
+	rows.Close()
+
+	if len(overdue) == 0 {
+		return 0, nil
+	}
+
+	for _, o := range overdue {
+		_, err = tx.Exec(ctx,
+			`UPDATE rentals SET returned_at = NOW() WHERE id = $1`, o.rentalID)
+		if err != nil {
+			return 0, fmt.Errorf("failed to auto-return rental %s: %w", o.rentalID, err)
+		}
+
+		_, err = tx.Exec(ctx,
+			`UPDATE game_copies SET status = 'available' WHERE id = $1`, o.copyID)
+		if err != nil {
+			return 0, fmt.Errorf("failed to mark copy available %s: %w", o.copyID, err)
+		}
+
+		_, err = tx.Exec(ctx,
+			`UPDATE members SET status = 'em_debito', late_count = late_count + 1 WHERE id = $1`,
+			o.memberID)
+		if err != nil {
+			return 0, fmt.Errorf("failed to penalize member %s: %w", o.memberID, err)
+		}
+	}
+
+	if err := tx.Commit(ctx); err != nil {
+		return 0, fmt.Errorf("failed to commit overdue processing: %w", err)
+	}
+
+	return len(overdue), nil
+}
+
+// GetTopShameEntries returns the top N members with the most late returns.
+func (s *PostgresStore) GetTopShameEntries(ctx context.Context, limit int) ([]ShameEntry, error) {
+	query := `
+		SELECT profile_name, late_count
+		FROM members
+		WHERE late_count > 0
+		ORDER BY late_count DESC, profile_name ASC
+		LIMIT $1`
+
+	rows, err := s.pool.Query(ctx, query, limit)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query shame entries: %w", err)
+	}
+	defer rows.Close()
+
+	var entries []ShameEntry
+	for rows.Next() {
+		var e ShameEntry
+		if err := rows.Scan(&e.ProfileName, &e.LateCount); err != nil {
+			return nil, fmt.Errorf("failed to scan shame entry: %w", err)
+		}
+		entries = append(entries, e)
+	}
+	return entries, nil
+}
+
+// RedeemMember resets a member's status from 'em_debito' to 'active'.
+func (s *PostgresStore) RedeemMember(ctx context.Context, memberID uuid.UUID) error {
+	tag, err := s.pool.Exec(ctx,
+		`UPDATE members SET status = 'active' WHERE id = $1 AND status = 'em_debito'`,
+		memberID)
+	if err != nil {
+		return fmt.Errorf("failed to redeem member: %w", err)
+	}
+	if tag.RowsAffected() == 0 {
+		return fmt.Errorf("member not found or not in debt: %s", memberID)
+	}
+	return nil
+}
+
+// GetMemberStatus returns the current status of a member.
+func (s *PostgresStore) GetMemberStatus(ctx context.Context, memberID uuid.UUID) (string, error) {
+	var status string
+	err := s.pool.QueryRow(ctx,
+		`SELECT COALESCE(status, 'active') FROM members WHERE id = $1`, memberID).Scan(&status)
+	if err != nil {
+		if err == pgx.ErrNoRows {
+			return "", fmt.Errorf("member not found: %s", memberID)
+		}
+		return "", fmt.Errorf("failed to get member status: %w", err)
+	}
+	return status, nil
 }

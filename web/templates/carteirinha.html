@@ -110,7 +110,14 @@
             <p class="pixel-aligned-subtitle">[MODO LOCADORA &mdash; DESDE 1991]</p>
         </header>
 
-        {{if .Success}}
+        {{if eq .Success "redencao"}}
+        <div class="success-balloon">
+            <div class="nes-balloon from-left is-dark">
+                <p class="balloon-text">Cartucho soprado! Voc&ecirc; est&aacute; redimido(a). N&atilde;o atrase de novo!</p>
+            </div>
+            <i class="nes-bcrikko"></i>
+        </div>
+        {{else if .Success}}
         <div class="success-balloon">
             <div class="nes-balloon from-left is-dark">
                 <p class="balloon-text">Caderno de passwords salvo com sucesso!</p>
@@ -161,6 +168,24 @@
                     {{.ActiveRentals}} fita(s) alugada(s){{if gt .OverdueCount 0}} &mdash; {{.OverdueCount}} em atraso{{end}}
                 </p>
             </div>
+
+            {{if .IsEmDebito}}
+            <div style="margin-top: 1.5rem; text-align: center; padding-top: 1rem; border-top: 2px dashed #e74c3c;">
+                <p class="nes-text is-error" style="font-size: 10px; margin-bottom: 12px;">
+                    Voc&ecirc; est&aacute; em d&eacute;bito com o Tio! Sopre o cartucho e pe&ccedil;a desculpas.
+                </p>
+                <form action="/carteirinha/redeem" method="POST">
+                    <button type="submit" class="nes-btn is-warning btn-nav">
+                        SOPRAR O CARTUCHO E PEDIR DESCULPAS
+                    </button>
+                </form>
+                {{if gt .LateCount 0}}
+                <p style="font-size: 8px; color: #777; margin-top: 8px;">
+                    Hist&oacute;rico: {{.LateCount}} atraso(s) registrado(s) permanentemente.
+                </p>
+                {{end}}
+            </div>
+            {{end}}
         </div>
 
         <!-- Caderno de Passwords -->

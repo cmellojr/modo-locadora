@@ -14,6 +14,7 @@ import (
 	"github.com/cmellojr/modo-locadora/internal/config"
 	"github.com/cmellojr/modo-locadora/internal/database"
 	"github.com/cmellojr/modo-locadora/internal/handlers"
+	"github.com/cmellojr/modo-locadora/internal/jobs"
 	"github.com/cmellojr/modo-locadora/internal/middleware"
 )
 
@@ -48,6 +49,11 @@ func main() {
 	}
 
 	h := handlers.NewHandler(store, cookieSecret)
+
+	// Start the overdue rental checker background job.
+	if store != nil {
+		jobs.StartOverdueChecker(ctx, store, 5*time.Minute)
+	}
 
 	indexTmpl, err := template.ParseFiles("web/templates/index.html")
 	if err != nil {
@@ -86,9 +92,7 @@ func main() {
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /{$}", func(w http.ResponseWriter, r *http.Request) {
-		if err := indexTmpl.Execute(w, nil); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-		}
+		h.HandleIndex(w, r, indexTmpl)
 	})
 	mux.HandleFunc("POST /login", h.Login)
 	mux.HandleFunc("GET /games", func(w http.ResponseWriter, r *http.Request) {
@@ -119,6 +123,7 @@ func main() {
 	}))
 	mux.HandleFunc("POST /rent", middleware.RequireAuth(cookieSecret, h.RentGame))
 	mux.HandleFunc("POST /carteirinha/notes", middleware.RequireAuth(cookieSecret, h.SavePasswordNotes))
+	mux.HandleFunc("POST /carteirinha/redeem", middleware.RequireAuth(cookieSecret, h.HandleRedeem))
 
 	// Serve static files from web/static
 	fileServer := http.FileServer(http.Dir("web/static"))

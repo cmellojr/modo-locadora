@@ -24,6 +24,12 @@ type ActiveRental struct {
 	RentedAt   string // Formatted date.
 }
 
+// ShameEntry holds data for the "Painel da Vergonha" (Wall of Shame).
+type ShameEntry struct {
+	ProfileName string
+	LateCount   int
+}
+
 // Store defines the set of operations for the database layer.
 type Store interface {
 	// CreateMember persists a new member in the database.
@@ -70,4 +76,16 @@ type Store interface {
 
 	// GetMemberRentalStats returns counts of active and overdue rentals for a member.
 	GetMemberRentalStats(ctx context.Context, memberID uuid.UUID) (activeCount, overdueCount int, err error)
+
+	// ProcessOverdueRentals auto-returns overdue rentals and penalizes members.
+	ProcessOverdueRentals(ctx context.Context) (int, error)
+
+	// GetTopShameEntries returns the top N members with the most late returns.
+	GetTopShameEntries(ctx context.Context, limit int) ([]ShameEntry, error)
+
+	// RedeemMember resets a member's status from 'em_debito' to 'active'.
+	RedeemMember(ctx context.Context, memberID uuid.UUID) error
+
+	// GetMemberStatus returns the member's current status.
+	GetMemberStatus(ctx context.Context, memberID uuid.UUID) (string, error)
 }

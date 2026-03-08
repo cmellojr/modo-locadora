@@ -200,16 +200,20 @@ func (h *Handler) ListGames(w http.ResponseWriter, r *http.Request, tmpl *templa
 		}
 	}
 
+	debtError := r.URL.Query().Get("error") == "em_debito"
+
 	data := struct {
 		MemberName string
 		MemberID   string
 		IsLoggedIn bool
 		Games      []GameView
+		DebtError  bool
 	}{
 		MemberName: memberName,
 		MemberID:   memberID,
 		IsLoggedIn: isLoggedIn,
 		Games:      games,
+		DebtError:  debtError,
 	}
 
 	if err := tmpl.Execute(w, data); err != nil {
@@ -244,9 +248,11 @@ func (h *Handler) Carteirinha(w http.ResponseWriter, r *http.Request, tmpl *temp
 
 	activeCount, overdueCount, _ := h.store.GetMemberRentalStats(r.Context(), id)
 
+	isEmDebito := member.Status == models.MemberStatusEmDebito
+
 	statusLabel := "Jogador Honesto"
 	statusBadge := "is-success"
-	if overdueCount > 0 {
+	if isEmDebito || overdueCount > 0 {
 		statusLabel = "Socio em Debito com o Tio"
 		statusBadge = "is-error"
 	} else if activeCount > 0 {
@@ -263,6 +269,8 @@ func (h *Handler) Carteirinha(w http.ResponseWriter, r *http.Request, tmpl *temp
 		StatusLabel   string
 		StatusBadge   string
 		Success       string
+		IsEmDebito    bool
+		LateCount     int
 	}{
 		Member:        member,
 		ActiveRentals: activeCount,
@@ -270,6 +278,8 @@ func (h *Handler) Carteirinha(w http.ResponseWriter, r *http.Request, tmpl *temp
 		StatusLabel:   statusLabel,
 		StatusBadge:   statusBadge,
 		Success:       successMsg,
+		IsEmDebito:    isEmDebito,
+		LateCount:     member.LateCount,
 	}
 
 	if err := tmpl.Execute(w, data); err != nil {
@@ -321,6 +331,17 @@ func (h *Handler) RentGame(w http.ResponseWriter, r *http.Request) {
 	memberID, err := uuid.Parse(rawMemberID)
 	if err != nil {
 		http.Error(w, "Sessão inválida", http.StatusBadRequest)
+		return
+	}
+
+	// Block rental if member is in debt.
+	status, err := h.store.GetMemberStatus(r.Context(), memberID)
+	if err != nil {
+		http.Error(w, "Falha ao verificar status: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+	if status == models.MemberStatusEmDebito {
+		http.Redirect(w, r, "/games?error=em_debito", http.StatusSeeOther)
 		return
 	}
 
@@ -611,6 +632,54 @@ func (h *Handler) SearchGame(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(games)
+}
+
+// HandleIndex handles GET / and renders the landing page with the Wall of Shame.
+func (h *Handler) HandleIndex(w http.ResponseWriter, r *http.Request, tmpl *template.Template) {
+	var shameEntries []database.ShameEntry
+	if h.store != nil {
+		entries, err := h.store.GetTopShameEntries(r.Context(), 5)
+		if err == nil {
+			shameEntries = entries
+		}
+	}
+
+	data := struct {
+		ShameEntries []database.ShameEntry
+	}{
+		ShameEntries: shameEntries,
+	}
+
+	if err := tmpl.Execute(w, data); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+}
+
+// HandleRedeem handles POST /carteirinha/redeem, clearing the member's debt status.
+func (h *Handler) HandleRedeem(w http.ResponseWriter, r *http.Request) {
+	if h.store == nil {
+		http.Error(w, "Database not configured", http.StatusServiceUnavailable)
+		return
+	}
+
+	rawMemberID := auth.GetSessionMemberID(r, h.cookieSecret)
+	if rawMemberID == "" {
+		http.Redirect(w, r, "/", http.StatusSeeOther)
+		return
+	}
+
+	memberID, err := uuid.Parse(rawMemberID)
+	if err != nil {
+		http.Redirect(w, r, "/", http.StatusSeeOther)
+		return
+	}
+
+	if err := h.store.RedeemMember(r.Context(), memberID); err != nil {
+		http.Error(w, "Falha na redenção: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	http.Redirect(w, r, "/carteirinha?success=redencao", http.StatusSeeOther)
 }
 
 // GetGame handles GET /games/{id}.

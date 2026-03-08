@@ -120,6 +120,28 @@
             </div>
         </div>
 
+        {{if .ShameEntries}}
+        <div style="margin-top: 20px;">
+            <div class="nes-container with-title is-dark">
+                <p class="title">
+                    <span class="title-main">Painel da Vergonha</span>
+                    <span class="title-sub">[DEVEDORES]</span>
+                </p>
+                <p class="nes-text is-error" style="font-size: 10px; margin-bottom: 16px;">
+                    S&oacute;cios que n&atilde;o devolveram no prazo:
+                </p>
+                {{range .ShameEntries}}
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px dashed #333; font-size: 11px;">
+                    <span>
+                        <span style="color: #e74c3c;">&#9760; {{.ProfileName}}</span>
+                    </span>
+                    <span class="nes-text is-warning">{{.LateCount}}x atrasado(a)</span>
+                </div>
+                {{end}}
+            </div>
+        </div>
+        {{end}}
+
         <p class="footer-copyright">&copy; 1991-2026 Modo Locadora - Sob licen&ccedil;a GPLv3. Criado pelo Tio da Locadora.</p>
     </div>
 </body>
