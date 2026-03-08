@@ -1,0 +1,8 @@
+.env
+.git
+*.exe
+/server
+README.md
+CLAUDE.md
+AGENTS.md
+docs/
