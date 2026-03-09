@@ -16,43 +16,39 @@ Report privately via email to the project maintainer or use [GitHub's private vu
 
 Include: description, steps to reproduce, potential impact, and any suggested fix.
 
-## Authentication
+## Authentication & Sessions
 
-- Passwords are hashed with **bcrypt** (default cost) before storage. Never logged or exposed in API responses.
-- Login requires profile name + password, validated against the database.
-
-## Session Management
-
-Sessions use a signed cookie (`session_member`):
-
-| Property | Value |
-|----------|-------|
-| Format | `{member_uuid}.{hmac_sha256_hex}` |
-| HttpOnly | `true` |
-| SameSite | `Strict` |
-| MaxAge | 604800 (7 days) |
-| Path | `/` |
-
-The cookie is signed using HMAC-SHA256 with the `COOKIE_SECRET` environment variable. Forged or tampered cookies are rejected.
+- Passwords hashed with **bcrypt** (default cost). Never logged or exposed in API responses.
+- Sessions use a signed cookie (`session_member`): `{member_uuid}.{hmac_sha256_hex}`
+- Cookie flags: `HttpOnly`, `SameSite=Strict`, `MaxAge=604800` (7 days), `Path=/`
+- `COOKIE_SECRET` must be at least 32 characters.
 
 ## Authorization
 
 | Scope | Middleware | Check |
 |-------|-----------|-------|
-| Member routes (`/carteirinha`, `/rent`) | `RequireAuth` | Valid signed cookie |
+| Member routes | `RequireAuth` | Valid signed cookie |
 | Admin routes (`/admin/*`) | `RequireAdmin` | Valid cookie + email matches `ADMIN_EMAIL` |
 
 Unauthenticated requests redirect to `/`. Non-admin users receive `403 Forbidden`.
 
+## Member Reputation
+
+- Overdue rentals are auto-returned by a background job (5-minute interval).
+- Offending members are marked `em_debito` with a permanent `late_count` increment.
+- Members in debt cannot rent games until they redeem themselves via `/carteirinha/redeem`.
+- The Wall of Shame on the landing page displays top offenders.
+
 ## Data Integrity
 
-- Rental and return operations use **database transactions** for atomicity (find copy, update status, create/update rental record).
-- Game purchases atomically create both the game and a copy in a single transaction.
+- Rental, return, and game acquisition operations use **database transactions**.
+- All SQL queries use parameterized placeholders (no string interpolation).
 
-## Environment & Secrets
+## File Uploads
 
-- Credentials loaded from `.env` (never committed — listed in `.gitignore`).
-- `.env.example` provided with placeholder values.
+- Cover uploads are restricted to image files (`accept="image/*"`).
+- Maximum form size: 10 MB.
+- Files are saved with the game UUID as filename (prevents path traversal).
 
 ## Deployment Checklist
 
@@ -61,3 +57,4 @@ Unauthenticated requests redirect to `/`. Non-admin users receive `403 Forbidden
 - Use **HTTPS** in production to protect cookies and form data.
 - Restrict database access to the application server only.
 - Rotate Twitch API credentials if compromised.
+- Credentials loaded from `.env` (never committed — listed in `.gitignore`).

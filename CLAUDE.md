@@ -5,89 +5,92 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Build & Run
 
 ```bash
-# Build
+# Local build
 go build -o modo-locadora ./cmd/server
+go run ./cmd/server          # starts on :8080 (override with PORT env var)
+go vet ./...                 # static analysis — run before every commit
 
-# Run (requires .env or environment variables set)
-go run ./cmd/server
-# Server starts on port 8080 (override with PORT env var)
-
-# Static analysis
-go vet ./...
+# Docker (full stack: app + PostgreSQL)
+docker compose up -d --build
 ```
 
 ## Database
 
-PostgreSQL 15 via Docker:
-```bash
-docker compose up -d
-```
+PostgreSQL 15 via Docker Compose. Migrations applied in order:
 
-Migrations must be applied in order:
 ```bash
 psql $DATABASE_URL -f internal/database/migrations/001_initial_schema.sql
 psql $DATABASE_URL -f internal/database/migrations/002_update_games_table.sql
 psql $DATABASE_URL -f internal/database/migrations/003_membership_and_rental_support.sql
 psql $DATABASE_URL -f internal/database/migrations/004_password_notes.sql
+psql $DATABASE_URL -f internal/database/migrations/005_auto_return_reputation.sql
 ```
 
-Default credentials in docker-compose.yml: `tio_da_locadora` / `sopre_a_fita` / `modo_locadora`.
+Default credentials: `tio_da_locadora` / `sopre_a_fita` / `modo_locadora`.
 
 ## Environment Variables
 
 Required in `.env` (see `.env.example`):
 - `TWITCH_CLIENT_ID`, `TWITCH_CLIENT_SECRET` — IGDB API via Twitch OAuth2
-- `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`, `DATABASE_URL`
-- `COOKIE_SECRET` — HMAC-SHA256 key for session cookies (≥32 chars)
+- `DB_USER`, `DB_PASSWORD`, `DB_NAME`, `DATABASE_URL`
+- `COOKIE_SECRET` — HMAC-SHA256 key for session cookies (min 32 chars)
 - `ADMIN_EMAIL` — email that grants admin panel access
 
 ## Architecture
 
-Go 1.24.3, standard library `net/http.ServeMux` with method-pattern routing (`GET /path`, `POST /path`). Server-side rendered with `html/template`, no JavaScript. NES.css 2.3.0 + Press Start 2P font for retro 8-bit UI.
+Go 1.24, standard library `net/http.ServeMux` with method-pattern routing. Server-side rendered with `html/template`, no JavaScript. NES.css 2.3.0 + Press Start 2P for retro 8-bit UI. Multi-stage Dockerfile (golang:1.24-alpine builder + alpine:3.21 runtime).
 
 ### Package Structure
 
-- **`cmd/server/main.go`** — Entrypoint: loads config, parses templates, creates pgx pool, wires routes with middleware
-- **`internal/handlers/handler.go`** — All HTTP handlers in a single `Handler` struct that holds Store, templates, and config
-- **`internal/database/store.go`** — `Store` interface defining all DB operations
-- **`internal/database/postgres.go`** — PostgreSQL implementation using `pgx/v5` connection pool with transactions for atomic operations (AddGame, RentGame)
-- **`internal/middleware/middleware.go`** — `RequireAuth` (cookie verification) and `RequireAdmin` (auth + email check) middleware
+- **`cmd/server/main.go`** — Entrypoint: config, templates, pgx pool, routes, middleware
+- **`internal/handlers/handler.go`** — All HTTP handlers in a `Handler` struct (Store + cookieSecret)
+- **`internal/database/store.go`** — `Store` interface + view structs (GameAvailability, PlatformSummary, GameDetail, ActiveRental, ShameEntry)
+- **`internal/database/postgres.go`** — PostgreSQL implementation (pgx/v5 pool, transactions)
+- **`internal/middleware/middleware.go`** — `RequireAuth` and `RequireAdmin` middleware
 - **`internal/auth/auth.go`** — HMAC-SHA256 cookie signing/verification
-- **`internal/igdb/igdb.go`** — IGDB API client (Twitch OAuth2 → game search)
+- **`internal/igdb/igdb.go`** — IGDB API client (Twitch OAuth2 + game search)
+- **`internal/jobs/overdue.go`** — Background goroutine: auto-returns overdue rentals every 5 min
 - **`internal/config/config.go`** — `.env` loader via godotenv
-- **`internal/models/`** — Data structs: Member, Game, GameCopy, Rental
-- **`web/templates/`** — Go HTML templates (Portuguese UI)
+- **`internal/models/`** — Domain structs: Member (with status/late_count), Game, GameCopy, Rental
+- **`web/templates/`** — 9 standalone HTML templates (Portuguese UI)
 - **`web/static/css/retro.css`** — NES.css dark theme overrides and utility classes
-
-### Request Flow
-
-1. `main.go` registers routes on `http.ServeMux` with middleware wrappers
-2. Middleware verifies `session_member` cookie via HMAC, loads member UUID into context
-3. Handler reads context, calls `Store` interface methods, renders template with data struct
-4. Store implementation executes parameterized SQL via pgx pool
+- **`web/static/covers/`** — Uploaded Brazilian game covers (Docker volume)
 
 ### Database Schema
 
-4 tables: `members`, `games`, `game_copies`, `rentals` + `membership_seq` sequence (generates `1991-XXX` membership numbers). Key relationship: Game → GameCopy → Rental ← Member. Copy status enum: `available` | `rented`.
+4 tables + 1 sequence. Key relationship: `Game -> GameCopy -> Rental <- Member`.
+
+- `members` — profile_name, email, password_hash, membership_number (`1991-XXX`), status (`active`|`em_debito`), late_count
+- `games` — title, igdb_id, platform, summary, cover_url, source_magazine, acquired_at
+- `game_copies` — game_id, status (`available`|`rented`)
+- `rentals` — member_id, copy_id, rented_at, due_at (3 days), returned_at
 
 ### Auth Flow
 
-POST `/login` → bcrypt verify → sign cookie as `{uuid}.{hmac_hex}` → middleware on subsequent requests splits and verifies signature.
+POST `/login` -> bcrypt verify -> HMAC-signed cookie `{uuid}.{hmac_hex}` -> middleware verifies on each request.
+
+### 3-Level Game Navigation
+
+- `GET /games` (no params) -> platform selection grid (platforms.html)
+- `GET /games?platform=X` -> simplified cards for that console (games.html)
+- `GET /games/{id}` -> full game detail with rental stats (game_detail.html)
 
 ## Conventions
 
-- **Language split**: Code, routes, database columns in English. UI text (templates) in Portuguese (BR).
+- **Language split**: Code, routes, DB columns in English. UI text in Portuguese (BR).
 - **Commit format**: Conventional Commits (`feat:`, `fix:`, `docs:`, `refactor:`)
+- **Branching**: `main` (stable) + `develop` (active). Feature branches: `feature/*`, `fix/*`, `hotfix/*`, `docs/*`
 - **Routing**: Standard library only — `mux.HandleFunc("METHOD /path", handler)`
-- **No test framework**: Run `go build ./...` and `go vet ./...` before commits
-- **CSS**: All template styling uses NES.css classes with dark theme overrides in `retro.css`. Shared utility classes: `.btn-nav`, `.btn-sm`, `.title-main`, `.title-sub`, `.footer-copyright`, `.nav-bar`, `.form-actions`, `.empty-state`, `.success-balloon`
-- **Templates**: Each page is a standalone HTML file with inline `<style>` for page-specific CSS, shared classes from `retro.css`
+- **Validation**: `go build ./...` and `go vet ./...` before commits (no test framework)
+- **CSS**: NES.css classes + dark theme overrides in `retro.css`. Shared utilities: `.btn-nav`, `.btn-sm`, `.title-main`, `.title-sub`, `.footer-copyright`, `.nav-bar`, `.form-actions`, `.empty-state`, `.success-balloon`
+- **Templates**: Standalone HTML files. Page-specific CSS in inline `<style>`, shared CSS from `retro.css`
+- **No JavaScript**: Fully static SSR
 
 ## Dependencies
 
 ```
-pgx/v5        — PostgreSQL driver + pool
-godotenv      — .env loading
-google/uuid   — UUID generation
+pgx/v5           — PostgreSQL driver + pool
+godotenv         — .env loading
+google/uuid      — UUID generation
 golang.org/x/crypto — bcrypt
 ```

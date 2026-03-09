@@ -6,11 +6,10 @@ Step-by-step guide for setting up Modo Locadora locally.
 
 | Tool       | Version | Purpose                       |
 |------------|---------|-------------------------------|
-| Go         | 1.24+   | Backend language              |
-| Docker     | 20+     | PostgreSQL container          |
+| Docker     | 20+     | App + PostgreSQL containers   |
 | Git        | 2.x     | Version control               |
 
-A local PostgreSQL 15+ installation works as an alternative to Docker.
+For local development without Docker, you also need **Go 1.24+** and a **PostgreSQL 15+** instance.
 
 ## 1. Clone and Configure
 
@@ -27,13 +26,10 @@ Edit `.env` with your values:
 TWITCH_CLIENT_ID=your_client_id
 TWITCH_CLIENT_SECRET=your_client_secret
 
-# Database
-DB_HOST=localhost
-DB_PORT=5432
+# Database (used by Docker Compose)
 DB_USER=tio_da_locadora
 DB_PASSWORD=sopre_a_fita
 DB_NAME=modo_locadora
-DATABASE_URL=postgres://tio_da_locadora:sopre_a_fita@localhost:5432/modo_locadora?sslmode=disable
 
 # Security
 COOKIE_SECRET=generate-a-random-secret-here-min-32-chars
@@ -46,38 +42,38 @@ ADMIN_EMAIL=your_admin_email@example.com
 2. Register a new application (any category).
 3. Copy the **Client ID** and generate a **Client Secret**.
 
-## 2. Start the Database
-
-### Option A: Docker Compose (recommended)
+## 2. Start with Docker (recommended)
 
 ```bash
-docker compose up -d
+docker compose up -d --build
 ```
 
-### Option B: Local PostgreSQL
+This starts both the Go app and PostgreSQL. The app auto-connects to the database. Access at `http://localhost:8080`.
 
-```bash
-createdb -U your_user modo_locadora
-```
+Migrations are applied manually (see step 3).
 
 ## 3. Run Migrations
 
-Migrations are in `internal/database/migrations/` and must be applied in order:
+Migrations are in `internal/database/migrations/` and must be applied in order.
 
-```bash
-psql $DATABASE_URL -f internal/database/migrations/001_initial_schema.sql
-psql $DATABASE_URL -f internal/database/migrations/002_update_games_table.sql
-psql $DATABASE_URL -f internal/database/migrations/003_membership_and_rental_support.sql
-psql $DATABASE_URL -f internal/database/migrations/004_password_notes.sql
-```
-
-On Windows with Docker:
+### Via Docker container:
 
 ```bash
 docker exec -i modo_locadora_db psql -U tio_da_locadora -d modo_locadora < internal/database/migrations/001_initial_schema.sql
 docker exec -i modo_locadora_db psql -U tio_da_locadora -d modo_locadora < internal/database/migrations/002_update_games_table.sql
 docker exec -i modo_locadora_db psql -U tio_da_locadora -d modo_locadora < internal/database/migrations/003_membership_and_rental_support.sql
 docker exec -i modo_locadora_db psql -U tio_da_locadora -d modo_locadora < internal/database/migrations/004_password_notes.sql
+docker exec -i modo_locadora_db psql -U tio_da_locadora -d modo_locadora < internal/database/migrations/005_auto_return_reputation.sql
+```
+
+### Via psql directly:
+
+```bash
+psql $DATABASE_URL -f internal/database/migrations/001_initial_schema.sql
+psql $DATABASE_URL -f internal/database/migrations/002_update_games_table.sql
+psql $DATABASE_URL -f internal/database/migrations/003_membership_and_rental_support.sql
+psql $DATABASE_URL -f internal/database/migrations/004_password_notes.sql
+psql $DATABASE_URL -f internal/database/migrations/005_auto_return_reputation.sql
 ```
 
 ### Migration Summary
@@ -88,21 +84,26 @@ docker exec -i modo_locadora_db psql -U tio_da_locadora -d modo_locadora < inter
 | `002_update_games_table.sql` | Adds `cover_url`, `source_magazine`, `acquired_at` to `games` |
 | `003_membership_and_rental_support.sql` | Adds membership fields, `membership_seq` sequence, auto-creates copies |
 | `004_password_notes.sql` | Adds `password_notes` field to `members` |
+| `005_auto_return_reputation.sql` | Adds `status` and `late_count` fields to `members` |
 
-## 4. Build and Run
+## 4. Local Development (without Docker for the app)
+
+If you prefer running the Go server locally while keeping PostgreSQL in Docker:
 
 ```bash
+docker compose up -d db       # start only PostgreSQL
+go run ./cmd/server            # run the Go server locally
+```
+
+Set `DATABASE_URL` in `.env` to point to `localhost:5432` (not `db:5432`).
+
+```bash
+# Build binary
 go build -o modo-locadora ./cmd/server
-./modo-locadora
+
+# Static analysis
+go vet ./...
 ```
-
-Or run directly:
-
-```bash
-go run ./cmd/server
-```
-
-The server starts on `http://localhost:8080`. Set the `PORT` environment variable to change it.
 
 ## 5. Create Your First Member
 
@@ -124,36 +125,30 @@ The email must match `ADMIN_EMAIL` for admin access. A membership number (`1991-
 | Check | Expected |
 |-------|----------|
 | `http://localhost:8080` | Login page loads |
-| Login with member credentials | Redirects to `/games` |
+| Login with member credentials | Redirects to `/games` (platform grid) |
+| Click a platform | Shows cartridge cards |
+| Click a cartridge | Shows game detail page |
 | `/carteirinha` (logged in) | Membership card with `1991-XXX` |
 | `/admin/stock` (as admin) | IGDB search page |
-| `/admin/inventory` (as admin) | Catalog table |
-| `/admin/returns` (as admin) | Active rentals list |
 
 ## Troubleshooting
 
 ### "No DATABASE_URL provided"
-
-Login, rental, and admin features require the database. Ensure `DATABASE_URL` is set in `.env`.
+Ensure `DATABASE_URL` is set in `.env`. When using Docker Compose for the full stack, it's set automatically via `docker-compose.yml`.
 
 ### "COOKIE_SECRET not set"
-
 The server falls back to an insecure default in development. For production, set a strong random value (at least 32 characters).
 
 ### "ADMIN_EMAIL not set"
-
 Admin routes (`/admin/*`) are inaccessible without this. Set it to the admin member's email.
 
 ### IGDB search returns no results
-
 Verify Twitch credentials:
-
 ```bash
 curl -X POST "https://id.twitch.tv/oauth2/token?client_id=YOUR_ID&client_secret=YOUR_SECRET&grant_type=client_credentials"
 ```
 
 ### Port 8080 already in use
-
 ```bash
 # Linux/Mac
 lsof -ti:8080 | xargs kill -9

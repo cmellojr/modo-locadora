@@ -1,4 +1,4 @@
-# Modo Locadora 
+# Modo Locadora
 
 > **"Sopre a fita, pegue o controle e respeite o tempo."**
 
@@ -8,31 +8,29 @@ Era sexta-feira. Você corria da escola, passava no balcão, mostrava a carteiri
 
 O **Modo Locadora** é uma homenagem a essa era dourada. Um sistema web que recria a experiência das videolocadoras brasileiras dos anos 90 — onde a escassez gerava valor, o tempo era um compromisso, e o conhecimento era compartilhado num caderninho de passwords grudento de guaraná.
 
-Este projeto é para quem ainda lembra do cheiro de plástico dos cartuchos, da emoção de encontrar a última cópia de Mega Man 2 na prateleira, e da comunidade que se formava em torno daquele balcão.
-
 ---
 
 ## A Locadora
 
-**O Balcão** — A tela de entrada. Você chega, mostra sua carteirinha e entra.
+**O Balcão** — A tela de entrada. Você chega, mostra sua carteirinha e entra. Sócios em débito aparecem no Painel da Vergonha.
 
-**A Prateleira** — O acervo de cartuchos, com capas pixeladas e status em tempo real. Se a fita estiver alugada, vai ter que esperar o próximo sócio devolver.
+**A Prateleira** — Organizada por console (Mega Drive, SNES, NES...). Escolha a plataforma, navegue pelos cartuchos e veja os detalhes de cada fita — resumo, revista de origem, quantas vezes foi alugada e quem é o fã número 1.
 
 **A Carteirinha de Sócio** — Cada membro recebe um número no formato `1991-XXX`. É digital, mas carrega o espírito daquele cartão plastificado com foto 3x4.
 
 **O Caderno de Passwords** — Espaço pessoal para anotar senhas, códigos e mapas. Porque ninguém merece perder o progresso do Metroid.
 
-**O Tio da Locadora** — O administrador. Ele abastece as prateleiras, cuida do acervo e dá baixa nas devoluções. Tudo pelo painel admin, como se estivesse atrás do balcão.
+**O Tio da Locadora** — O administrador. Abastece as prateleiras com capas brasileiras (TecToy, Playtronic), cuida do acervo e dá baixa nas devoluções.
+
+**O Fiscal Automático** — Não devolveu no prazo? O sistema devolve a fita automaticamente e marca seu nome no Painel da Vergonha.
 
 ---
 
 ## O Espírito da Coisa
 
-Este não é um sistema genérico de catálogo. É uma experiência. Cada detalhe foi pensado para evocar aquela época:
-
-- **Escassez real** — Cada jogo tem cópias limitadas. Se todas estiverem alugadas, o jogo fica indisponível. Assim como era na locadora.
+- **Escassez real** — Cada jogo tem cópias limitadas. Se todas estiverem alugadas, o jogo fica indisponível.
 - **Visual 8-bit** — Interface com [NES.css](https://nostalgic-css.github.io/NES.css/) e fonte Press Start 2P. Cada pixel no lugar.
-- **Sem JavaScript** — Renderização no servidor, como os sites de 1996. Rápido, limpo, sem frescura.
+- **Sem JavaScript** — Renderização no servidor. Rápido, limpo, sem frescura.
 - **Copyleft** — Licenciado sob GPL v3. O código é livre, como deveria ser.
 
 ---
@@ -46,7 +44,7 @@ Este não é um sistema genérico de catálogo. É uma experiência. Cada detalh
 | Interface | Server-Side Rendering com `html/template` |
 | Estilo | [NES.css](https://nostalgic-css.github.io/NES.css/) 2.3.0 + Press Start 2P |
 | Dados de jogos | [IGDB](https://api-docs.igdb.com/) via Twitch OAuth2 |
-| Segurança | bcrypt + HMAC-SHA256 + middleware de autorização |
+| Deploy | Docker Compose (app + banco) |
 
 ---
 
@@ -54,9 +52,8 @@ Este não é um sistema genérico de catálogo. É uma experiência. Cada detalh
 
 ### Pré-requisitos
 
-- Go 1.24+
-- Docker (para o PostgreSQL)
-- Credenciais da [API do IGDB](https://dev.twitch.tv/)
+- Docker e Docker Compose
+- Credenciais da [API do IGDB](https://dev.twitch.tv/) (Twitch Developer)
 
 ### Início rápido
 
@@ -64,11 +61,12 @@ Este não é um sistema genérico de catálogo. É uma experiência. Cada detalh
 git clone https://github.com/cmellojr/modo-locadora.git
 cd modo-locadora
 cp .env.example .env        # preencha com seus valores
-docker compose up -d         # sobe o banco
-go run ./cmd/server          # abre a locadora em http://localhost:8080
+docker compose up -d --build # sobe tudo: app + banco
 ```
 
-Para o guia completo de configuração (migrações, primeiro sócio, solução de problemas), veja **[docs/SETUP.md](docs/SETUP.md)**.
+Acesse `http://localhost:8080` — a locadora está aberta.
+
+Para desenvolvimento local sem Docker, migrações manuais e criação do primeiro sócio, veja **[docs/SETUP.md](docs/SETUP.md)**.
 
 ---
 
@@ -76,11 +74,11 @@ Para o guia completo de configuração (migrações, primeiro sócio, solução 
 
 | Documento | Conteúdo |
 |-----------|---------|
-| [ARCHITECTURE.md](ARCHITECTURE.md) | Visão geral da arquitetura, entidades e fluxos |
-| [docs/SETUP.md](docs/SETUP.md) | Guia completo de instalação e configuração |
-| [docs/API.md](docs/API.md) | Referência de endpoints (SSR e JSON) |
-| [docs/SECURITY.md](docs/SECURITY.md) | Política de segurança e práticas |
-| [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md) | Como contribuir com o projeto |
+| [ARCHITECTURE.md](ARCHITECTURE.md) | Entidades, fluxos e navegação |
+| [docs/SETUP.md](docs/SETUP.md) | Guia completo de instalação |
+| [docs/API.md](docs/API.md) | Referência de endpoints |
+| [docs/SECURITY.md](docs/SECURITY.md) | Política de segurança |
+| [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md) | Como contribuir |
 | [docs/CHANGELOG.md](docs/CHANGELOG.md) | Histórico de mudanças |
 
 ---
@@ -89,8 +87,8 @@ Para o guia completo de configuração (migrações, primeiro sócio, solução 
 
 - **Verso da Capa** — Deixe dicas públicas para os próximos jogadores ao devolver uma fita.
 - **Regra da Sexta** — Alugou na sexta? Só precisa devolver na segunda!
-- **Ranking de Sócios** — Quem mais alugou, quem mais devolveu no prazo.
 - **Coleção Pessoal** — Marque os jogos que você já zerou.
+- **Menções na Mídia** — Registre em quais podcasts, sites ou reportagens cada jogo foi mencionado.
 
 ---
 
