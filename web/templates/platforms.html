@@ -19,23 +19,7 @@
         }
 
         .container-wrapper {
-            max-width: 1100px;
-        }
-
-        .balcao-layout {
-            display: flex;
-            gap: 24px;
-            align-items: flex-start;
-        }
-
-        .balcao-main {
-            flex: 1;
-            min-width: 0;
-        }
-
-        .balcao-sidebar {
-            width: 320px;
-            flex-shrink: 0;
+            max-width: 1200px;
         }
 
         .platform-grid {
@@ -135,15 +119,6 @@
             color: #ccc;
             line-height: 1.8;
         }
-
-        @media (max-width: 800px) {
-            .balcao-layout {
-                flex-direction: column;
-            }
-            .balcao-sidebar {
-                width: 100%;
-            }
-        }
     </style>
 </head>
 
@@ -160,8 +135,54 @@
 
         <h2 class="pixel-aligned-title" style="margin-bottom: 20px;">ACERVO DE CARTUCHOS</h2>
 
-        <div class="balcao-layout">
-            <div class="balcao-main">
+        <div class="locadora-grid">
+            <!-- LEFT SIDEBAR -->
+            <div>
+                {{if .IsLoggedIn}}
+                {{if .MemberMini}}
+                <div class="nes-container with-title is-dark">
+                    <p class="title"><span class="title-main">CARTEIRINHA</span></p>
+                    <div class="member-mini-card">
+                        <i class="nes-avatar is-rounded"></i>
+                        <p class="mini-name">{{.MemberMini.ProfileName}}</p>
+                        <p class="mini-number">{{.MemberMini.MembershipNumber}}</p>
+                        <span class="nes-badge">
+                            <span class="{{.MemberMini.StatusBadge}}">{{.MemberMini.StatusLabel}}</span>
+                        </span>
+                        {{if gt .MemberMini.ActiveRentals 0}}
+                        <p style="font-size:8px;color:#999;margin-top:8px;">{{.MemberMini.ActiveRentals}} fita(s) alugada(s)</p>
+                        {{end}}
+                    </div>
+                    <ul class="quick-links">
+                        <li><a href="/carteirinha" class="nes-text is-warning">MINHA CARTEIRINHA</a></li>
+                    </ul>
+                </div>
+                {{end}}
+                {{else}}
+                <div class="nes-container with-title is-dark">
+                    <p class="title"><span class="title-main">BEM-VINDO</span></p>
+                    <p style="font-size:9px;color:#999;">Fa&ccedil;a login para acessar sua carteirinha e alugar fitas.</p>
+                    <ul class="quick-links">
+                        <li><a href="/" class="nes-text is-primary">IR AO BALC&Atilde;O</a></li>
+                    </ul>
+                </div>
+                {{end}}
+
+                {{if .ShameEntries}}
+                <div class="nes-container with-title is-dark" style="margin-top:16px;">
+                    <p class="title"><span class="title-main">VERGONHA</span></p>
+                    {{range .ShameEntries}}
+                    <div class="shame-compact">
+                        <span class="shame-name">&#9760; {{.ProfileName}}</span>
+                        <span class="shame-count">{{.LateCount}}x</span>
+                    </div>
+                    {{end}}
+                </div>
+                {{end}}
+            </div>
+
+            <!-- MAIN CONTENT -->
+            <div>
                 <div class="nes-container with-title is-dark">
                     <p class="title">
                         <span class="title-main">[ESCOLHA O CONSOLE]</span>
@@ -189,7 +210,8 @@
                 </div>
             </div>
 
-            <div class="balcao-sidebar">
+            <!-- RIGHT SIDEBAR -->
+            <div>
                 <div class="nes-container with-title is-dark">
                     <p class="title">
                         <span class="title-main">ACONTECEU NA LOCADORA</span>

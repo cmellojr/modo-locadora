@@ -95,6 +95,37 @@ func formatTimeAgo(t time.Time) string {
 	}
 }
 
+// MemberMiniView holds compact member info for sidebar display.
+type MemberMiniView struct {
+	ProfileName      string
+	MembershipNumber string
+	StatusLabel      string
+	StatusBadge      string
+	ActiveRentals    int
+}
+
+// formatActivityMessage returns a human-readable message for an activity event.
+func formatActivityMessage(a database.ActivityEntry) string {
+	switch a.EventType {
+	case "penalty":
+		return fmt.Sprintf("%s foi penalizado(a) por atrasar %s!", a.MemberName, a.GameTitle)
+	case "redemption":
+		return fmt.Sprintf("%s soprou o cartucho e foi redimido(a)!", a.MemberName)
+	case "new_game":
+		return fmt.Sprintf("Nova fita no acervo: %s!", a.GameTitle)
+	case "prestige":
+		return fmt.Sprintf("%s atingiu prestigio! Socio(a) exemplar!", a.MemberName)
+	case "verdict_complete":
+		return fmt.Sprintf("%s zerou %s! Respeito total!", a.MemberName, a.GameTitle)
+	case "verdict_partial":
+		return fmt.Sprintf("%s jogou %s mas nao terminou.", a.MemberName, a.GameTitle)
+	case "verdict_quit":
+		return fmt.Sprintf("%s desistiu de %s. O Tio esta decepcionado!", a.MemberName, a.GameTitle)
+	default:
+		return ""
+	}
+}
+
 // CreateMemberRequest defines the input for member registration.
 type CreateMemberRequest struct {
 	ProfileName     string `json:"profile_name"`
@@ -271,34 +302,63 @@ func (h *Handler) ListGames(w http.ResponseWriter, r *http.Request, platformsTmp
 					EventType:  a.EventType,
 					MemberName: a.MemberName,
 					GameTitle:  a.GameTitle,
+					Message:    formatActivityMessage(a),
 					TimeAgo:    formatTimeAgo(a.CreatedAt),
-				}
-				switch a.EventType {
-				case "penalty":
-					av.Message = fmt.Sprintf("%s foi penalizado(a) por atrasar %s!", a.MemberName, a.GameTitle)
-				case "redemption":
-					av.Message = fmt.Sprintf("%s soprou o cartucho e foi redimido(a)!", a.MemberName)
-				case "new_game":
-					av.Message = fmt.Sprintf("Nova fita no acervo: %s!", a.GameTitle)
-				case "prestige":
-					av.Message = fmt.Sprintf("%s atingiu prestigio! Socio(a) exemplar!", a.MemberName)
 				}
 				activityViews = append(activityViews, av)
 			}
 		}
 
+		// Build member mini-card for left sidebar.
+		var memberMini *MemberMiniView
+		if isLoggedIn && h.store != nil {
+			id, err := uuid.Parse(rawMemberID)
+			if err == nil {
+				member, err := h.store.GetMemberByID(r.Context(), id)
+				if err == nil && member != nil {
+					activeCount, overdueCount, _ := h.store.GetMemberRentalStats(r.Context(), id)
+					statusLabel := "Ativo"
+					statusBadge := "is-success"
+					if member.Status == models.MemberStatusEmDebito || overdueCount > 0 {
+						statusLabel = "Em Debito"
+						statusBadge = "is-error"
+					} else if activeCount > 0 {
+						statusLabel = "Jogando"
+						statusBadge = "is-primary"
+					}
+					memberMini = &MemberMiniView{
+						ProfileName:      member.ProfileName,
+						MembershipNumber: member.MembershipNumber,
+						StatusLabel:      statusLabel,
+						StatusBadge:      statusBadge,
+						ActiveRentals:    activeCount,
+					}
+				}
+			}
+		}
+
+		// Fetch Wall of Shame for left sidebar.
+		var shameEntries []database.ShameEntry
+		if h.store != nil {
+			shameEntries, _ = h.store.GetTopShameEntries(r.Context(), 5)
+		}
+
 		data := struct {
-			MemberName string
-			IsLoggedIn bool
-			Platforms  []PlatformView
-			Activities []ActivityView
-			Ephemeride string
+			MemberName   string
+			IsLoggedIn   bool
+			Platforms    []PlatformView
+			Activities   []ActivityView
+			Ephemeride   string
+			MemberMini   *MemberMiniView
+			ShameEntries []database.ShameEntry
 		}{
-			MemberName: memberName,
-			IsLoggedIn: isLoggedIn,
-			Platforms:  platformViews,
-			Activities: activityViews,
-			Ephemeride: almanac.TodaysEphemeride(),
+			MemberName:   memberName,
+			IsLoggedIn:   isLoggedIn,
+			Platforms:    platformViews,
+			Activities:   activityViews,
+			Ephemeride:   almanac.TodaysEphemeride(),
+			MemberMini:   memberMini,
+			ShameEntries: shameEntries,
 		}
 
 		if err := platformsTmpl.Execute(w, data); err != nil {
@@ -329,20 +389,34 @@ func (h *Handler) ListGames(w http.ResponseWriter, r *http.Request, platformsTmp
 
 	debtError := r.URL.Query().Get("error") == "em_debito"
 
+	// Build completed games map for golden star display.
+	completedGames := make(map[string]bool)
+	if isLoggedIn && h.store != nil {
+		memberUUID, err := uuid.Parse(memberID)
+		if err == nil {
+			completedIDs, _ := h.store.ListCompletedGameIDs(r.Context(), memberUUID)
+			for _, cid := range completedIDs {
+				completedGames[cid.String()] = true
+			}
+		}
+	}
+
 	data := struct {
-		MemberName string
-		MemberID   string
-		IsLoggedIn bool
-		Games      []GameView
-		Platform   string
-		DebtError  bool
+		MemberName     string
+		MemberID       string
+		IsLoggedIn     bool
+		Games          []GameView
+		Platform       string
+		DebtError      bool
+		CompletedGames map[string]bool
 	}{
-		MemberName: memberName,
-		MemberID:   memberID,
-		IsLoggedIn: isLoggedIn,
-		Games:      games,
-		Platform:   platform,
-		DebtError:  debtError,
+		MemberName:     memberName,
+		MemberID:       memberID,
+		IsLoggedIn:     isLoggedIn,
+		Games:          games,
+		Platform:       platform,
+		DebtError:      debtError,
+		CompletedGames: completedGames,
 	}
 
 	if err := gamesTmpl.Execute(w, data); err != nil {
@@ -949,9 +1023,34 @@ func (h *Handler) HandleMemberReturn(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := h.store.ReturnGameByMember(r.Context(), rentalID, memberID); err != nil {
+	verdict := r.FormValue("verdict")
+	if verdict != "zerei" && verdict != "joguei_um_pouco" && verdict != "desisti" {
+		verdict = ""
+	}
+
+	// Get game title before the return (for activity logging).
+	gameTitle, _ := h.store.GetRentalGameTitle(r.Context(), rentalID)
+
+	if err := h.store.ReturnGameByMember(r.Context(), rentalID, memberID, verdict); err != nil {
 		http.Error(w, "Falha ao devolver: "+err.Error(), http.StatusInternalServerError)
 		return
+	}
+
+	// Fire verdict activity event.
+	if verdict != "" && gameTitle != "" {
+		member, _ := h.store.GetMemberByID(r.Context(), memberID)
+		if member != nil {
+			var eventType string
+			switch verdict {
+			case "zerei":
+				eventType = "verdict_complete"
+			case "joguei_um_pouco":
+				eventType = "verdict_partial"
+			case "desisti":
+				eventType = "verdict_quit"
+			}
+			_ = h.store.InsertActivity(r.Context(), eventType, member.ProfileName, gameTitle)
+		}
 	}
 
 	// Check for prestige milestone (every 10th on-time return).

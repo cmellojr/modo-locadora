@@ -132,6 +132,27 @@
             font-weight: bold;
         }
 
+        .verdict-form {
+            margin: 0;
+            flex-shrink: 0;
+        }
+
+        .verdict-options {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            margin-bottom: 8px;
+        }
+
+        .verdict-label {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 8px;
+            color: #ccc;
+            cursor: pointer;
+        }
+
         .notebook-section {
             margin-top: 2rem;
         }
@@ -275,8 +296,22 @@
                         <p class="rental-overdue">(ATRASADO!)</p>
                         {{end}}
                     </div>
-                    <form action="/carteirinha/return" method="POST" style="margin:0;">
+                    <form action="/carteirinha/return" method="POST" class="verdict-form">
                         <input type="hidden" name="rental_id" value="{{.RentalID}}">
+                        <div class="verdict-options">
+                            <label class="verdict-label">
+                                <input type="radio" class="nes-radio is-success" name="verdict" value="zerei" required>
+                                <span>Zerei!</span>
+                            </label>
+                            <label class="verdict-label">
+                                <input type="radio" class="nes-radio is-primary" name="verdict" value="joguei_um_pouco">
+                                <span>Joguei um pouco</span>
+                            </label>
+                            <label class="verdict-label">
+                                <input type="radio" class="nes-radio is-error" name="verdict" value="desisti">
+                                <span>Desisti</span>
+                            </label>
+                        </div>
                         <button type="submit" class="nes-btn is-success btn-sm">DEVOLVER</button>
                     </form>
                 </div>

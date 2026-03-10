@@ -667,7 +667,8 @@ func (s *PostgresStore) CountOnTimeReturns(ctx context.Context, memberID uuid.UU
 }
 
 // ReturnGameByMember returns a game, validating that the rental belongs to the given member.
-func (s *PostgresStore) ReturnGameByMember(ctx context.Context, rentalID, memberID uuid.UUID) error {
+// verdict stores the member's play status in the public_legacy column.
+func (s *PostgresStore) ReturnGameByMember(ctx context.Context, rentalID, memberID uuid.UUID, verdict string) error {
 	tx, err := s.pool.Begin(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to begin transaction: %w", err)
@@ -686,7 +687,9 @@ func (s *PostgresStore) ReturnGameByMember(ctx context.Context, rentalID, member
 		return fmt.Errorf("failed to find rental: %w", err)
 	}
 
-	_, err = tx.Exec(ctx, `UPDATE rentals SET returned_at = NOW() WHERE id = $1`, rentalID)
+	_, err = tx.Exec(ctx,
+		`UPDATE rentals SET returned_at = NOW(), public_legacy = $2 WHERE id = $1`,
+		rentalID, verdict)
 	if err != nil {
 		return fmt.Errorf("failed to update rental: %w", err)
 	}
@@ -697,4 +700,43 @@ func (s *PostgresStore) ReturnGameByMember(ctx context.Context, rentalID, member
 	}
 
 	return tx.Commit(ctx)
+}
+
+// GetRentalGameTitle returns the game title for a rental (used for activity logging).
+func (s *PostgresStore) GetRentalGameTitle(ctx context.Context, rentalID uuid.UUID) (string, error) {
+	var title string
+	err := s.pool.QueryRow(ctx,
+		`SELECT g.title FROM rentals r
+		 JOIN game_copies gc ON gc.id = r.copy_id
+		 JOIN games g ON g.id = gc.game_id
+		 WHERE r.id = $1`, rentalID).Scan(&title)
+	if err != nil {
+		return "", fmt.Errorf("failed to get rental game title: %w", err)
+	}
+	return title, nil
+}
+
+// ListCompletedGameIDs returns game IDs that the member has completed ("zerei").
+func (s *PostgresStore) ListCompletedGameIDs(ctx context.Context, memberID uuid.UUID) ([]uuid.UUID, error) {
+	rows, err := s.pool.Query(ctx,
+		`SELECT DISTINCT gc.game_id
+		 FROM rentals r
+		 JOIN game_copies gc ON gc.id = r.copy_id
+		 WHERE r.member_id = $1
+		   AND r.returned_at IS NOT NULL
+		   AND r.public_legacy = 'zerei'`, memberID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query completed games: %w", err)
+	}
+	defer rows.Close()
+
+	var ids []uuid.UUID
+	for rows.Next() {
+		var id uuid.UUID
+		if err := rows.Scan(&id); err != nil {
+			return nil, fmt.Errorf("failed to scan completed game id: %w", err)
+		}
+		ids = append(ids, id)
+	}
+	return ids, nil
 }

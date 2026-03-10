@@ -97,6 +97,13 @@
             margin-top: 6px;
             display: block;
         }
+
+        .golden-star {
+            display: inline-block;
+            vertical-align: middle;
+            margin-left: 4px;
+            filter: drop-shadow(0 0 4px #f7d51d);
+        }
     </style>
 </head>
 
@@ -138,7 +145,7 @@
                         {{else}}
                         <div class="no-cover">SEM CAPA</div>
                         {{end}}
-                        <p class="game-title">{{.Title}}</p>
+                        <p class="game-title">{{.Title}}{{if index $.CompletedGames .ID}} <i class="nes-icon star is-small golden-star"></i>{{end}}</p>
                         <p class="copy-count">{{.AvailableCopies}} de {{.TotalCopies}} c&oacute;pias</p>
 
                         {{if gt .AvailableCopies 0}}

@@ -146,5 +146,12 @@ type Store interface {
 	CountOnTimeReturns(ctx context.Context, memberID uuid.UUID) (int, error)
 
 	// ReturnGameByMember returns a game for a specific member (validates ownership).
-	ReturnGameByMember(ctx context.Context, rentalID, memberID uuid.UUID) error
+	// verdict stores the member's play status ("zerei", "joguei_um_pouco", "desisti").
+	ReturnGameByMember(ctx context.Context, rentalID, memberID uuid.UUID, verdict string) error
+
+	// GetRentalGameTitle returns the game title for a rental (used for activity logging).
+	GetRentalGameTitle(ctx context.Context, rentalID uuid.UUID) (string, error)
+
+	// ListCompletedGameIDs returns game IDs that the member has completed ("zerei").
+	ListCompletedGameIDs(ctx context.Context, memberID uuid.UUID) ([]uuid.UUID, error)
 }
