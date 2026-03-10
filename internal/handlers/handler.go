@@ -136,6 +136,19 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/games", http.StatusSeeOther)
 }
 
+// PlatformView represents a platform for display in the console selection grid.
+type PlatformView struct {
+	Platform  string
+	GameCount int
+	LogoURL   string
+}
+
+// platformLogoFile returns the logo filename for a platform name.
+func platformLogoFile(platform string) string {
+	name := strings.ToLower(strings.ReplaceAll(platform, " ", "-"))
+	return "/static/img/logos/" + name + ".svg"
+}
+
 // GameView represents a game for display in the shelf.
 type GameView struct {
 	ID              string
@@ -173,19 +186,26 @@ func (h *Handler) ListGames(w http.ResponseWriter, r *http.Request, platformsTmp
 
 	// No platform filter → show platform selection page.
 	if platform == "" {
-		var platforms []database.PlatformSummary
+		var platformViews []PlatformView
 		if h.store != nil {
-			platforms, _ = h.store.ListPlatforms(r.Context())
+			platforms, _ := h.store.ListPlatforms(r.Context())
+			for _, ps := range platforms {
+				platformViews = append(platformViews, PlatformView{
+					Platform:  ps.Platform,
+					GameCount: ps.GameCount,
+					LogoURL:   platformLogoFile(ps.Platform),
+				})
+			}
 		}
 
 		data := struct {
 			MemberName string
 			IsLoggedIn bool
-			Platforms  []database.PlatformSummary
+			Platforms  []PlatformView
 		}{
 			MemberName: memberName,
 			IsLoggedIn: isLoggedIn,
-			Platforms:  platforms,
+			Platforms:  platformViews,
 		}
 
 		if err := platformsTmpl.Execute(w, data); err != nil {

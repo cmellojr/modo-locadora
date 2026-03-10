@@ -226,11 +226,10 @@ func (s *PostgresStore) ListGamesWithAvailability(ctx context.Context, platform 
 // ListPlatforms returns a summary of each platform in the catalog.
 func (s *PostgresStore) ListPlatforms(ctx context.Context) ([]PlatformSummary, error) {
 	query := `
-		SELECT g.platform, COUNT(*) AS game_count,
-			COALESCE((SELECT g2.cover_url FROM games g2 WHERE g2.platform = g.platform AND g2.cover_url != '' ORDER BY g2.acquired_at DESC LIMIT 1), '') AS cover_url
-		FROM games g
-		GROUP BY g.platform
-		ORDER BY g.platform ASC`
+		SELECT platform, COUNT(*) AS game_count
+		FROM games
+		GROUP BY platform
+		ORDER BY platform ASC`
 
 	rows, err := s.pool.Query(ctx, query)
 	if err != nil {
@@ -241,7 +240,7 @@ func (s *PostgresStore) ListPlatforms(ctx context.Context) ([]PlatformSummary, e
 	var result []PlatformSummary
 	for rows.Next() {
 		var ps PlatformSummary
-		if err := rows.Scan(&ps.Platform, &ps.GameCount, &ps.CoverURL); err != nil {
+		if err := rows.Scan(&ps.Platform, &ps.GameCount); err != nil {
 			return nil, fmt.Errorf("failed to scan platform summary: %w", err)
 		}
 		result = append(result, ps)

@@ -34,7 +34,6 @@ type ShameEntry struct {
 type PlatformSummary struct {
 	Platform  string
 	GameCount int
-	CoverURL  string // Cover of a representative game.
 }
 
 // GameDetail holds detailed info for a single game page.
