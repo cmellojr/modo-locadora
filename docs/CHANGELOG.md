@@ -8,18 +8,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Login/logout flow**: Balcão is always the landing page; logged-in members see welcome message + navigation instead of login form. `POST /logout` clears session cookie.
+- **Auth bar**: All pages display "Sócio: nome / [DESCONECTAR]" aligned top-right when logged in. CSS class `.auth-bar` in `retro.css`.
+- **Console logos on platform grid**: Platform selection page shows SVG console logos (`web/static/img/logos/`) instead of game cover images. Auto-mapped via `platformLogoFile()` helper.
 - **3-level game navigation**: `/games` shows platform selection grid, `?platform=X` filters by console, `/games/{id}` shows full game detail with rental stats (total rentals, top renter, current renter).
 - **Brazilian cover upload**: Admin can upload local cover images (TecToy, Playtronic) via multipart form on the edit page. Uploaded covers stored in `web/static/covers/` (Docker volume).
 - **Auto-return system**: Background job checks overdue rentals every 5 minutes, auto-returns them and penalizes members (`em_debito` status + `late_count` increment). Migration `005_auto_return_reputation.sql`.
 - **Wall of Shame** (`Painel da Vergonha`): Landing page shows top members with late returns.
 - **Member redemption**: `POST /carteirinha/redeem` clears debt status.
-- **Authenticated redirect**: Logged-in members visiting `/` are redirected to `/games`.
 - **Dockerized application**: Multi-stage Dockerfile, Docker Compose runs app + PostgreSQL, `covers_data` volume for uploads.
 - **Password notebook** (`Caderno de Passwords`): Members can save game codes on their membership card. Migration `004_password_notes.sql`.
 - **`internal/jobs/` package**: Background goroutine for overdue rental processing.
 - **CLAUDE.md** and **AGENTS.md**: AI agent guidance files.
 
 ### Changed
+- **Landing page**: Removed authenticated redirect; Balcão always shown first with conditional login/welcome content.
 - **Game shelf simplified**: Cards now show only cover, title, copy count, and availability status (no summary/magazine).
 - **`GET /games/{id}`** changed from JSON API to server-rendered game detail page.
 - **`POST /rent`** redirects to game detail page instead of shelf.
