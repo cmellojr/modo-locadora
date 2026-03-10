@@ -240,6 +240,12 @@ img, .nes-icon {
     gap: 12px;
     margin-bottom: 12px;
     font-size: 9px;
+    flex-wrap: nowrap;
+}
+.auth-bar form {
+    display: inline;
+    margin: 0;
+    padding: 0;
 }
 .auth-bar .auth-member {
     color: #92cc41;
