@@ -105,6 +105,7 @@ func main() {
 		h.HandleIndex(w, r, indexTmpl)
 	})
 	mux.HandleFunc("POST /login", h.Login)
+	mux.HandleFunc("POST /logout", h.Logout)
 	mux.HandleFunc("GET /games", func(w http.ResponseWriter, r *http.Request) {
 		h.ListGames(w, r, platformsTmpl, gamesTmpl)
 	})

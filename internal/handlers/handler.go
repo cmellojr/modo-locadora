@@ -30,6 +30,34 @@ func NewHandler(store database.Store, cookieSecret string) *Handler {
 	return &Handler{store: store, cookieSecret: cookieSecret}
 }
 
+// getSessionMember returns the authenticated member's name and login status.
+func (h *Handler) getSessionMember(r *http.Request) (name string, loggedIn bool) {
+	rawID := auth.GetSessionMemberID(r, h.cookieSecret)
+	if rawID == "" || h.store == nil {
+		return "", false
+	}
+	id, err := uuid.Parse(rawID)
+	if err != nil {
+		return "", false
+	}
+	member, err := h.store.GetMemberByID(r.Context(), id)
+	if err != nil || member == nil {
+		return "", false
+	}
+	return member.ProfileName, true
+}
+
+// Logout handles POST /logout by clearing the session cookie.
+func (h *Handler) Logout(w http.ResponseWriter, r *http.Request) {
+	http.SetCookie(w, &http.Cookie{
+		Name:   "session_member",
+		Value:  "",
+		Path:   "/",
+		MaxAge: -1,
+	})
+	http.Redirect(w, r, "/", http.StatusSeeOther)
+}
+
 // CreateMemberRequest defines the input for member registration.
 type CreateMemberRequest struct {
 	ProfileName     string `json:"profile_name"`
@@ -281,24 +309,18 @@ func (h *Handler) GameDetailPage(w http.ResponseWriter, r *http.Request, tmpl *t
 		return
 	}
 
-	var memberID string
-	var isLoggedIn bool
-	rawMemberID := auth.GetSessionMemberID(r, h.cookieSecret)
-	if rawMemberID != "" {
-		memberID = rawMemberID
-		isLoggedIn = true
-	}
+	memberName, isLoggedIn := h.getSessionMember(r)
 
 	debtError := r.URL.Query().Get("error") == "em_debito"
 
 	data := struct {
 		Detail     *database.GameDetail
-		MemberID   string
+		MemberName string
 		IsLoggedIn bool
 		DebtError  bool
 	}{
 		Detail:     detail,
-		MemberID:   memberID,
+		MemberName: memberName,
 		IsLoggedIn: isLoggedIn,
 		DebtError:  debtError,
 	}
@@ -455,6 +477,7 @@ func (h *Handler) AdminReturns(w http.ResponseWriter, r *http.Request, tmpl *tem
 		return
 	}
 
+	memberName, _ := h.getSessionMember(r)
 	successMsg := r.URL.Query().Get("success")
 
 	rentals, err := h.store.ListActiveRentals(r.Context())
@@ -464,11 +487,13 @@ func (h *Handler) AdminReturns(w http.ResponseWriter, r *http.Request, tmpl *tem
 	}
 
 	data := struct {
-		Rentals []database.ActiveRental
-		Success string
+		MemberName string
+		Rentals    []database.ActiveRental
+		Success    string
 	}{
-		Rentals: rentals,
-		Success: successMsg,
+		MemberName: memberName,
+		Rentals:    rentals,
+		Success:    successMsg,
 	}
 
 	if err := tmpl.Execute(w, data); err != nil {
@@ -530,18 +555,22 @@ func (h *Handler) AdminStock(w http.ResponseWriter, r *http.Request, tmpl *templ
 		}
 	}
 
+	memberName, _ := h.getSessionMember(r)
+
 	data := struct {
-		Query    string
-		Magazine string
-		Results  []igdb.GameData
-		Selected *igdb.GameData
-		Success  string
+		MemberName string
+		Query      string
+		Magazine   string
+		Results    []igdb.GameData
+		Selected   *igdb.GameData
+		Success    string
 	}{
-		Query:    query,
-		Magazine: magazine,
-		Results:  results,
-		Selected: selected,
-		Success:  successMsg,
+		MemberName: memberName,
+		Query:      query,
+		Magazine:   magazine,
+		Results:    results,
+		Selected:   selected,
+		Success:    successMsg,
 	}
 
 	if err := tmpl.Execute(w, data); err != nil {
@@ -592,6 +621,7 @@ func (h *Handler) AdminInventory(w http.ResponseWriter, r *http.Request, tmpl *t
 		return
 	}
 
+	memberName, _ := h.getSessionMember(r)
 	successMsg := r.URL.Query().Get("success")
 
 	games, err := h.store.ListGames(r.Context())
@@ -601,11 +631,13 @@ func (h *Handler) AdminInventory(w http.ResponseWriter, r *http.Request, tmpl *t
 	}
 
 	data := struct {
-		Games   []models.Game
-		Success string
+		MemberName string
+		Games      []models.Game
+		Success    string
 	}{
-		Games:   games,
-		Success: successMsg,
+		MemberName: memberName,
+		Games:      games,
+		Success:    successMsg,
 	}
 
 	if err := tmpl.Execute(w, data); err != nil {
@@ -637,10 +669,14 @@ func (h *Handler) EditGame(w http.ResponseWriter, r *http.Request, tmpl *templat
 		return
 	}
 
+	memberName, _ := h.getSessionMember(r)
+
 	data := struct {
-		Game *models.Game
+		MemberName string
+		Game       *models.Game
 	}{
-		Game: game,
+		MemberName: memberName,
+		Game:       game,
 	}
 
 	if err := tmpl.Execute(w, data); err != nil {
@@ -759,10 +795,7 @@ func (h *Handler) SearchGame(w http.ResponseWriter, r *http.Request) {
 // HandleIndex handles GET / and renders the landing page with the Wall of Shame.
 // Authenticated members are redirected straight to the shelf.
 func (h *Handler) HandleIndex(w http.ResponseWriter, r *http.Request, tmpl *template.Template) {
-	if memberID := auth.GetSessionMemberID(r, h.cookieSecret); memberID != "" {
-		http.Redirect(w, r, "/games", http.StatusSeeOther)
-		return
-	}
+	memberName, isLoggedIn := h.getSessionMember(r)
 
 	var shameEntries []database.ShameEntry
 	if h.store != nil {
@@ -773,8 +806,12 @@ func (h *Handler) HandleIndex(w http.ResponseWriter, r *http.Request, tmpl *temp
 	}
 
 	data := struct {
+		MemberName   string
+		IsLoggedIn   bool
 		ShameEntries []database.ShameEntry
 	}{
+		MemberName:   memberName,
+		IsLoggedIn:   isLoggedIn,
 		ShameEntries: shameEntries,
 	}
 

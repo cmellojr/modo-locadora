@@ -18,20 +18,6 @@
             justify-content: center;
         }
 
-        .header-bar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-            flex-wrap: wrap;
-            gap: 10px;
-        }
-
-        .greeting {
-            font-size: 10px;
-            color: #3498DB;
-        }
-
         .platform-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
@@ -93,10 +79,16 @@
 
 <body>
     <div class="container-wrapper">
-        <div class="header-bar">
-            <h2 class="pixel-aligned-title">ACERVO DE CARTUCHOS</h2>
-            <p class="greeting">S&oacute;cio {{.MemberName}}</p>
+        {{if .IsLoggedIn}}
+        <div class="auth-bar">
+            <span class="auth-member">S&oacute;cio: {{.MemberName}}</span>
+            <form action="/logout" method="POST" style="margin:0;">
+                <button type="submit" class="auth-logout">[DESCONECTAR]</button>
+            </form>
         </div>
+        {{end}}
+
+        <h2 class="pixel-aligned-title" style="margin-bottom: 20px;">ACERVO DE CARTUCHOS</h2>
 
         <div class="nes-container with-title is-dark">
             <p class="title">

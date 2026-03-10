@@ -59,6 +59,15 @@
 
 <body>
     <div class="container-wrapper">
+        {{if .MemberName}}
+        <div class="auth-bar">
+            <span class="auth-member">S&oacute;cio: {{.MemberName}}</span>
+            <form action="/logout" method="POST" style="margin:0;">
+                <button type="submit" class="auth-logout">[DESCONECTAR]</button>
+            </form>
+        </div>
+        {{end}}
+
         <header class="admin-header">
             <h2 class="pixel-aligned-title">EDITAR FICHA DO JOGO</h2>
             <p class="pixel-aligned-subtitle">[CURADORIA DO TIO DA LOCADORA]</p>

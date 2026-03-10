@@ -231,3 +231,29 @@ img, .nes-icon {
     max-width: 960px;
     width: 100%;
 }
+
+/* Auth bar - shown at top right on all pages */
+.auth-bar {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+    font-size: 9px;
+}
+.auth-bar .auth-member {
+    color: #92cc41;
+}
+.auth-bar .auth-logout {
+    background: none;
+    border: none;
+    color: #e74c3c;
+    font-family: 'Press Start 2P', cursive;
+    font-size: 9px;
+    cursor: pointer;
+    padding: 0;
+    text-decoration: underline;
+}
+.auth-bar .auth-logout:hover {
+    color: #ff6b6b;
+}

@@ -131,6 +131,15 @@
 
 <body>
     <div class="container-wrapper">
+        {{if .IsLoggedIn}}
+        <div class="auth-bar">
+            <span class="auth-member">S&oacute;cio: {{.MemberName}}</span>
+            <form action="/logout" method="POST" style="margin:0;">
+                <button type="submit" class="auth-logout">[DESCONECTAR]</button>
+            </form>
+        </div>
+        {{end}}
+
         {{if .DebtError}}
         <div style="margin-bottom: 20px;">
             <div class="nes-container is-dark is-rounded" style="border-color: #e74c3c;">
