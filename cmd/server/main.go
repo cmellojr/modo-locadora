@@ -135,6 +135,7 @@ func main() {
 	mux.HandleFunc("POST /rent", middleware.RequireAuth(cookieSecret, h.RentGame))
 	mux.HandleFunc("POST /carteirinha/notes", middleware.RequireAuth(cookieSecret, h.SavePasswordNotes))
 	mux.HandleFunc("POST /carteirinha/redeem", middleware.RequireAuth(cookieSecret, h.HandleRedeem))
+	mux.HandleFunc("POST /carteirinha/return", middleware.RequireAuth(cookieSecret, h.HandleMemberReturn))
 
 	// Serve static files from web/static
 	fileServer := http.FileServer(http.Dir("web/static"))

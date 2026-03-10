@@ -11,6 +11,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/cmellojr/modo-locadora/internal/almanac"
 	"github.com/cmellojr/modo-locadora/internal/auth"
 	"github.com/cmellojr/modo-locadora/internal/database"
 	"github.com/cmellojr/modo-locadora/internal/igdb"
@@ -56,6 +57,42 @@ func (h *Handler) Logout(w http.ResponseWriter, r *http.Request) {
 		MaxAge: -1,
 	})
 	http.Redirect(w, r, "/", http.StatusSeeOther)
+}
+
+// ActivityView represents a formatted activity event for template display.
+type ActivityView struct {
+	EventType  string
+	MemberName string
+	GameTitle  string
+	Message    string
+	TimeAgo    string
+}
+
+// formatTimeAgo returns a Portuguese relative-time string.
+func formatTimeAgo(t time.Time) string {
+	d := time.Since(t)
+	switch {
+	case d < time.Minute:
+		return "agora"
+	case d < time.Hour:
+		m := int(d.Minutes())
+		if m == 1 {
+			return "1 min atras"
+		}
+		return fmt.Sprintf("%d min atras", m)
+	case d < 24*time.Hour:
+		h := int(d.Hours())
+		if h == 1 {
+			return "1 hora atras"
+		}
+		return fmt.Sprintf("%d horas atras", h)
+	default:
+		days := int(d.Hours() / 24)
+		if days == 1 {
+			return "ontem"
+		}
+		return fmt.Sprintf("%d dias atras", days)
+	}
 }
 
 // CreateMemberRequest defines the input for member registration.
@@ -226,14 +263,42 @@ func (h *Handler) ListGames(w http.ResponseWriter, r *http.Request, platformsTmp
 			}
 		}
 
+		var activityViews []ActivityView
+		if h.store != nil {
+			activities, _ := h.store.ListRecentActivities(r.Context(), 5)
+			for _, a := range activities {
+				av := ActivityView{
+					EventType:  a.EventType,
+					MemberName: a.MemberName,
+					GameTitle:  a.GameTitle,
+					TimeAgo:    formatTimeAgo(a.CreatedAt),
+				}
+				switch a.EventType {
+				case "penalty":
+					av.Message = fmt.Sprintf("%s foi penalizado(a) por atrasar %s!", a.MemberName, a.GameTitle)
+				case "redemption":
+					av.Message = fmt.Sprintf("%s soprou o cartucho e foi redimido(a)!", a.MemberName)
+				case "new_game":
+					av.Message = fmt.Sprintf("Nova fita no acervo: %s!", a.GameTitle)
+				case "prestige":
+					av.Message = fmt.Sprintf("%s atingiu prestigio! Socio(a) exemplar!", a.MemberName)
+				}
+				activityViews = append(activityViews, av)
+			}
+		}
+
 		data := struct {
 			MemberName string
 			IsLoggedIn bool
 			Platforms  []PlatformView
+			Activities []ActivityView
+			Ephemeride string
 		}{
 			MemberName: memberName,
 			IsLoggedIn: isLoggedIn,
 			Platforms:  platformViews,
+			Activities: activityViews,
+			Ephemeride: almanac.TodaysEphemeride(),
 		}
 
 		if err := platformsTmpl.Execute(w, data); err != nil {
@@ -371,6 +436,9 @@ func (h *Handler) Carteirinha(w http.ResponseWriter, r *http.Request, tmpl *temp
 
 	successMsg := r.URL.Query().Get("success")
 
+	var memberRentals []database.MemberRental
+	memberRentals, _ = h.store.ListMemberActiveRentals(r.Context(), id)
+
 	data := struct {
 		Member        *models.Member
 		ActiveRentals int
@@ -380,6 +448,7 @@ func (h *Handler) Carteirinha(w http.ResponseWriter, r *http.Request, tmpl *temp
 		Success       string
 		IsEmDebito    bool
 		LateCount     int
+		Rentals       []database.MemberRental
 	}{
 		Member:        member,
 		ActiveRentals: activeCount,
@@ -389,6 +458,7 @@ func (h *Handler) Carteirinha(w http.ResponseWriter, r *http.Request, tmpl *temp
 		Success:       successMsg,
 		IsEmDebito:    isEmDebito,
 		LateCount:     member.LateCount,
+		Rentals:       memberRentals,
 	}
 
 	if err := tmpl.Execute(w, data); err != nil {
@@ -610,6 +680,8 @@ func (h *Handler) PurchaseGame(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Failed to purchase game: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
+
+	_ = h.store.InsertActivity(r.Context(), "new_game", "", game.Title)
 
 	http.Redirect(w, r, "/admin/edit/"+game.ID.String(), http.StatusSeeOther)
 }
@@ -844,7 +916,54 @@ func (h *Handler) HandleRedeem(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	member, err := h.store.GetMemberByID(r.Context(), memberID)
+	if err == nil && member != nil {
+		_ = h.store.InsertActivity(r.Context(), "redemption", member.ProfileName, "")
+	}
+
 	http.Redirect(w, r, "/carteirinha?success=redencao", http.StatusSeeOther)
+}
+
+// HandleMemberReturn handles POST /carteirinha/return, allowing a member to self-return a game.
+func (h *Handler) HandleMemberReturn(w http.ResponseWriter, r *http.Request) {
+	if h.store == nil {
+		http.Error(w, "Database not configured", http.StatusServiceUnavailable)
+		return
+	}
+
+	rawMemberID := auth.GetSessionMemberID(r, h.cookieSecret)
+	if rawMemberID == "" {
+		http.Redirect(w, r, "/", http.StatusSeeOther)
+		return
+	}
+
+	memberID, err := uuid.Parse(rawMemberID)
+	if err != nil {
+		http.Redirect(w, r, "/", http.StatusSeeOther)
+		return
+	}
+
+	rentalID, err := uuid.Parse(r.FormValue("rental_id"))
+	if err != nil {
+		http.Error(w, "ID de aluguel invalido", http.StatusBadRequest)
+		return
+	}
+
+	if err := h.store.ReturnGameByMember(r.Context(), rentalID, memberID); err != nil {
+		http.Error(w, "Falha ao devolver: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Check for prestige milestone (every 10th on-time return).
+	onTimeCount, err := h.store.CountOnTimeReturns(r.Context(), memberID)
+	if err == nil && onTimeCount > 0 && onTimeCount%10 == 0 {
+		member, err := h.store.GetMemberByID(r.Context(), memberID)
+		if err == nil && member != nil {
+			_ = h.store.InsertActivity(r.Context(), "prestige", member.ProfileName, "")
+		}
+	}
+
+	http.Redirect(w, r, "/carteirinha?success=devolucao", http.StatusSeeOther)
 }
 
 // GetGame handles GET /games/{id}.

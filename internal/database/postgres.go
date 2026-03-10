@@ -453,23 +453,28 @@ func (s *PostgresStore) ProcessOverdueRentals(ctx context.Context) (int, error) 
 	defer tx.Rollback(ctx)
 
 	rows, err := tx.Query(ctx,
-		`SELECT r.id, r.copy_id, r.member_id
+		`SELECT r.id, r.copy_id, r.member_id, m.profile_name, g.title
 		 FROM rentals r
+		 JOIN members m ON m.id = r.member_id
+		 JOIN game_copies gc ON gc.id = r.copy_id
+		 JOIN games g ON g.id = gc.game_id
 		 WHERE r.returned_at IS NULL AND r.due_at < NOW()
-		 FOR UPDATE`)
+		 FOR UPDATE OF r`)
 	if err != nil {
 		return 0, fmt.Errorf("failed to query overdue rentals: %w", err)
 	}
 
 	type overdueRental struct {
-		rentalID uuid.UUID
-		copyID   uuid.UUID
-		memberID uuid.UUID
+		rentalID   uuid.UUID
+		copyID     uuid.UUID
+		memberID   uuid.UUID
+		memberName string
+		gameTitle  string
 	}
 	var overdue []overdueRental
 	for rows.Next() {
 		var o overdueRental
-		if err := rows.Scan(&o.rentalID, &o.copyID, &o.memberID); err != nil {
+		if err := rows.Scan(&o.rentalID, &o.copyID, &o.memberID, &o.memberName, &o.gameTitle); err != nil {
 			rows.Close()
 			return 0, fmt.Errorf("failed to scan overdue rental: %w", err)
 		}
@@ -499,6 +504,10 @@ func (s *PostgresStore) ProcessOverdueRentals(ctx context.Context) (int, error) 
 			o.memberID)
 		if err != nil {
 			return 0, fmt.Errorf("failed to penalize member %s: %w", o.memberID, err)
+		}
+
+		if err := s.insertActivityTx(ctx, tx, "penalty", o.memberName, o.gameTitle); err != nil {
+			return 0, fmt.Errorf("failed to insert penalty activity: %w", err)
 		}
 	}
 
@@ -561,4 +570,131 @@ func (s *PostgresStore) GetMemberStatus(ctx context.Context, memberID uuid.UUID)
 		return "", fmt.Errorf("failed to get member status: %w", err)
 	}
 	return status, nil
+}
+
+// insertActivityTx records an activity event within an existing transaction.
+func (s *PostgresStore) insertActivityTx(ctx context.Context, tx pgx.Tx, eventType, memberName, gameTitle string) error {
+	_, err := tx.Exec(ctx,
+		`INSERT INTO activities (id, event_type, member_name, game_title, created_at)
+		 VALUES ($1, $2, $3, $4, NOW())`,
+		uuid.New(), eventType, memberName, gameTitle)
+	if err != nil {
+		return fmt.Errorf("failed to insert activity: %w", err)
+	}
+	return nil
+}
+
+// InsertActivity records an activity event using the connection pool.
+func (s *PostgresStore) InsertActivity(ctx context.Context, eventType, memberName, gameTitle string) error {
+	_, err := s.pool.Exec(ctx,
+		`INSERT INTO activities (id, event_type, member_name, game_title, created_at)
+		 VALUES ($1, $2, $3, $4, NOW())`,
+		uuid.New(), eventType, memberName, gameTitle)
+	if err != nil {
+		return fmt.Errorf("failed to insert activity: %w", err)
+	}
+	return nil
+}
+
+// ListRecentActivities returns the N most recent activity events.
+func (s *PostgresStore) ListRecentActivities(ctx context.Context, limit int) ([]ActivityEntry, error) {
+	query := `
+		SELECT id, event_type, member_name, game_title, created_at
+		FROM activities
+		ORDER BY created_at DESC
+		LIMIT $1`
+
+	rows, err := s.pool.Query(ctx, query, limit)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query activities: %w", err)
+	}
+	defer rows.Close()
+
+	var result []ActivityEntry
+	for rows.Next() {
+		var a ActivityEntry
+		if err := rows.Scan(&a.ID, &a.EventType, &a.MemberName, &a.GameTitle, &a.CreatedAt); err != nil {
+			return nil, fmt.Errorf("failed to scan activity: %w", err)
+		}
+		result = append(result, a)
+	}
+	return result, nil
+}
+
+// ListMemberActiveRentals returns active rentals for a specific member.
+func (s *PostgresStore) ListMemberActiveRentals(ctx context.Context, memberID uuid.UUID) ([]MemberRental, error) {
+	query := `
+		SELECT r.id, g.title, g.cover_url, g.platform, r.rented_at, r.due_at,
+		       (r.due_at < NOW()) AS is_overdue
+		FROM rentals r
+		JOIN game_copies gc ON gc.id = r.copy_id
+		JOIN games g ON g.id = gc.game_id
+		WHERE r.member_id = $1 AND r.returned_at IS NULL
+		ORDER BY r.rented_at DESC`
+
+	rows, err := s.pool.Query(ctx, query, memberID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query member rentals: %w", err)
+	}
+	defer rows.Close()
+
+	var result []MemberRental
+	for rows.Next() {
+		var mr MemberRental
+		var rentedAt, dueAt time.Time
+		if err := rows.Scan(&mr.RentalID, &mr.GameTitle, &mr.CoverURL, &mr.Platform,
+			&rentedAt, &dueAt, &mr.IsOverdue); err != nil {
+			return nil, fmt.Errorf("failed to scan member rental: %w", err)
+		}
+		mr.RentedAt = rentedAt.Format("02/01/2006")
+		mr.DueAt = dueAt.Format("02/01/2006")
+		result = append(result, mr)
+	}
+	return result, nil
+}
+
+// CountOnTimeReturns counts completed rentals returned before or on the due date.
+func (s *PostgresStore) CountOnTimeReturns(ctx context.Context, memberID uuid.UUID) (int, error) {
+	var count int
+	err := s.pool.QueryRow(ctx,
+		`SELECT COUNT(*) FROM rentals
+		 WHERE member_id = $1 AND returned_at IS NOT NULL AND returned_at <= due_at`,
+		memberID).Scan(&count)
+	if err != nil {
+		return 0, fmt.Errorf("failed to count on-time returns: %w", err)
+	}
+	return count, nil
+}
+
+// ReturnGameByMember returns a game, validating that the rental belongs to the given member.
+func (s *PostgresStore) ReturnGameByMember(ctx context.Context, rentalID, memberID uuid.UUID) error {
+	tx, err := s.pool.Begin(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to begin transaction: %w", err)
+	}
+	defer tx.Rollback(ctx)
+
+	var copyID uuid.UUID
+	err = tx.QueryRow(ctx,
+		`SELECT copy_id FROM rentals
+		 WHERE id = $1 AND member_id = $2 AND returned_at IS NULL`,
+		rentalID, memberID).Scan(&copyID)
+	if err != nil {
+		if err == pgx.ErrNoRows {
+			return fmt.Errorf("rental not found or does not belong to this member")
+		}
+		return fmt.Errorf("failed to find rental: %w", err)
+	}
+
+	_, err = tx.Exec(ctx, `UPDATE rentals SET returned_at = NOW() WHERE id = $1`, rentalID)
+	if err != nil {
+		return fmt.Errorf("failed to update rental: %w", err)
+	}
+
+	_, err = tx.Exec(ctx, `UPDATE game_copies SET status = 'available' WHERE id = $1`, copyID)
+	if err != nil {
+		return fmt.Errorf("failed to update copy status: %w", err)
+	}
+
+	return tx.Commit(ctx)
 }

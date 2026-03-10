@@ -2,6 +2,7 @@ package database
 
 import (
 	"context"
+	"time"
 
 	"github.com/cmellojr/modo-locadora/internal/models"
 	"github.com/google/uuid"
@@ -34,6 +35,26 @@ type ShameEntry struct {
 type PlatformSummary struct {
 	Platform  string
 	GameCount int
+}
+
+// ActivityEntry holds data for the "Aconteceu na Locadora" feed.
+type ActivityEntry struct {
+	ID         uuid.UUID
+	EventType  string // "penalty", "redemption", "new_game", "prestige"
+	MemberName string
+	GameTitle  string
+	CreatedAt  time.Time
+}
+
+// MemberRental holds a member's active rental for the carteirinha self-return.
+type MemberRental struct {
+	RentalID  uuid.UUID
+	GameTitle string
+	CoverURL  string
+	Platform  string
+	RentedAt  string // Formatted date.
+	DueAt     string // Formatted date.
+	IsOverdue bool
 }
 
 // GameDetail holds detailed info for a single game page.
@@ -111,4 +132,19 @@ type Store interface {
 
 	// GetMemberStatus returns the member's current status.
 	GetMemberStatus(ctx context.Context, memberID uuid.UUID) (string, error)
+
+	// InsertActivity records an event in the activities feed.
+	InsertActivity(ctx context.Context, eventType, memberName, gameTitle string) error
+
+	// ListRecentActivities returns the N most recent activity events.
+	ListRecentActivities(ctx context.Context, limit int) ([]ActivityEntry, error)
+
+	// ListMemberActiveRentals returns all active (unreturned) rentals for a specific member.
+	ListMemberActiveRentals(ctx context.Context, memberID uuid.UUID) ([]MemberRental, error)
+
+	// CountOnTimeReturns counts how many on-time returns a member has made.
+	CountOnTimeReturns(ctx context.Context, memberID uuid.UUID) (int, error)
+
+	// ReturnGameByMember returns a game for a specific member (validates ownership).
+	ReturnGameByMember(ctx context.Context, rentalID, memberID uuid.UUID) error
 }

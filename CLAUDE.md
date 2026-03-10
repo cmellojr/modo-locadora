@@ -24,6 +24,7 @@ psql $DATABASE_URL -f internal/database/migrations/002_update_games_table.sql
 psql $DATABASE_URL -f internal/database/migrations/003_membership_and_rental_support.sql
 psql $DATABASE_URL -f internal/database/migrations/004_password_notes.sql
 psql $DATABASE_URL -f internal/database/migrations/005_auto_return_reputation.sql
+psql $DATABASE_URL -f internal/database/migrations/006_activities_feed.sql
 ```
 
 Default credentials: `tio_da_locadora` / `sopre_a_fita` / `modo_locadora`.
@@ -44,11 +45,12 @@ Go 1.24, standard library `net/http.ServeMux` with method-pattern routing. Serve
 
 - **`cmd/server/main.go`** — Entrypoint: config, templates, pgx pool, routes, middleware
 - **`internal/handlers/handler.go`** — All HTTP handlers in a `Handler` struct (Store + cookieSecret)
-- **`internal/database/store.go`** — `Store` interface + view structs (GameAvailability, PlatformSummary, GameDetail, ActiveRental, ShameEntry)
+- **`internal/database/store.go`** — `Store` interface + view structs (GameAvailability, PlatformSummary, GameDetail, ActiveRental, ShameEntry, ActivityEntry, MemberRental)
 - **`internal/database/postgres.go`** — PostgreSQL implementation (pgx/v5 pool, transactions)
 - **`internal/middleware/middleware.go`** — `RequireAuth` and `RequireAdmin` middleware
 - **`internal/auth/auth.go`** — HMAC-SHA256 cookie signing/verification
 - **`internal/igdb/igdb.go`** — IGDB API client (Twitch OAuth2 + game search)
+- **`internal/almanac/almanac.go`** — Static gaming ephemerides by day-of-year
 - **`internal/jobs/overdue.go`** — Background goroutine: auto-returns overdue rentals every 5 min
 - **`internal/config/config.go`** — `.env` loader via godotenv
 - **`internal/models/`** — Domain structs: Member (with status/late_count), Game, GameCopy, Rental
@@ -58,12 +60,13 @@ Go 1.24, standard library `net/http.ServeMux` with method-pattern routing. Serve
 
 ### Database Schema
 
-4 tables + 1 sequence. Key relationship: `Game -> GameCopy -> Rental <- Member`.
+5 tables + 1 sequence. Key relationship: `Game -> GameCopy -> Rental <- Member`.
 
 - `members` — profile_name, email, password_hash, membership_number (`1991-XXX`), status (`active`|`em_debito`), late_count
 - `games` — title, igdb_id, platform, summary, cover_url, source_magazine, acquired_at
 - `game_copies` — game_id, status (`available`|`rented`)
 - `rentals` — member_id, copy_id, rented_at, due_at (3 days), returned_at
+- `activities` — event_type, member_name, game_title, created_at (denormalized feed)
 
 ### Auth Flow
 

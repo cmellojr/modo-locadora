@@ -18,6 +18,26 @@
             justify-content: center;
         }
 
+        .container-wrapper {
+            max-width: 1100px;
+        }
+
+        .balcao-layout {
+            display: flex;
+            gap: 24px;
+            align-items: flex-start;
+        }
+
+        .balcao-main {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .balcao-sidebar {
+            width: 320px;
+            flex-shrink: 0;
+        }
+
         .platform-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
@@ -74,6 +94,56 @@
             font-size: 9px;
             color: #92cc41;
         }
+
+        .activity-item {
+            margin-bottom: 16px;
+        }
+
+        .activity-item .nes-balloon {
+            font-size: 9px;
+            line-height: 1.8;
+            margin-bottom: 4px;
+        }
+
+        .activity-time {
+            font-size: 8px;
+            color: #777;
+            text-align: right;
+        }
+
+        .activity-mascot {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 4px;
+        }
+
+        .almanac-section {
+            border-top: 2px dashed #444;
+            margin-top: 16px;
+            padding-top: 16px;
+        }
+
+        .almanac-section .almanac-label {
+            font-size: 10px;
+            color: #f7d51d;
+            margin-bottom: 10px;
+        }
+
+        .almanac-section .almanac-text {
+            font-size: 9px;
+            color: #ccc;
+            line-height: 1.8;
+        }
+
+        @media (max-width: 800px) {
+            .balcao-layout {
+                flex-direction: column;
+            }
+            .balcao-sidebar {
+                width: 100%;
+            }
+        }
     </style>
 </head>
 
@@ -90,29 +160,62 @@
 
         <h2 class="pixel-aligned-title" style="margin-bottom: 20px;">ACERVO DE CARTUCHOS</h2>
 
-        <div class="nes-container with-title is-dark">
-            <p class="title">
-                <span class="title-main">[ESCOLHA O CONSOLE]</span>
-                <span class="title-sub">{{len .Platforms}} plataformas</span>
-            </p>
-            <div class="forum-body">
-                {{if .Platforms}}
-                <div class="platform-grid">
-                    {{range .Platforms}}
-                    <a href="/games?platform={{.Platform}}" class="platform-card">
-                        {{if .LogoURL}}
-                        <img src="{{.LogoURL}}" alt="{{.Platform}}" class="console-logo">
+        <div class="balcao-layout">
+            <div class="balcao-main">
+                <div class="nes-container with-title is-dark">
+                    <p class="title">
+                        <span class="title-main">[ESCOLHA O CONSOLE]</span>
+                        <span class="title-sub">{{len .Platforms}} plataformas</span>
+                    </p>
+                    <div class="forum-body">
+                        {{if .Platforms}}
+                        <div class="platform-grid">
+                            {{range .Platforms}}
+                            <a href="/games?platform={{.Platform}}" class="platform-card">
+                                {{if .LogoURL}}
+                                <img src="{{.LogoURL}}" alt="{{.Platform}}" class="console-logo">
+                                {{else}}
+                                <div class="no-logo">{{.Platform}}</div>
+                                {{end}}
+                                <p class="platform-name">{{.Platform}}</p>
+                                <p class="game-count">{{.GameCount}} {{if eq .GameCount 1}}fita{{else}}fitas{{end}}</p>
+                            </a>
+                            {{end}}
+                        </div>
                         {{else}}
-                        <div class="no-logo">{{.Platform}}</div>
+                        <p class="empty-state">Nenhum console no acervo ainda. O Tio est&aacute; comprando fitas!</p>
                         {{end}}
-                        <p class="platform-name">{{.Platform}}</p>
-                        <p class="game-count">{{.GameCount}} {{if eq .GameCount 1}}fita{{else}}fitas{{end}}</p>
-                    </a>
-                    {{end}}
+                    </div>
                 </div>
-                {{else}}
-                <p class="empty-state">Nenhum console no acervo ainda. O Tio est&aacute; comprando fitas!</p>
-                {{end}}
+            </div>
+
+            <div class="balcao-sidebar">
+                <div class="nes-container with-title is-dark">
+                    <p class="title">
+                        <span class="title-main">ACONTECEU NA LOCADORA</span>
+                    </p>
+
+                    {{if .Activities}}
+                    {{range .Activities}}
+                    <div class="activity-item">
+                        <div class="nes-balloon from-left is-dark">
+                            <p>{{.Message}}</p>
+                        </div>
+                        <div class="activity-mascot">
+                            <i class="nes-bcrikko is-small"></i>
+                            <span class="activity-time">{{.TimeAgo}}</span>
+                        </div>
+                    </div>
+                    {{end}}
+                    {{else}}
+                    <p class="nes-text is-disabled" style="font-size: 9px;">Nenhuma novidade por enquanto. O Tio est&aacute; de olho!</p>
+                    {{end}}
+
+                    <div class="almanac-section">
+                        <p class="almanac-label">ALMANAQUE DO TIO</p>
+                        <p class="almanac-text">{{.Ephemeride}}</p>
+                    </div>
+                </div>
             </div>
         </div>
 

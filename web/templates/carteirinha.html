@@ -80,6 +80,58 @@
             margin-top: 10px;
         }
 
+        .rentals-section {
+            margin-top: 2rem;
+        }
+
+        .rental-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 0;
+            border-bottom: 1px solid #333;
+        }
+
+        .rental-item:last-child {
+            border-bottom: none;
+        }
+
+        .rental-item .rental-cover {
+            width: 50px;
+            height: auto;
+            image-rendering: pixelated;
+            border: 2px solid #444;
+            flex-shrink: 0;
+        }
+
+        .rental-item .rental-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .rental-item .rental-title {
+            font-size: 10px;
+            color: #fff;
+            margin-bottom: 4px;
+        }
+
+        .rental-item .rental-platform {
+            font-size: 8px;
+            color: #92cc41;
+            margin-bottom: 2px;
+        }
+
+        .rental-item .rental-dates {
+            font-size: 8px;
+            color: #999;
+        }
+
+        .rental-item .rental-overdue {
+            color: #e74c3c;
+            font-size: 8px;
+            font-weight: bold;
+        }
+
         .notebook-section {
             margin-top: 2rem;
         }
@@ -121,6 +173,13 @@
         <div class="success-balloon">
             <div class="nes-balloon from-left is-dark">
                 <p class="balloon-text">Cartucho soprado! Voc&ecirc; est&aacute; redimido(a). N&atilde;o atrase de novo!</p>
+            </div>
+            <i class="nes-bcrikko"></i>
+        </div>
+        {{else if eq .Success "devolucao"}}
+        <div class="success-balloon">
+            <div class="nes-balloon from-left is-dark">
+                <p class="balloon-text">Fita devolvida com sucesso! O Tio agradece pela pontualidade.</p>
             </div>
             <i class="nes-bcrikko"></i>
         </div>
@@ -194,6 +253,37 @@
             </div>
             {{end}}
         </div>
+
+        <!-- Minhas Fitas -->
+        {{if .Rentals}}
+        <div class="rentals-section">
+            <div class="nes-container with-title is-dark">
+                <p class="title">
+                    <span class="title-main">MINHAS FITAS</span>
+                    <span class="title-sub">{{len .Rentals}} alugada(s)</span>
+                </p>
+                {{range .Rentals}}
+                <div class="rental-item">
+                    {{if .CoverURL}}
+                    <img src="{{.CoverURL}}" alt="{{.GameTitle}}" class="rental-cover">
+                    {{end}}
+                    <div class="rental-info">
+                        <p class="rental-title">{{.GameTitle}}</p>
+                        <p class="rental-platform">{{.Platform}}</p>
+                        <p class="rental-dates">Alugado: {{.RentedAt}} &mdash; Prazo: {{.DueAt}}</p>
+                        {{if .IsOverdue}}
+                        <p class="rental-overdue">(ATRASADO!)</p>
+                        {{end}}
+                    </div>
+                    <form action="/carteirinha/return" method="POST" style="margin:0;">
+                        <input type="hidden" name="rental_id" value="{{.RentalID}}">
+                        <button type="submit" class="nes-btn is-success btn-sm">DEVOLVER</button>
+                    </form>
+                </div>
+                {{end}}
+            </div>
+        </div>
+        {{end}}
 
         <!-- Caderno de Passwords -->
         <div class="notebook-section">
