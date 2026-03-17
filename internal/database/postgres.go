@@ -30,6 +30,12 @@ func NewPostgresStore(ctx context.Context, connString string) (*PostgresStore, e
 	return &PostgresStore{pool: pool}, nil
 }
 
+// ExecRaw executes a raw SQL string against the database (used for seed scripts).
+func (s *PostgresStore) ExecRaw(ctx context.Context, sql string) error {
+	_, err := s.pool.Exec(ctx, sql)
+	return err
+}
+
 // Close closes the database connection pool.
 func (s *PostgresStore) Close() {
 	s.pool.Close()

@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"flag"
 	"fmt"
 	"html/template"
 	"log"
@@ -19,6 +20,9 @@ import (
 )
 
 func main() {
+	seedFlag := flag.Bool("seed", false, "Populate database with sample data and exit")
+	flag.Parse()
+
 	config.LoadConfig()
 
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
@@ -35,6 +39,27 @@ func main() {
 		}
 	} else {
 		log.Println("No DATABASE_URL provided. Proceeding without database.")
+	}
+
+	if *seedFlag {
+		if store == nil {
+			log.Fatal("Cannot seed: no database connection. Set DATABASE_URL.")
+		}
+		seedSQL, err := os.ReadFile("internal/database/migrations/007_seed_initial_data.sql")
+		if err != nil {
+			log.Fatalf("Failed to read seed file: %v", err)
+		}
+		pgStore, ok := store.(interface {
+			ExecRaw(ctx context.Context, sql string) error
+		})
+		if !ok {
+			log.Fatal("Store does not support raw SQL execution.")
+		}
+		if err := pgStore.ExecRaw(ctx, string(seedSQL)); err != nil {
+			log.Fatalf("Seed failed: %v", err)
+		}
+		log.Println("Seed concluido com sucesso!")
+		return
 	}
 
 	cookieSecret := os.Getenv("COOKIE_SECRET")
