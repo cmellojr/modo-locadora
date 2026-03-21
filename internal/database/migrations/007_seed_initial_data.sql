@@ -5,7 +5,7 @@
 -- =============================================================================
 
 -- Idempotência: só insere se não houver jogos
-DO $$
+DO $seed$
 BEGIN
     IF (SELECT COUNT(*) FROM games) > 0 THEN
         RAISE NOTICE 'Seed: banco ja populado. Pulando.';
@@ -160,4 +160,4 @@ BEGIN
     RAISE NOTICE 'Seed: concluido com sucesso!';
     RAISE NOTICE 'Socios: MegaDriveKid/sega1991 | Devedor/atrasado123 | Novato/novato2026';
 
-END $$;
+END $seed$;
