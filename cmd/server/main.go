@@ -45,20 +45,33 @@ func main() {
 		if store == nil {
 			log.Fatal("Cannot seed: no database connection. Set DATABASE_URL.")
 		}
-		seedSQL, err := os.ReadFile("internal/database/migrations/007_seed_initial_data.sql")
-		if err != nil {
-			log.Fatalf("Failed to read seed file: %v", err)
-		}
 		pgStore, ok := store.(interface {
 			ExecRaw(ctx context.Context, sql string) error
 		})
 		if !ok {
 			log.Fatal("Store does not support raw SQL execution.")
 		}
-		if err := pgStore.ExecRaw(ctx, string(seedSQL)); err != nil {
-			log.Fatalf("Seed failed: %v", err)
+		// Apply all migrations in order, then seed.
+		sqlFiles := []string{
+			"internal/database/migrations/001_initial_schema.sql",
+			"internal/database/migrations/002_update_games_table.sql",
+			"internal/database/migrations/003_membership_and_rental_support.sql",
+			"internal/database/migrations/004_password_notes.sql",
+			"internal/database/migrations/005_auto_return_reputation.sql",
+			"internal/database/migrations/006_activities_feed.sql",
+			"internal/database/migrations/007_seed_initial_data.sql",
 		}
-		log.Println("Seed concluido com sucesso!")
+		for _, f := range sqlFiles {
+			data, err := os.ReadFile(f)
+			if err != nil {
+				log.Fatalf("Failed to read %s: %v", f, err)
+			}
+			if err := pgStore.ExecRaw(ctx, string(data)); err != nil {
+				log.Fatalf("Failed to execute %s: %v", f, err)
+			}
+			log.Printf("Applied: %s", f)
+		}
+		log.Println("Migrations + seed concluidos com sucesso!")
 		return
 	}
 
