@@ -21,7 +21,7 @@ BEGIN
     VALUES ('a1b2c3d4-1111-4000-8000-000000000001', 'Golden Axe', '',
             'Mega Drive',
             'Hack and slash cooperativo no mundo de Yuria. Resgate a magia do machado dourado com Ax Battler, Tyris Flare ou Gilius Thunderhead!',
-            'https://upload.wikimedia.org/wikipedia/pt/8/80/Golden_Axe_Mega_Drive.jpg',
+            'https://upload.wikimedia.org/wikipedia/en/a/ab/Golden_Axe_Promo_Flyer.jpeg',
             'Acao Games #1', '1991-07-01');
     INSERT INTO game_copies (id, game_id, status)
     VALUES ('c0010001-0001-4000-8000-000000000001', 'a1b2c3d4-1111-4000-8000-000000000001', 'available');
@@ -31,7 +31,7 @@ BEGIN
     VALUES ('a1b2c3d4-2222-4000-8000-000000000002', 'Altered Beast', '',
             'Mega Drive',
             'Rise from your grave! Luta mitologica lado a lado contra as forcas de Neff. O jogo que veio com o Mega Drive!',
-            'https://upload.wikimedia.org/wikipedia/pt/d/d2/Altered_Beast_Mega_Drive.jpg',
+            'https://upload.wikimedia.org/wikipedia/en/2/2b/Altered_Beast_Cover.jpg',
             'Acao Games #1', '1991-07-01');
     INSERT INTO game_copies (id, game_id, status)
     VALUES ('c0010001-0002-4000-8000-000000000002', 'a1b2c3d4-2222-4000-8000-000000000002', 'available');
@@ -41,7 +41,7 @@ BEGIN
     VALUES ('a1b2c3d4-3333-4000-8000-000000000003', 'Super Mario Bros. 3', '',
             'NES',
             'O encanador mais famoso do mundo enfrenta os Koopalings em 8 mundos. Folha de Tanooki, sapo e martelo — o melhor Mario de todos!',
-            'https://upload.wikimedia.org/wikipedia/pt/a/a5/Super_Mario_Bros._3_capa.png',
+            'https://upload.wikimedia.org/wikipedia/en/a/a5/Super_Mario_Bros._3_coverart.png',
             'Acao Games #1', '1991-07-01');
     INSERT INTO game_copies (id, game_id, status)
     VALUES ('c0010001-0003-4000-8000-000000000003', 'a1b2c3d4-3333-4000-8000-000000000003', 'available');
@@ -51,7 +51,7 @@ BEGIN
     VALUES ('a1b2c3d4-4444-4000-8000-000000000004', 'Castle of Illusion', '',
             'Mega Drive',
             'Mickey Mouse adentra o Castelo da Ilusao para salvar Minnie da bruxa Mizrabel. Plataforma magica da SEGA!',
-            'https://upload.wikimedia.org/wikipedia/en/2/2f/Castle_of_Illusion_Mega_Drive_cover.jpg',
+            'https://upload.wikimedia.org/wikipedia/en/f/f4/Castle_of_illusion_Mickey_mouse.jpg',
             'Acao Games #1', '1991-07-01');
     INSERT INTO game_copies (id, game_id, status)
     VALUES ('c0010001-0004-4000-8000-000000000004', 'a1b2c3d4-4444-4000-8000-000000000004', 'available');
@@ -61,7 +61,7 @@ BEGIN
     VALUES ('a1b2c3d4-5555-4000-8000-000000000005', 'Double Dragon II: The Revenge', '',
             'NES',
             'Billy e Jimmy Lee vingam a morte de Marian neste classico beat em up cooperativo. Golpes devastadores e fases icônicas!',
-            'https://upload.wikimedia.org/wikipedia/en/5/5b/Double_Dragon_II_-_The_Revenge_NES_cover.jpg',
+            'https://upload.wikimedia.org/wikipedia/en/0/02/NES_Double_Dragon_II_packaging_front.jpg',
             'Acao Games #1', '1991-07-01');
     INSERT INTO game_copies (id, game_id, status)
     VALUES ('c0010001-0005-4000-8000-000000000005', 'a1b2c3d4-5555-4000-8000-000000000005', 'available');
