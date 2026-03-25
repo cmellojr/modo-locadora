@@ -241,6 +241,12 @@ type PlatformView struct {
 
 // platformLogoFile returns the logo filename for a platform name.
 func platformLogoFile(platform string) string {
+	aliases := map[string]string{
+		"Super Nintendo": "snes",
+	}
+	if alias, ok := aliases[platform]; ok {
+		return "/static/img/logos/" + alias + ".svg"
+	}
 	name := strings.ToLower(strings.ReplaceAll(platform, " ", "-"))
 	return "/static/img/logos/" + name + ".svg"
 }
@@ -282,16 +288,22 @@ func (h *Handler) ListGames(w http.ResponseWriter, r *http.Request, platformsTmp
 
 	// No platform filter → show platform selection page.
 	if platform == "" {
-		var platformViews []PlatformView
+		// Fixed platform list — always shown, even without games.
+		fixedPlatforms := []string{"Mega Drive", "Super Nintendo", "NES", "Master System", "Atari 2600"}
+		platformCounts := make(map[string]int)
 		if h.store != nil {
 			platforms, _ := h.store.ListPlatforms(r.Context())
 			for _, ps := range platforms {
-				platformViews = append(platformViews, PlatformView{
-					Platform:  ps.Platform,
-					GameCount: ps.GameCount,
-					LogoURL:   platformLogoFile(ps.Platform),
-				})
+				platformCounts[ps.Platform] = ps.GameCount
 			}
+		}
+		var platformViews []PlatformView
+		for _, p := range fixedPlatforms {
+			platformViews = append(platformViews, PlatformView{
+				Platform:  p,
+				GameCount: platformCounts[p],
+				LogoURL:   platformLogoFile(p),
+			})
 		}
 
 		var activityViews []ActivityView
