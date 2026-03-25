@@ -69,7 +69,7 @@ BEGIN
     -- ════════════════════════════════════════════════════════════════════════
     -- SÓCIOS DE TESTE
     -- ════════════════════════════════════════════════════════════════════════
-    -- Senhas: TioDaLocadora=sopre_a_fita | MegaDriveKid=sega1991 | Devedor=atrasado123 | Novato=novato2026
+    -- Senhas: tio_da_locadora=sopre_a_fita | MegaDriveKid=sega1991 | Devedor=atrasado123 | Novato=novato2026
 
     -- Avança a sequence para 4 membros
     PERFORM nextval('membership_seq'); -- 1991-001
@@ -80,7 +80,7 @@ BEGIN
     -- 0. Tio da Locadora — Administrador (email = ADMIN_EMAIL)
     INSERT INTO members (id, profile_name, email, password_hash, favorite_console, membership_number, joined_at)
     VALUES ('aabb0001-0000-4000-8000-000000000000',
-            'TioDaLocadora', 'admin@locadora.com',
+            'tio_da_locadora', 'admin@locadora.com',
             '$2a$10$MNvVnff1TjnTrXDHY3OmiOKwx8NuVSgpMNaGXTEJ6soaJLxCSWJfG',
             'Mega Drive', '1991-001',
             '1991-07-01 08:00:00-03');
@@ -167,6 +167,6 @@ BEGIN
         (gen_random_uuid(), 'penalty',           'Devedor',      'Altered Beast',       NOW() - INTERVAL '6 hours');
 
     RAISE NOTICE 'Seed: concluido com sucesso!';
-    RAISE NOTICE 'Socios: MegaDriveKid/sega1991 | Devedor/atrasado123 | Novato/novato2026';
+    RAISE NOTICE 'Socios: tio_da_locadora/sopre_a_fita (admin) | MegaDriveKid/sega1991 | Devedor/atrasado123 | Novato/novato2026';
 
 END $seed$;

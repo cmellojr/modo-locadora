@@ -31,7 +31,7 @@ psql $DATABASE_URL -f internal/database/migrations/006_activities_feed.sql
 Shortcut: `go run ./cmd/server --seed` applies all migrations + seed data in one step.
 
 Default DB credentials: `tio_da_locadora` / `sopre_a_fita` / `modo_locadora`.
-Seed admin: `TioDaLocadora` / `sopre_a_fita` (email must match `ADMIN_EMAIL`).
+Seed admin: `tio_da_locadora` / `sopre_a_fita` (email must match `ADMIN_EMAIL`).
 Seed test members: `MegaDriveKid` / `sega1991`, `Devedor` / `atrasado123`, `Novato` / `novato2026`.
 
 ## Environment Variables
