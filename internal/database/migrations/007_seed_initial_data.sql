@@ -69,19 +69,28 @@ BEGIN
     -- ════════════════════════════════════════════════════════════════════════
     -- SÓCIOS DE TESTE
     -- ════════════════════════════════════════════════════════════════════════
-    -- Senhas: MegaDriveKid=sega1991 | Devedor=atrasado123 | Novato=novato2026
+    -- Senhas: TioDaLocadora=sopre_a_fita | MegaDriveKid=sega1991 | Devedor=atrasado123 | Novato=novato2026
 
-    -- Avança a sequence para 3 membros
+    -- Avança a sequence para 4 membros
     PERFORM nextval('membership_seq'); -- 1991-001
     PERFORM nextval('membership_seq'); -- 1991-002
     PERFORM nextval('membership_seq'); -- 1991-003
+    PERFORM nextval('membership_seq'); -- 1991-004
+
+    -- 0. Tio da Locadora — Administrador (email = ADMIN_EMAIL)
+    INSERT INTO members (id, profile_name, email, password_hash, favorite_console, membership_number, joined_at)
+    VALUES ('aabb0001-0000-4000-8000-000000000000',
+            'TioDaLocadora', 'admin@locadora.com',
+            '$2a$10$MNvVnff1TjnTrXDHY3OmiOKwx8NuVSgpMNaGXTEJ6soaJLxCSWJfG',
+            'Mega Drive', '1991-001',
+            '1991-07-01 08:00:00-03');
 
     -- 1. MegaDriveKid — Sócio exemplar, muitas devoluções no prazo
     INSERT INTO members (id, profile_name, email, password_hash, favorite_console, membership_number, joined_at)
     VALUES ('aabb0001-0001-4000-8000-000000000001',
             'MegaDriveKid', 'mega@locadora.com',
             '$2a$10$v/pOxtjrYzlrA5SbkO3EFubZN2tBWsZA4Fc673Fq8RMekVkSChyAO',
-            'Mega Drive', '1991-001',
+            'Mega Drive', '1991-002',
             '1991-07-15 10:00:00-03');
 
     -- 2. Devedor — Inadimplente, painel da vergonha
@@ -90,7 +99,7 @@ BEGIN
     VALUES ('aabb0001-0002-4000-8000-000000000002',
             'Devedor', 'devedor@locadora.com',
             '$2a$10$cYaEEdblvHr84QKT2c0toeZMIOUpgt4omo84FGaZAnJymY2s/inI.',
-            'NES', '1991-002',
+            'NES', '1991-003',
             'em_debito', 3,
             '1991-08-01 14:00:00-03');
 
@@ -99,7 +108,7 @@ BEGIN
     VALUES ('aabb0001-0003-4000-8000-000000000003',
             'Novato', 'novato@locadora.com',
             '$2a$10$mUiUVmj502aSoM5datTu9ukxCR/VS4IiEcAOFuC2eZkrnF.y.AWDa',
-            'Mega Drive', '1991-003',
+            'Mega Drive', '1991-004',
             '2026-03-10 09:00:00-03');
 
     -- ════════════════════════════════════════════════════════════════════════
