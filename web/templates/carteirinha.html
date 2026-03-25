@@ -153,6 +153,17 @@
             cursor: pointer;
         }
 
+        .status-badge-label {
+            display: inline-block;
+            font-size: 10px;
+            padding: 6px 16px;
+            color: #fff;
+            text-align: center;
+        }
+        .status-badge-label.is-success { background-color: #92cc41; color: #111; }
+        .status-badge-label.is-error   { background-color: #e74c3c; }
+        .status-badge-label.is-primary { background-color: #209cee; }
+
         .notebook-section {
             margin-top: 2rem;
         }
@@ -248,9 +259,7 @@
 
             <div class="status-section">
                 <p class="status-label">STATUS DO S&Oacute;CIO</p>
-                <span class="nes-badge">
-                    <span class="{{.StatusBadge}}">{{.StatusLabel}}</span>
-                </span>
+                <span class="status-badge-label {{.StatusBadge}}">{{.StatusLabel}}</span>
                 <p class="rental-stats">
                     {{.ActiveRentals}} fita(s) alugada(s){{if gt .OverdueCount 0}} &mdash; {{.OverdueCount}} em atraso{{end}}
                 </p>

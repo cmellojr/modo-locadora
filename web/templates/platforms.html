@@ -79,6 +79,18 @@
             color: #92cc41;
         }
 
+        .status-badge-label {
+            display: inline-block;
+            font-size: 9px;
+            padding: 4px 12px;
+            color: #fff;
+            text-align: center;
+            margin-top: 6px;
+        }
+        .status-badge-label.is-success { background-color: #92cc41; color: #111; }
+        .status-badge-label.is-error   { background-color: #e74c3c; }
+        .status-badge-label.is-primary { background-color: #209cee; }
+
         .activity-item {
             margin-bottom: 16px;
         }
@@ -151,9 +163,7 @@
                         <i class="nes-avatar is-rounded"></i>
                         <p class="mini-name">{{.MemberMini.ProfileName}}</p>
                         <p class="mini-number">{{.MemberMini.MembershipNumber}}</p>
-                        <span class="nes-badge">
-                            <span class="{{.MemberMini.StatusBadge}}">{{.MemberMini.StatusLabel}}</span>
-                        </span>
+                        <span class="status-badge-label {{.MemberMini.StatusBadge}}">{{.MemberMini.StatusLabel}}</span>
                         {{if gt .MemberMini.ActiveRentals 0}}
                         <p style="font-size:8px;color:#999;margin-top:8px;">{{.MemberMini.ActiveRentals}} fita(s) alugada(s)</p>
                         {{end}}
