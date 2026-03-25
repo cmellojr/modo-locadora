@@ -25,9 +25,13 @@ psql $DATABASE_URL -f internal/database/migrations/003_membership_and_rental_sup
 psql $DATABASE_URL -f internal/database/migrations/004_password_notes.sql
 psql $DATABASE_URL -f internal/database/migrations/005_auto_return_reputation.sql
 psql $DATABASE_URL -f internal/database/migrations/006_activities_feed.sql
+# 007 is seed data — applied via --seed flag, not manually
 ```
 
-Default credentials: `tio_da_locadora` / `sopre_a_fita` / `modo_locadora`.
+Shortcut: `go run ./cmd/server --seed` applies all migrations + seed data in one step.
+
+Default DB credentials: `tio_da_locadora` / `sopre_a_fita` / `modo_locadora`.
+Seed test members: `MegaDriveKid` / `sega1991`, `Devedor` / `atrasado123`, `Novato` / `novato2026`.
 
 ## Environment Variables
 
@@ -60,12 +64,12 @@ Go 1.24, standard library `net/http.ServeMux` with method-pattern routing. Serve
 
 ### Database Schema
 
-5 tables + 1 sequence. Key relationship: `Game -> GameCopy -> Rental <- Member`.
+6 tables + 1 sequence. Key relationship: `Game -> GameCopy -> Rental <- Member`.
 
 - `members` — profile_name, email, password_hash, membership_number (`1991-XXX`), status (`active`|`em_debito`), late_count
 - `games` — title, igdb_id, platform, summary, cover_url, source_magazine, acquired_at
 - `game_copies` — game_id, status (`available`|`rented`)
-- `rentals` — member_id, copy_id, rented_at, due_at (3 days), returned_at
+- `rentals` — member_id, copy_id, rented_at, due_at (3 days), returned_at, public_legacy (verdict)
 - `activities` — event_type, member_name, game_title, created_at (denormalized feed)
 
 ### Auth Flow

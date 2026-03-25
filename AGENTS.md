@@ -33,9 +33,14 @@ psql $DATABASE_URL -f internal/database/migrations/002_update_games_table.sql
 psql $DATABASE_URL -f internal/database/migrations/003_membership_and_rental_support.sql
 psql $DATABASE_URL -f internal/database/migrations/004_password_notes.sql
 psql $DATABASE_URL -f internal/database/migrations/005_auto_return_reputation.sql
+psql $DATABASE_URL -f internal/database/migrations/006_activities_feed.sql
+# 007 is seed data — applied via --seed flag
 ```
 
-Default credentials: `tio_da_locadora` / `sopre_a_fita` / database `modo_locadora`.
+Shortcut: `go run ./cmd/server --seed` applies all migrations + seed data in one step.
+
+Default DB credentials: `tio_da_locadora` / `sopre_a_fita` / database `modo_locadora`.
+Seed test members: `MegaDriveKid` / `sega1991`, `Devedor` / `atrasado123`, `Novato` / `novato2026`.
 
 ## Environment Variables
 
@@ -55,11 +60,12 @@ Go 1.24, standard library `net/http.ServeMux` with method-pattern routing. Serve
 |---------|---------|
 | `cmd/server/main.go` | Entrypoint: config, template parsing, pgx pool, route wiring |
 | `internal/handlers/handler.go` | All HTTP handlers in a `Handler` struct (Store + cookieSecret) |
-| `internal/database/store.go` | `Store` interface + view structs (GameAvailability, PlatformSummary, GameDetail, ActiveRental, ShameEntry) |
+| `internal/database/store.go` | `Store` interface + view structs (GameAvailability, PlatformSummary, GameDetail, ActiveRental, ShameEntry, ActivityEntry, MemberRental) |
 | `internal/database/postgres.go` | PostgreSQL implementation (pgx/v5 pool, transactions) |
 | `internal/middleware/middleware.go` | `RequireAuth` (cookie check) and `RequireAdmin` (auth + email) |
 | `internal/auth/auth.go` | HMAC-SHA256 cookie signing/verification |
 | `internal/igdb/igdb.go` | IGDB API client (Twitch OAuth2 token flow + game search) |
+| `internal/almanac/almanac.go` | Static gaming ephemerides by day-of-year |
 | `internal/jobs/overdue.go` | Background goroutine: auto-returns overdue rentals every 5 min |
 | `internal/config/config.go` | `.env` loader via godotenv |
 | `internal/models/` | Domain structs: Member (with status/late_count), Game, GameCopy, Rental |
@@ -76,12 +82,13 @@ Go 1.24, standard library `net/http.ServeMux` with method-pattern routing. Serve
 
 ### Database Schema
 
-4 tables + 1 sequence. Key relationship: `Game -> GameCopy -> Rental <- Member`.
+6 tables + 1 sequence. Key relationship: `Game -> GameCopy -> Rental <- Member`.
 
 - `members` — profile_name, email, password_hash, membership_number (`1991-XXX`), status (`active`|`em_debito`), late_count
 - `games` — title, igdb_id, platform, summary, cover_url, source_magazine, acquired_at
 - `game_copies` — game_id, status (`available`|`rented`)
-- `rentals` — member_id, copy_id, rented_at, due_at (3 days), returned_at
+- `rentals` — member_id, copy_id, rented_at, due_at (3 days), returned_at, public_legacy (verdict)
+- `activities` — event_type, member_name, game_title, created_at (denormalized feed)
 - `membership_seq` — generates sequential numbers (1991-001, 1991-002, ...)
 
 ### Authentication
@@ -111,6 +118,7 @@ Go 1.24, standard library `net/http.ServeMux` with method-pattern routing. Serve
 - `GET /carteirinha` — Digital membership card
 - `POST /carteirinha/notes` — Save password notebook
 - `POST /carteirinha/redeem` — Clear debt status
+- `POST /carteirinha/return` — Self-return a rental (with verdict)
 - `POST /rent` — Rent a game
 
 ### Admin (RequireAdmin middleware)
@@ -154,7 +162,7 @@ golang.org/x/crypto — bcrypt password hashing
 5. Run `go build ./...` and `go vet ./...`
 
 ### Adding a new database migration
-1. Create numbered SQL file in `internal/database/migrations/` (e.g., `006_description.sql`)
+1. Create numbered SQL file in `internal/database/migrations/` (e.g., `008_description.sql`)
 2. Update Store interface and postgres implementation if schema changes affect queries
 3. Document the migration in `docs/SETUP.md`
 

@@ -8,6 +8,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Activities feed** (`Aconteceu na Locadora`): Real-time event feed on platforms page showing new games, verdicts, penalties, and redemptions. Migration `006_activities_feed.sql`.
+- **Gaming almanac** (`internal/almanac/`): Static gaming ephemerides by day-of-year shown alongside the activities feed.
+- **Verdict system**: On game return, members choose a verdict (Zerei / Joguei um pouco / Desisti). Verdicts stored in `public_legacy` column and generate activity events.
+- **Golden star**: Games completed ("Zerei") by the logged-in member show a golden star on the shelf.
+- **Self-return on carteirinha**: Members can return their own rentals directly from the membership card page via `POST /carteirinha/return`.
+- **3-column layout**: Platforms page uses CSS Grid (`.locadora-grid`): left sidebar (member mini-card + Wall of Shame), center (platform grid), right sidebar (activities feed + almanac).
+- **SQL seed system**: `--seed` flag applies all migrations + `007_seed_initial_data.sql` with 5 games from Acao Games #1, 3 test members, rental history, and activities feed. Run via `go run ./cmd/server --seed`.
 - **Login/logout flow**: Balcão is always the landing page; logged-in members see welcome message + navigation instead of login form. `POST /logout` clears session cookie.
 - **Auth bar**: All pages display "Sócio: nome / [DESCONECTAR]" aligned top-right when logged in. CSS class `.auth-bar` in `retro.css`.
 - **Console logos on platform grid**: Platform selection page shows SVG console logos (`web/static/img/logos/`) instead of game cover images. Auto-mapped via `platformLogoFile()` helper.
@@ -26,7 +33,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Game shelf simplified**: Cards now show only cover, title, copy count, and availability status (no summary/magazine).
 - **`GET /games/{id}`** changed from JSON API to server-rendered game detail page.
 - **`POST /rent`** redirects to game detail page instead of shelf.
-- **NES.css component expansion**: `nes-badge`, `nes-progress`, `nes-list`, `nes-avatar`, `nes-dialog`, `nes-balloon` patterns.
+- **Platforms page**: Restructured from 2-column flex to 3-column CSS Grid layout.
+- **NES.css component expansion**: `nes-radio` for verdict, `nes-icon star` for golden star, `nes-progress`, `nes-list`, `nes-avatar`, `nes-dialog`, `nes-balloon` patterns.
 - **Font sizes and container widths** standardized across all pages.
 - **Inline styles consolidated** into reusable CSS classes in `retro.css`.
 

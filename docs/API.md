@@ -10,9 +10,9 @@ Landing page (Balcão) with login form and Wall of Shame (top late returners). A
 
 ### `GET /games`
 
-Without query parameters: platform selection grid showing each console with game count and a representative cover.
+Without query parameters: 3-column layout with member mini-card + Wall of Shame (left), platform selection grid (center), activities feed + gaming almanac (right).
 
-With `?platform=X`: simplified cartridge cards for that console — cover, title, copy count, availability status. Each card links to the game detail page.
+With `?platform=X`: simplified cartridge cards for that console — cover, title, copy count, availability status, golden star for completed games. Each card links to the game detail page.
 
 ### `GET /games/{id}`
 
@@ -22,7 +22,7 @@ Query parameter: `error=em_debito` shows debt warning.
 
 ### `GET /carteirinha`
 
-Digital membership card. Requires authentication. Shows membership number, profile, rental stats, status, and password notebook.
+Digital membership card. Requires authentication. Shows membership number, profile, rental stats, status, password notebook, and active rentals with self-return (verdict selection).
 
 Query parameter: `success` shows notification.
 
@@ -76,6 +76,17 @@ Save password notebook. Requires authentication.
 | `notes` | Password notes text |
 
 **Success:** 303 redirect to `/carteirinha?success=1`.
+
+### `POST /carteirinha/return`
+
+Self-return a rental with verdict. Requires authentication.
+
+| Field | Description |
+|-------|-------------|
+| `rental_id` | Rental UUID |
+| `verdict` | Play status: `zerei`, `joguei_um_pouco`, or `desisti` |
+
+**Success:** 303 redirect to `/carteirinha?success=devolucao`. Fires an activity event based on the verdict.
 
 ### `POST /carteirinha/redeem`
 

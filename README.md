@@ -22,6 +22,10 @@ O **Modo Locadora** é uma homenagem a essa era dourada. Um sistema web que recr
 
 **O Tio da Locadora** — O administrador. Abastece as prateleiras com capas brasileiras (TecToy, Playtronic), cuida do acervo e dá baixa nas devoluções.
 
+**O Veredito** — Ao devolver uma fita, diga ao Tio se você zerou, jogou um pouco ou desistiu. Quem zerou ganha uma estrela dourada na prateleira.
+
+**Aconteceu na Locadora** — Feed de atividades em tempo real. Quem alugou, quem zerou, quem foi pro Painel da Vergonha — tudo aparece no balcão.
+
 **O Fiscal Automático** — Não devolveu no prazo? O sistema devolve a fita automaticamente e marca seu nome no Painel da Vergonha.
 
 ---
@@ -62,9 +66,11 @@ git clone https://github.com/cmellojr/modo-locadora.git
 cd modo-locadora
 cp .env.example .env        # preencha com seus valores
 docker compose up -d --build # sobe tudo: app + banco
+go run ./cmd/server --seed   # popula com dados de teste (opcional)
 ```
 
 Acesse `http://localhost:8080` — a locadora está aberta.
+Com seed: `MegaDriveKid` / `sega1991`, `Devedor` / `atrasado123`, `Novato` / `novato2026`.
 
 Para desenvolvimento local sem Docker, migrações manuais e criação do primeiro sócio, veja **[docs/SETUP.md](docs/SETUP.md)**.
 
@@ -87,7 +93,6 @@ Para desenvolvimento local sem Docker, migrações manuais e criação do primei
 
 - **Verso da Capa** — Deixe dicas públicas para os próximos jogadores ao devolver uma fita.
 - **Regra da Sexta** — Alugou na sexta? Só precisa devolver na segunda!
-- **Coleção Pessoal** — Marque os jogos que você já zerou.
 - **Menções na Mídia** — Registre em quais podcasts, sites ou reportagens cada jogo foi mencionado.
 
 ---

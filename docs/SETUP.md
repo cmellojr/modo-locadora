@@ -64,6 +64,7 @@ docker exec -i modo_locadora_db psql -U tio_da_locadora -d modo_locadora < inter
 docker exec -i modo_locadora_db psql -U tio_da_locadora -d modo_locadora < internal/database/migrations/003_membership_and_rental_support.sql
 docker exec -i modo_locadora_db psql -U tio_da_locadora -d modo_locadora < internal/database/migrations/004_password_notes.sql
 docker exec -i modo_locadora_db psql -U tio_da_locadora -d modo_locadora < internal/database/migrations/005_auto_return_reputation.sql
+docker exec -i modo_locadora_db psql -U tio_da_locadora -d modo_locadora < internal/database/migrations/006_activities_feed.sql
 ```
 
 ### Via psql directly:
@@ -74,7 +75,16 @@ psql $DATABASE_URL -f internal/database/migrations/002_update_games_table.sql
 psql $DATABASE_URL -f internal/database/migrations/003_membership_and_rental_support.sql
 psql $DATABASE_URL -f internal/database/migrations/004_password_notes.sql
 psql $DATABASE_URL -f internal/database/migrations/005_auto_return_reputation.sql
+psql $DATABASE_URL -f internal/database/migrations/006_activities_feed.sql
 ```
+
+### Quick setup with seed data:
+
+```bash
+go run ./cmd/server --seed
+```
+
+This applies all migrations (001-006) and populates the database with sample games, members, and rental history. Test credentials: `MegaDriveKid` / `sega1991`, `Devedor` / `atrasado123`, `Novato` / `novato2026`.
 
 ### Migration Summary
 
@@ -85,6 +95,8 @@ psql $DATABASE_URL -f internal/database/migrations/005_auto_return_reputation.sq
 | `003_membership_and_rental_support.sql` | Adds membership fields, `membership_seq` sequence, auto-creates copies |
 | `004_password_notes.sql` | Adds `password_notes` field to `members` |
 | `005_auto_return_reputation.sql` | Adds `status` and `late_count` fields to `members` |
+| `006_activities_feed.sql` | Creates `activities` table for event feed |
+| `007_seed_initial_data.sql` | Sample data (applied via `--seed` flag, not manually) |
 
 ## 4. Local Development (without Docker for the app)
 
