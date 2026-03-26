@@ -21,7 +21,7 @@ BEGIN
     VALUES ('a1b2c3d4-1111-4000-8000-000000000001', 'Golden Axe', '',
             'Mega Drive',
             'Hack and slash cooperativo no mundo de Yuria. Resgate a magia do machado dourado com Ax Battler, Tyris Flare ou Gilius Thunderhead!',
-            'https://upload.wikimedia.org/wikipedia/en/a/ab/Golden_Axe_Promo_Flyer.jpeg',
+            'https://www.sega-brasil.com.br/fullalbums/jogos/Mega%20Drive/Caixas%20de%20Plastico%20Preta/Golden%20Axe/goldenaxe_f_b.jpg',
             'Acao Games #1', '1991-07-01');
     INSERT INTO game_copies (id, game_id, status)
     VALUES ('c0010001-0001-4000-8000-000000000001', 'a1b2c3d4-1111-4000-8000-000000000001', 'available');
@@ -31,7 +31,7 @@ BEGIN
     VALUES ('a1b2c3d4-2222-4000-8000-000000000002', 'Altered Beast', '',
             'Mega Drive',
             'Rise from your grave! Luta mitologica lado a lado contra as forcas de Neff. O jogo que veio com o Mega Drive!',
-            'https://upload.wikimedia.org/wikipedia/en/2/2b/Altered_Beast_Cover.jpg',
+            'https://www.sega-brasil.com.br/fullalbums/jogos/Mega%20Drive/Caixas%20de%20Plastico%20Vermelha/Altered%20Beast/alteredbeast_ft_b_cs_cm_zfm_sls.jpg',
             'Acao Games #1', '1991-07-01');
     INSERT INTO game_copies (id, game_id, status)
     VALUES ('c0010001-0002-4000-8000-000000000002', 'a1b2c3d4-2222-4000-8000-000000000002', 'available');
@@ -51,7 +51,7 @@ BEGIN
     VALUES ('a1b2c3d4-4444-4000-8000-000000000004', 'Castle of Illusion', '',
             'Mega Drive',
             'Mickey Mouse adentra o Castelo da Ilusao para salvar Minnie da bruxa Mizrabel. Plataforma magica da SEGA!',
-            'https://upload.wikimedia.org/wikipedia/en/f/f4/Castle_of_illusion_Mickey_mouse.jpg',
+            'https://www.sega-brasil.com.br/fullalbums/jogos/Mega%20Drive/Caixas%20de%20Papelao%20Preta/Castle%20of%20Illusion/castleofillusion_ft_c_zfm_sls.jpg',
             'Acao Games #1', '1991-07-01');
     INSERT INTO game_copies (id, game_id, status)
     VALUES ('c0010001-0004-4000-8000-000000000004', 'a1b2c3d4-4444-4000-8000-000000000004', 'available');
