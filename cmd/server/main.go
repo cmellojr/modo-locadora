@@ -60,6 +60,7 @@ func main() {
 			"internal/database/migrations/005_auto_return_reputation.sql",
 			"internal/database/migrations/006_activities_feed.sql",
 			"internal/database/migrations/007_seed_initial_data.sql",
+			"internal/database/migrations/008_cover_display.sql",
 		}
 		for _, f := range sqlFiles {
 			data, err := os.ReadFile(f)

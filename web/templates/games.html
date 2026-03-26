@@ -146,7 +146,7 @@
                     {{range .Games}}
                     <a href="/games/{{.ID}}" class="cartridge-card">
                         {{if .CoverURL}}
-                        <img src="{{.CoverURL}}" alt="{{.Title}}" class="game-cover-mini">
+                        <img src="{{.CoverURL}}" alt="{{.Title}}" class="game-cover-mini" style="object-fit: {{.CoverDisplay}}">
                         {{else}}
                         <div class="no-cover">SEM CAPA</div>
                         {{end}}

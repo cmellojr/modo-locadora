@@ -122,6 +122,17 @@
                                 rows="6" placeholder="Traduza e adapte o resumo com sua nostalgia...">{{.Game.Summary}}</textarea>
                         </div>
 
+                        <div class="field-row nes-field">
+                            <label for="cover_display">Modo de Exibi&ccedil;&atilde;o da Capa</label>
+                            <div class="nes-select is-dark">
+                                <select id="cover_display" name="cover_display">
+                                    <option value="cover" {{if eq .Game.CoverDisplay "cover"}}selected{{end}}>Preencher (recorta bordas)</option>
+                                    <option value="contain" {{if eq .Game.CoverDisplay "contain"}}selected{{end}}>Mostrar inteira</option>
+                                    <option value="fill" {{if eq .Game.CoverDisplay "fill"}}selected{{end}}>Esticar</option>
+                                </select>
+                            </div>
+                        </div>
+
                         <div class="meta-info" style="clear: both;">
                             Adquirido em: {{.Game.AcquiredAt.Format "02/01/2006"}}
                         </div>

@@ -107,10 +107,10 @@ func (s *PostgresStore) NextMembershipNumber(ctx context.Context) (string, error
 
 // GetGameByID retrieves a game by its ID.
 func (s *PostgresStore) GetGameByID(ctx context.Context, id uuid.UUID) (*models.Game, error) {
-	query := `SELECT id, title, igdb_id, platform, summary, cover_url, source_magazine, acquired_at FROM games WHERE id = $1`
+	query := `SELECT id, title, igdb_id, platform, summary, cover_url, source_magazine, COALESCE(cover_display, 'cover'), acquired_at FROM games WHERE id = $1`
 
 	var g models.Game
-	err := s.pool.QueryRow(ctx, query, id).Scan(&g.ID, &g.Title, &g.IgdbID, &g.Platform, &g.Summary, &g.CoverURL, &g.SourceMagazine, &g.AcquiredAt)
+	err := s.pool.QueryRow(ctx, query, id).Scan(&g.ID, &g.Title, &g.IgdbID, &g.Platform, &g.Summary, &g.CoverURL, &g.SourceMagazine, &g.CoverDisplay, &g.AcquiredAt)
 	if err != nil {
 		if err == pgx.ErrNoRows {
 			return nil, nil
@@ -149,10 +149,10 @@ func (s *PostgresStore) AddGame(ctx context.Context, g *models.Game) error {
 func (s *PostgresStore) UpdateGame(ctx context.Context, g *models.Game) error {
 	query := `
 		UPDATE games
-		SET title = $2, platform = $3, summary = $4, cover_url = $5, source_magazine = $6
+		SET title = $2, platform = $3, summary = $4, cover_url = $5, source_magazine = $6, cover_display = $7
 		WHERE id = $1`
 
-	tag, err := s.pool.Exec(ctx, query, g.ID, g.Title, g.Platform, g.Summary, g.CoverURL, g.SourceMagazine)
+	tag, err := s.pool.Exec(ctx, query, g.ID, g.Title, g.Platform, g.Summary, g.CoverURL, g.SourceMagazine, g.CoverDisplay)
 	if err != nil {
 		return fmt.Errorf("failed to update game: %w", err)
 	}
@@ -164,7 +164,7 @@ func (s *PostgresStore) UpdateGame(ctx context.Context, g *models.Game) error {
 
 // ListGames retrieves all games from the database.
 func (s *PostgresStore) ListGames(ctx context.Context) ([]models.Game, error) {
-	query := `SELECT id, title, igdb_id, platform, summary, cover_url, source_magazine, acquired_at FROM games ORDER BY acquired_at DESC`
+	query := `SELECT id, title, igdb_id, platform, summary, cover_url, source_magazine, COALESCE(cover_display, 'cover'), acquired_at FROM games ORDER BY acquired_at DESC`
 
 	rows, err := s.pool.Query(ctx, query)
 	if err != nil {
@@ -175,7 +175,7 @@ func (s *PostgresStore) ListGames(ctx context.Context) ([]models.Game, error) {
 	var games []models.Game
 	for rows.Next() {
 		var g models.Game
-		if err := rows.Scan(&g.ID, &g.Title, &g.IgdbID, &g.Platform, &g.Summary, &g.CoverURL, &g.SourceMagazine, &g.AcquiredAt); err != nil {
+		if err := rows.Scan(&g.ID, &g.Title, &g.IgdbID, &g.Platform, &g.Summary, &g.CoverURL, &g.SourceMagazine, &g.CoverDisplay, &g.AcquiredAt); err != nil {
 			return nil, fmt.Errorf("failed to scan game: %w", err)
 		}
 		games = append(games, g)
@@ -186,7 +186,7 @@ func (s *PostgresStore) ListGames(ctx context.Context) ([]models.Game, error) {
 // ListGamesWithAvailability returns games with copy counts and rental status, optionally filtered by platform.
 func (s *PostgresStore) ListGamesWithAvailability(ctx context.Context, platform string) ([]GameAvailability, error) {
 	query := `
-		SELECT g.id, g.title, g.igdb_id, g.platform, g.summary, g.cover_url, g.source_magazine, g.acquired_at,
+		SELECT g.id, g.title, g.igdb_id, g.platform, g.summary, g.cover_url, g.source_magazine, COALESCE(g.cover_display, 'cover'), g.acquired_at,
 			COUNT(gc.id) AS total_copies,
 			COUNT(gc.id) FILTER (WHERE gc.status = 'available') AS available_copies,
 			COALESCE(
@@ -219,7 +219,7 @@ func (s *PostgresStore) ListGamesWithAvailability(ctx context.Context, platform 
 		var ga GameAvailability
 		if err := rows.Scan(
 			&ga.Game.ID, &ga.Game.Title, &ga.Game.IgdbID, &ga.Game.Platform,
-			&ga.Game.Summary, &ga.Game.CoverURL, &ga.Game.SourceMagazine, &ga.Game.AcquiredAt,
+			&ga.Game.Summary, &ga.Game.CoverURL, &ga.Game.SourceMagazine, &ga.Game.CoverDisplay, &ga.Game.AcquiredAt,
 			&ga.TotalCopies, &ga.AvailableCopies, &ga.RenterName,
 		); err != nil {
 			return nil, fmt.Errorf("failed to scan game availability: %w", err)
@@ -258,7 +258,7 @@ func (s *PostgresStore) ListPlatforms(ctx context.Context) ([]PlatformSummary, e
 func (s *PostgresStore) GetGameDetail(ctx context.Context, gameID uuid.UUID) (*GameDetail, error) {
 	// Base game + copy counts.
 	query := `
-		SELECT g.id, g.title, g.igdb_id, g.platform, g.summary, g.cover_url, g.source_magazine, g.acquired_at,
+		SELECT g.id, g.title, g.igdb_id, g.platform, g.summary, g.cover_url, g.source_magazine, COALESCE(g.cover_display, 'cover'), g.acquired_at,
 			COUNT(gc.id) AS total_copies,
 			COUNT(gc.id) FILTER (WHERE gc.status = 'available') AS available_copies
 		FROM games g
@@ -269,7 +269,7 @@ func (s *PostgresStore) GetGameDetail(ctx context.Context, gameID uuid.UUID) (*G
 	var gd GameDetail
 	err := s.pool.QueryRow(ctx, query, gameID).Scan(
 		&gd.Game.ID, &gd.Game.Title, &gd.Game.IgdbID, &gd.Game.Platform,
-		&gd.Game.Summary, &gd.Game.CoverURL, &gd.Game.SourceMagazine, &gd.Game.AcquiredAt,
+		&gd.Game.Summary, &gd.Game.CoverURL, &gd.Game.SourceMagazine, &gd.Game.CoverDisplay, &gd.Game.AcquiredAt,
 		&gd.TotalCopies, &gd.AvailableCopies,
 	)
 	if err != nil {

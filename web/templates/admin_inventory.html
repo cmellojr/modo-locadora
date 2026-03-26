@@ -37,10 +37,11 @@
         }
 
         .inventory-table .cover-thumb {
-            width: 90px;
-            height: auto;
+            width: 120px;
+            height: 155px;
             image-rendering: pixelated;
             border: 2px solid #444;
+            object-fit: cover;
         }
 
         .inventory-table .game-title {
@@ -94,7 +95,6 @@
                         <tr>
                             <th>Capa</th>
                             <th>T&iacute;tulo</th>
-                            <th>Revista</th>
                             <th>A&ccedil;&otilde;es</th>
                         </tr>
                     </thead>
@@ -103,7 +103,7 @@
                         <tr>
                             <td>
                                 {{if .CoverURL}}
-                                <img src="{{.CoverURL}}" alt="{{.Title}}" class="cover-thumb">
+                                <img src="{{.CoverURL}}" alt="{{.Title}}" class="cover-thumb" style="object-fit: {{.CoverDisplay}}">
                                 {{else}}
                                 <span class="nes-text is-disabled">N/A</span>
                                 {{end}}
@@ -111,9 +111,6 @@
                             <td>
                                 <div class="game-title">{{.Title}}</div>
                                 <div class="game-magazine">{{.Platform}}</div>
-                            </td>
-                            <td>
-                                <span class="game-magazine">{{if .SourceMagazine}}{{.SourceMagazine}}{{else}}&mdash;{{end}}</span>
                             </td>
                             <td>
                                 <a href="/admin/edit/{{.ID}}" class="nes-btn is-warning btn-sm">Editar</a>

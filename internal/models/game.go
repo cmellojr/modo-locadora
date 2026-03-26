@@ -15,5 +15,6 @@ type Game struct {
 	Summary        string
 	CoverURL       string
 	SourceMagazine string
+	CoverDisplay   string // CSS object-fit value: "cover", "contain", "fill"
 	AcquiredAt     time.Time
 }

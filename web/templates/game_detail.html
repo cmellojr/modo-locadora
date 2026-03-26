@@ -159,7 +159,7 @@
                 <div class="detail-layout">
                     <div class="detail-cover">
                         {{if .Detail.Game.CoverURL}}
-                        <img src="{{.Detail.Game.CoverURL}}" alt="{{.Detail.Game.Title}}">
+                        <img src="{{.Detail.Game.CoverURL}}" alt="{{.Detail.Game.Title}}" style="object-fit: {{.Detail.Game.CoverDisplay}}">
                         {{else}}
                         <div class="no-cover">SEM CAPA</div>
                         {{end}}

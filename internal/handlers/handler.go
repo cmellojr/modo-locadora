@@ -258,6 +258,7 @@ type GameView struct {
 	Title           string
 	Platform        string
 	CoverURL        string
+	CoverDisplay    string
 	Summary         string
 	SourceMagazine  string
 	TotalCopies     int
@@ -392,6 +393,7 @@ func (h *Handler) ListGames(w http.ResponseWriter, r *http.Request, platformsTmp
 					Title:           ga.Game.Title,
 					Platform:        ga.Game.Platform,
 					CoverURL:        ga.Game.CoverURL,
+					CoverDisplay:    ga.Game.CoverDisplay,
 					TotalCopies:     ga.TotalCopies,
 					AvailableCopies: ga.AvailableCopies,
 					RenterName:      ga.RenterName,
@@ -872,6 +874,10 @@ func (h *Handler) UpdateGame(w http.ResponseWriter, r *http.Request) {
 	game.Platform = r.FormValue("platform")
 	game.Summary = r.FormValue("summary")
 	game.SourceMagazine = r.FormValue("magazine")
+	game.CoverDisplay = r.FormValue("cover_display")
+	if game.CoverDisplay == "" {
+		game.CoverDisplay = "cover"
+	}
 
 	// Handle cover file upload.
 	file, header, err := r.FormFile("cover_file")
