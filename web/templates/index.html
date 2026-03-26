@@ -98,6 +98,10 @@
                         <div class="nav-bar" style="margin-top: 0;">
                             <a href="/games" class="nes-btn is-primary btn-nav">IR PARA A PRATELEIRA</a>
                             <a href="/carteirinha" class="nes-btn is-warning btn-nav">MINHA CARTEIRINHA</a>
+                            {{if .IsAdmin}}
+                            <a href="/admin/stock" class="nes-btn is-success btn-nav">ABASTECER PRATELEIRAS</a>
+                            <a href="/admin/inventory" class="nes-btn btn-nav">ACERVO</a>
+                            {{end}}
                         </div>
                         {{else}}
                         <p class="nes-text is-primary" style="margin-bottom: 20px;">Identifique-se no balc&atilde;o para acessar a prateleira.</p>

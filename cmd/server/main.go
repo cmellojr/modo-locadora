@@ -86,7 +86,7 @@ func main() {
 		log.Println("Warning: ADMIN_EMAIL not set. Admin routes will be inaccessible.")
 	}
 
-	h := handlers.NewHandler(store, cookieSecret)
+	h := handlers.NewHandler(store, cookieSecret, adminEmail)
 
 	// Start the overdue rental checker background job.
 	if store != nil {
