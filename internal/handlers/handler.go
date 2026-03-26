@@ -24,28 +24,29 @@ import (
 type Handler struct {
 	store        database.Store
 	cookieSecret string
+	adminEmail   string
 }
 
-// NewHandler creates a new Handler with the provided store and cookie secret.
-func NewHandler(store database.Store, cookieSecret string) *Handler {
-	return &Handler{store: store, cookieSecret: cookieSecret}
+// NewHandler creates a new Handler with the provided store, cookie secret and admin email.
+func NewHandler(store database.Store, cookieSecret, adminEmail string) *Handler {
+	return &Handler{store: store, cookieSecret: cookieSecret, adminEmail: adminEmail}
 }
 
-// getSessionMember returns the authenticated member's name and login status.
-func (h *Handler) getSessionMember(r *http.Request) (name string, loggedIn bool) {
+// getSessionMember returns the authenticated member's name, email and login status.
+func (h *Handler) getSessionMember(r *http.Request) (name, email string, loggedIn bool) {
 	rawID := auth.GetSessionMemberID(r, h.cookieSecret)
 	if rawID == "" || h.store == nil {
-		return "", false
+		return "", "", false
 	}
 	id, err := uuid.Parse(rawID)
 	if err != nil {
-		return "", false
+		return "", "", false
 	}
 	member, err := h.store.GetMemberByID(r.Context(), id)
 	if err != nil || member == nil {
-		return "", false
+		return "", "", false
 	}
-	return member.ProfileName, true
+	return member.ProfileName, member.Email, true
 }
 
 // Logout handles POST /logout by clearing the session cookie.
@@ -460,7 +461,7 @@ func (h *Handler) GameDetailPage(w http.ResponseWriter, r *http.Request, tmpl *t
 		return
 	}
 
-	memberName, isLoggedIn := h.getSessionMember(r)
+	memberName, _, isLoggedIn := h.getSessionMember(r)
 
 	debtError := r.URL.Query().Get("error") == "em_debito"
 
@@ -633,7 +634,7 @@ func (h *Handler) AdminReturns(w http.ResponseWriter, r *http.Request, tmpl *tem
 		return
 	}
 
-	memberName, _ := h.getSessionMember(r)
+	memberName, _, _ := h.getSessionMember(r)
 	successMsg := r.URL.Query().Get("success")
 
 	rentals, err := h.store.ListActiveRentals(r.Context())
@@ -711,7 +712,7 @@ func (h *Handler) AdminStock(w http.ResponseWriter, r *http.Request, tmpl *templ
 		}
 	}
 
-	memberName, _ := h.getSessionMember(r)
+	memberName, _, _ := h.getSessionMember(r)
 
 	data := struct {
 		MemberName string
@@ -779,7 +780,7 @@ func (h *Handler) AdminInventory(w http.ResponseWriter, r *http.Request, tmpl *t
 		return
 	}
 
-	memberName, _ := h.getSessionMember(r)
+	memberName, _, _ := h.getSessionMember(r)
 	successMsg := r.URL.Query().Get("success")
 
 	games, err := h.store.ListGames(r.Context())
@@ -827,7 +828,7 @@ func (h *Handler) EditGame(w http.ResponseWriter, r *http.Request, tmpl *templat
 		return
 	}
 
-	memberName, _ := h.getSessionMember(r)
+	memberName, _, _ := h.getSessionMember(r)
 
 	data := struct {
 		MemberName string
@@ -953,7 +954,9 @@ func (h *Handler) SearchGame(w http.ResponseWriter, r *http.Request) {
 // HandleIndex handles GET / and renders the landing page with the Wall of Shame.
 // Authenticated members are redirected straight to the shelf.
 func (h *Handler) HandleIndex(w http.ResponseWriter, r *http.Request, tmpl *template.Template) {
-	memberName, isLoggedIn := h.getSessionMember(r)
+	memberName, memberEmail, isLoggedIn := h.getSessionMember(r)
+
+	isAdmin := isLoggedIn && h.adminEmail != "" && memberEmail == h.adminEmail
 
 	var shameEntries []database.ShameEntry
 	if h.store != nil {
@@ -966,10 +969,12 @@ func (h *Handler) HandleIndex(w http.ResponseWriter, r *http.Request, tmpl *temp
 	data := struct {
 		MemberName   string
 		IsLoggedIn   bool
+		IsAdmin      bool
 		ShameEntries []database.ShameEntry
 	}{
 		MemberName:   memberName,
 		IsLoggedIn:   isLoggedIn,
+		IsAdmin:      isAdmin,
 		ShameEntries: shameEntries,
 	}
 
