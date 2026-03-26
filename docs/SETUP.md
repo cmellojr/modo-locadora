@@ -65,6 +65,7 @@ docker exec -i modo_locadora_db psql -U tio_da_locadora -d modo_locadora < inter
 docker exec -i modo_locadora_db psql -U tio_da_locadora -d modo_locadora < internal/database/migrations/004_password_notes.sql
 docker exec -i modo_locadora_db psql -U tio_da_locadora -d modo_locadora < internal/database/migrations/005_auto_return_reputation.sql
 docker exec -i modo_locadora_db psql -U tio_da_locadora -d modo_locadora < internal/database/migrations/006_activities_feed.sql
+docker exec -i modo_locadora_db psql -U tio_da_locadora -d modo_locadora < internal/database/migrations/008_cover_display.sql
 ```
 
 ### Via psql directly:
@@ -76,15 +77,20 @@ psql $DATABASE_URL -f internal/database/migrations/003_membership_and_rental_sup
 psql $DATABASE_URL -f internal/database/migrations/004_password_notes.sql
 psql $DATABASE_URL -f internal/database/migrations/005_auto_return_reputation.sql
 psql $DATABASE_URL -f internal/database/migrations/006_activities_feed.sql
+psql $DATABASE_URL -f internal/database/migrations/008_cover_display.sql
 ```
 
 ### Quick setup with seed data:
 
 ```bash
+# Local development:
 go run ./cmd/server --seed
+
+# Inside Docker (after docker compose up):
+docker exec modo_locadora_app /app/server --seed
 ```
 
-This applies all migrations (001-006) and populates the database with sample games, members, and rental history. Test credentials: `MegaDriveKid` / `sega1991`, `Devedor` / `atrasado123`, `Novato` / `novato2026`.
+This applies all migrations (001-008) and populates the database with sample games, members, and rental history. The `--seed` flag auto-detects the migration directory (`migrations/` in Docker, `internal/database/migrations/` locally). Test credentials: `MegaDriveKid` / `sega1991`, `Devedor` / `atrasado123`, `Novato` / `novato2026`.
 
 ### Migration Summary
 
@@ -97,6 +103,7 @@ This applies all migrations (001-006) and populates the database with sample gam
 | `005_auto_return_reputation.sql` | Adds `status` and `late_count` fields to `members` |
 | `006_activities_feed.sql` | Creates `activities` table for event feed |
 | `007_seed_initial_data.sql` | Sample data (applied via `--seed` flag, not manually) |
+| `008_cover_display.sql` | Adds `cover_display` column to `games` (CSS object-fit mode) |
 
 ## 4. Local Development (without Docker for the app)
 
@@ -115,6 +122,12 @@ go build -o modo-locadora ./cmd/server
 
 # Static analysis
 go vet ./...
+
+# Lint (requires golangci-lint)
+golangci-lint run ./...
+
+# Or use the Task runner for all checks
+task check
 ```
 
 ## 5. Create Your First Member

@@ -35,9 +35,11 @@ psql $DATABASE_URL -f internal/database/migrations/004_password_notes.sql
 psql $DATABASE_URL -f internal/database/migrations/005_auto_return_reputation.sql
 psql $DATABASE_URL -f internal/database/migrations/006_activities_feed.sql
 # 007 is seed data — applied via --seed flag
+psql $DATABASE_URL -f internal/database/migrations/008_cover_display.sql
 ```
 
-Shortcut: `go run ./cmd/server --seed` applies all migrations + seed data in one step.
+Shortcut: `go run ./cmd/server --seed` applies all migrations (001-008) + seed data in one step.
+The `--seed` flag auto-detects the migration directory (`migrations/` in Docker, `internal/database/migrations/` locally).
 
 Default DB credentials: `tio_da_locadora` / `sopre_a_fita` / database `modo_locadora`.
 Seed test members: `MegaDriveKid` / `sega1991`, `Devedor` / `atrasado123`, `Novato` / `novato2026`.
@@ -60,7 +62,7 @@ Go 1.24, standard library `net/http.ServeMux` with method-pattern routing. Serve
 |---------|---------|
 | `cmd/server/main.go` | Entrypoint: config, template parsing, pgx pool, route wiring |
 | `internal/handlers/handler.go` | All HTTP handlers in a `Handler` struct (Store + cookieSecret) |
-| `internal/database/store.go` | `Store` interface + view structs (GameAvailability, PlatformSummary, GameDetail, ActiveRental, ShameEntry, ActivityEntry, MemberRental) |
+| `internal/database/store.go` | `Store` interface + view structs (GameAvailability, PlatformSummary, GameDetail, ActiveRental, ShameEntry, ActivityEntry, MemberRental, GameHealth, GameInventoryItem, GameRentalHistoryEntry) |
 | `internal/database/postgres.go` | PostgreSQL implementation (pgx/v5 pool, transactions) |
 | `internal/middleware/middleware.go` | `RequireAuth` (cookie check) and `RequireAdmin` (auth + email) |
 | `internal/auth/auth.go` | HMAC-SHA256 cookie signing/verification |
@@ -68,7 +70,7 @@ Go 1.24, standard library `net/http.ServeMux` with method-pattern routing. Serve
 | `internal/almanac/almanac.go` | Static gaming ephemerides by day-of-year |
 | `internal/jobs/overdue.go` | Background goroutine: auto-returns overdue rentals every 5 min |
 | `internal/config/config.go` | `.env` loader via godotenv |
-| `internal/models/` | Domain structs: Member (with status/late_count), Game, GameCopy, Rental |
+| `internal/models/` | Domain structs: Member (with status/late_count), Game (with cover_display), GameCopy, Rental, MemberTitle |
 | `web/templates/` | 9 standalone HTML templates (Portuguese UI) |
 | `web/static/css/retro.css` | NES.css dark theme overrides and shared utility classes |
 | `web/static/covers/` | Uploaded Brazilian game covers (Docker volume) |
@@ -85,7 +87,7 @@ Go 1.24, standard library `net/http.ServeMux` with method-pattern routing. Serve
 6 tables + 1 sequence. Key relationship: `Game -> GameCopy -> Rental <- Member`.
 
 - `members` — profile_name, email, password_hash, membership_number (`1991-XXX`), status (`active`|`em_debito`), late_count
-- `games` — title, igdb_id, platform, summary, cover_url, source_magazine, acquired_at
+- `games` — title, igdb_id, platform, summary, cover_url, cover_display, source_magazine, acquired_at
 - `game_copies` — game_id, status (`available`|`rented`)
 - `rentals` — member_id, copy_id, rented_at, due_at (3 days), returned_at, public_legacy (verdict)
 - `activities` — event_type, member_name, game_title, created_at (denormalized feed)
@@ -136,12 +138,27 @@ Go 1.24, standard library `net/http.ServeMux` with method-pattern routing. Serve
 2. **Commit format**: Conventional Commits (`feat:`, `fix:`, `docs:`, `refactor:`).
 3. **Branching**: `main` (stable) + `develop` (active). Feature branches: `feature/*`, `fix/*`, `hotfix/*`, `docs/*`.
 4. **Routing**: Standard library only — `mux.HandleFunc("METHOD /path", handler)`. No third-party routers.
-5. **Validation**: `go build ./...` and `go vet ./...` before commits (no test framework).
+5. **Validation**: `go build ./...`, `go vet ./...`, and `golangci-lint run ./...` before commits (no test framework). Use `task check` to run all three.
 6. **CSS**: NES.css 2.3.0 classes with dark theme overrides in `retro.css`. Shared utility classes: `.btn-nav`, `.btn-sm`, `.title-main`, `.title-sub`, `.footer-copyright`, `.nav-bar`, `.form-actions`, `.empty-state`, `.success-balloon`.
 7. **Templates**: Each page is a standalone HTML file. Page-specific CSS in inline `<style>`, shared CSS from `retro.css`.
 8. **No JavaScript**: The frontend is fully static SSR. No JS frameworks or inline scripts.
 9. **Security**: Parameterized SQL queries. Never store plaintext passwords. Cookie secrets must be 32+ chars.
 10. **Scarcity by design**: Each game has limited physical copies. All copies rented = game unavailable.
+
+## Task Runner
+
+The project uses [Task](https://taskfile.dev/) (`Taskfile.yml`) for common commands:
+
+```bash
+task build     # go build
+task check     # build + vet + lint
+task dev       # go run ./cmd/server
+task seed      # apply migrations + seed
+task up/down   # docker compose up/down
+task reset     # full reset (down -v + up + seed)
+task logs      # docker compose logs
+task psql      # connect to DB
+```
 
 ## Dependencies
 
@@ -150,6 +167,13 @@ pgx/v5           — PostgreSQL driver + connection pool
 godotenv         — .env file loading
 google/uuid      — UUID generation
 golang.org/x/crypto — bcrypt password hashing
+```
+
+## Dev Tools
+
+```
+golangci-lint    — Linting (.golangci.yml: errcheck, staticcheck, unused, gosec)
+go-task          — Task runner (Taskfile.yml)
 ```
 
 ## Common Tasks for Agents
@@ -162,9 +186,10 @@ golang.org/x/crypto — bcrypt password hashing
 5. Run `go build ./...` and `go vet ./...`
 
 ### Adding a new database migration
-1. Create numbered SQL file in `internal/database/migrations/` (e.g., `008_description.sql`)
-2. Update Store interface and postgres implementation if schema changes affect queries
-3. Document the migration in `docs/SETUP.md`
+1. Create numbered SQL file in `internal/database/migrations/` (e.g., `009_description.sql`)
+2. Add the file to the `sqlFiles` list in `cmd/server/main.go` (for `--seed` flag)
+3. Update Store interface and postgres implementation if schema changes affect queries
+4. Document the migration in `docs/SETUP.md`
 
 ### Modifying UI/templates
 1. Use NES.css classes — check existing templates for patterns

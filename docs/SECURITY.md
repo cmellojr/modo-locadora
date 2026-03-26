@@ -50,6 +50,15 @@ Unauthenticated requests redirect to `/`. Non-admin users receive `403 Forbidden
 - Maximum form size: 10 MB.
 - Files are saved with the game UUID as filename (prevents path traversal).
 
+## Static Analysis
+
+The project uses `golangci-lint` (`.golangci.yml`) with security-relevant linters:
+- **gosec** — Detects common Go security issues (hardcoded credentials, weak crypto, SQL injection patterns).
+- **errcheck** — Ensures error return values are checked.
+- **staticcheck** — Catches suspicious constructs.
+
+Run `task check` or `golangci-lint run ./...` before commits.
+
 ## Deployment Checklist
 
 - Set a strong, random `COOKIE_SECRET` (minimum 32 characters).

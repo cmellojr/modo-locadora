@@ -17,7 +17,7 @@ Open an issue with the `enhancement` label. Describe the problem it solves, how 
 1. Fork the repository and clone your fork.
 2. Create a branch from `develop`: `git checkout -b feature/your-feature-name`
 3. Follow the conventions below.
-4. Verify with `go build ./...` and `go vet ./...`.
+4. Verify with `task check` (or `go build ./...`, `go vet ./...`, `golangci-lint run ./...`).
 5. Commit with a descriptive message (see conventions below).
 6. Push to your fork and open a PR against `develop`.
 7. In the PR description, tell us **which game you were playing while coding** (it's tradition).
@@ -32,7 +32,7 @@ Open an issue with the `enhancement` label. Describe the problem it solves, how 
 ### Go Style
 
 - Follow the [Google Go Style Guide](https://google.github.io/styleguide/go/guide.html).
-- Run `go vet ./...` before committing.
+- Run `go vet ./...` and `golangci-lint run ./...` before committing (or use `task check`).
 - Keep functions short and focused.
 
 ### Commit Messages
@@ -53,7 +53,8 @@ Use [Conventional Commits](https://www.conventionalcommits.org/): `feat:`, `fix:
 ### Database Migrations
 
 - Place new migrations in `internal/database/migrations/`.
-- Use incremental numbering: `006_description.sql`, `007_description.sql`.
+- Use incremental numbering: `009_description.sql`, `010_description.sql`.
+- Add the file to the `sqlFiles` list in `cmd/server/main.go` (for `--seed` flag).
 - Document what each migration does in the file header.
 
 ## Development Setup

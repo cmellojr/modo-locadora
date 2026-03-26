@@ -26,9 +26,11 @@ psql $DATABASE_URL -f internal/database/migrations/004_password_notes.sql
 psql $DATABASE_URL -f internal/database/migrations/005_auto_return_reputation.sql
 psql $DATABASE_URL -f internal/database/migrations/006_activities_feed.sql
 # 007 is seed data — applied via --seed flag, not manually
+psql $DATABASE_URL -f internal/database/migrations/008_cover_display.sql
 ```
 
-Shortcut: `go run ./cmd/server --seed` applies all migrations + seed data in one step.
+Shortcut: `go run ./cmd/server --seed` applies all migrations (001-008) + seed data in one step.
+Inside Docker the `--seed` flag auto-detects the migration directory (`migrations/` in container, `internal/database/migrations/` locally).
 
 Default DB credentials: `tio_da_locadora` / `sopre_a_fita` / `modo_locadora`.
 Seed admin: `tio_da_locadora` / `sopre_a_fita` (email must match `ADMIN_EMAIL`).
@@ -50,7 +52,7 @@ Go 1.24, standard library `net/http.ServeMux` with method-pattern routing. Serve
 
 - **`cmd/server/main.go`** — Entrypoint: config, templates, pgx pool, routes, middleware
 - **`internal/handlers/handler.go`** — All HTTP handlers in a `Handler` struct (Store + cookieSecret)
-- **`internal/database/store.go`** — `Store` interface + view structs (GameAvailability, PlatformSummary, GameDetail, ActiveRental, ShameEntry, ActivityEntry, MemberRental)
+- **`internal/database/store.go`** — `Store` interface + view structs (GameAvailability, PlatformSummary, GameDetail, ActiveRental, ShameEntry, ActivityEntry, MemberRental, GameHealth, GameInventoryItem, GameRentalHistoryEntry)
 - **`internal/database/postgres.go`** — PostgreSQL implementation (pgx/v5 pool, transactions)
 - **`internal/middleware/middleware.go`** — `RequireAuth` and `RequireAdmin` middleware
 - **`internal/auth/auth.go`** — HMAC-SHA256 cookie signing/verification
@@ -58,7 +60,7 @@ Go 1.24, standard library `net/http.ServeMux` with method-pattern routing. Serve
 - **`internal/almanac/almanac.go`** — Static gaming ephemerides by day-of-year
 - **`internal/jobs/overdue.go`** — Background goroutine: auto-returns overdue rentals every 5 min
 - **`internal/config/config.go`** — `.env` loader via godotenv
-- **`internal/models/`** — Domain structs: Member (with status/late_count), Game, GameCopy, Rental
+- **`internal/models/`** — Domain structs: Member (with status/late_count), Game (with cover_display), GameCopy, Rental, MemberTitle
 - **`web/templates/`** — 9 standalone HTML templates (Portuguese UI)
 - **`web/static/css/retro.css`** — NES.css dark theme overrides and utility classes
 - **`web/static/covers/`** — Uploaded Brazilian game covers (Docker volume)
@@ -68,7 +70,7 @@ Go 1.24, standard library `net/http.ServeMux` with method-pattern routing. Serve
 6 tables + 1 sequence. Key relationship: `Game -> GameCopy -> Rental <- Member`.
 
 - `members` — profile_name, email, password_hash, membership_number (`1991-XXX`), status (`active`|`em_debito`), late_count
-- `games` — title, igdb_id, platform, summary, cover_url, source_magazine, acquired_at
+- `games` — title, igdb_id, platform, summary, cover_url, cover_display, source_magazine, acquired_at
 - `game_copies` — game_id, status (`available`|`rented`)
 - `rentals` — member_id, copy_id, rented_at, due_at (3 days), returned_at, public_legacy (verdict)
 - `activities` — event_type, member_name, game_title, created_at (denormalized feed)
@@ -89,10 +91,28 @@ POST `/login` -> bcrypt verify -> HMAC-signed cookie `{uuid}.{hmac_hex}` -> midd
 - **Commit format**: Conventional Commits (`feat:`, `fix:`, `docs:`, `refactor:`)
 - **Branching**: `main` (stable) + `develop` (active). Feature branches: `feature/*`, `fix/*`, `hotfix/*`, `docs/*`
 - **Routing**: Standard library only — `mux.HandleFunc("METHOD /path", handler)`
-- **Validation**: `go build ./...` and `go vet ./...` before commits (no test framework)
+- **Validation**: `go build ./...`, `go vet ./...`, and `golangci-lint run ./...` before commits (no test framework). Or use `task check` to run all three.
 - **CSS**: NES.css classes + dark theme overrides in `retro.css`. Shared utilities: `.btn-nav`, `.btn-sm`, `.title-main`, `.title-sub`, `.footer-copyright`, `.nav-bar`, `.form-actions`, `.empty-state`, `.success-balloon`
 - **Templates**: Standalone HTML files. Page-specific CSS in inline `<style>`, shared CSS from `retro.css`
 - **No JavaScript**: Fully static SSR
+
+## Task Runner
+
+The project uses [Task](https://taskfile.dev/) (`Taskfile.yml`) for common SRE commands:
+
+```bash
+task build     # go build ./cmd/server
+task vet       # go vet ./...
+task lint      # golangci-lint run ./...
+task check     # build + vet + lint
+task dev       # go run ./cmd/server
+task seed      # go run ./cmd/server --seed
+task up        # docker compose up -d --build
+task down      # docker compose down
+task reset     # down -v + up + seed
+task logs      # docker compose logs -f app
+task psql      # psql into the running DB container
+```
 
 ## Dependencies
 
@@ -101,4 +121,11 @@ pgx/v5           — PostgreSQL driver + pool
 godotenv         — .env loading
 google/uuid      — UUID generation
 golang.org/x/crypto — bcrypt
+```
+
+## Dev Tools
+
+```
+golangci-lint    — Linting (errcheck, staticcheck, unused, gosec, govet, ineffassign, typecheck)
+go-task          — Task runner (Taskfile.yml)
 ```

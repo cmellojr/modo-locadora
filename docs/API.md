@@ -22,7 +22,7 @@ Query parameter: `error=em_debito` shows debt warning.
 
 ### `GET /carteirinha`
 
-Digital membership card. Requires authentication. Shows membership number, profile, rental stats, status, password notebook, and active rentals with self-return (verdict selection).
+Digital membership card. Requires authentication. Shows membership number, progression title (Sócio Novato / Prata / Ouro / Dono da Calçada), profile, rental stats, status, password notebook, and active rentals with self-return (verdict selection).
 
 Query parameter: `success` shows notification.
 
@@ -32,11 +32,11 @@ IGDB search and game acquisition page. Requires admin role. Query parameters: `q
 
 ### `GET /admin/inventory`
 
-Full catalog table with edit buttons. Requires admin role. Query parameter: `success`.
+Full catalog table with edit buttons and game health indicators (Cartucho Novo, Clássico Eterno, Precisa Soprar, Fita Gasta). Requires admin role. Query parameter: `success`.
 
 ### `GET /admin/edit/{id}`
 
-Game edit form with cover upload (multipart). Requires admin role.
+Game edit form with cover upload (multipart) and cover display mode selector. Shows rental history (last 5 records). Requires admin role.
 
 ### `GET /admin/returns`
 
@@ -121,6 +121,7 @@ Update game details. Requires admin role. Content-Type: `multipart/form-data` (s
 | `summary` | Description |
 | `magazine` | Source magazine |
 | `cover_url` | Existing cover URL (hidden, fallback) |
+| `cover_display` | CSS object-fit mode: `cover` (default), `contain`, or `fill` |
 | `cover_file` | Cover image file upload (optional) |
 
 **Success:** 303 redirect to `/admin/inventory?success={title}`.

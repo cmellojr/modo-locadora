@@ -10,10 +10,11 @@ Retro-gaming session manager emulating 90s Brazilian video rental stores ("locad
 Member (1991-XXX)
   ├── status: active | em_debito
   ├── late_count: permanent penalty counter
-  └── password_notes: personal game codes notebook
+  ├── password_notes: personal game codes notebook
+  └── MemberTitle: computed progression (Novato → Prata → Ouro → Dono da Calçada)
 
 Game (IGDB metadata)
-  ├── platform, summary, cover_url, source_magazine
+  ├── platform, summary, cover_url, cover_display, source_magazine
   └── GameCopy (1:N)
         ├── status: available | rented
         └── Rental (1:N)
@@ -62,10 +63,10 @@ GET /admin/returns        → Active rentals check-in
 | `platforms.html` | `GET /games` | 3-column layout: member card + shame, platform grid, activities + almanac |
 | `games.html` | `GET /games?platform=X` | Cartridge shelf (simplified cards) |
 | `game_detail.html` | `GET /games/{id}` | Game detail + rental stats |
-| `carteirinha.html` | `GET /carteirinha` | Membership card + notebook + active rentals with self-return |
+| `carteirinha.html` | `GET /carteirinha` | Membership card + title badge + notebook + active rentals with self-return |
 | `admin_stock.html` | `GET /admin/stock` | IGDB search & acquisition |
-| `admin_inventory.html` | `GET /admin/inventory` | Catalog table |
-| `admin_edit.html` | `GET /admin/edit/{id}` | Game edit form |
+| `admin_inventory.html` | `GET /admin/inventory` | Catalog table with game health indicators |
+| `admin_edit.html` | `GET /admin/edit/{id}` | Game edit form + rental history |
 | `admin_returns.html` | `GET /admin/returns` | Returns counter |
 
 ## Deployment

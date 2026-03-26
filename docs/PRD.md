@@ -27,7 +27,7 @@ O Modo Locadora e um simulador de ecossistema de locadora brasileira dos anos 90
 ### 3.2. Experiencia do Socio (A Carteirinha)
 
 - **Identidade:** Numeracao sequencial `1991-XXX`.
-- **Status de Progressao:** Titulos automaticos: Novato, Socio Prata (10+ devolucoes) e Dono da Calcada (5+ jogos zerados).
+- **Status de Progressao:** Titulos automaticos: Socio Novato, Socio Prata (10+ devolucoes no prazo), Socio Ouro (25+ devolucoes no prazo) e Dono da Calcada (5+ jogos zerados). Devedores veem titulo esmaecido com indicador.
 - **Caderno de Passwords:** Campo de texto persistente para anotacoes e codigos de jogos.
 - **Estrela Dourada:** Badge visual para jogos marcados com o veredito "Zerei".
 
@@ -45,7 +45,7 @@ O Modo Locadora e um simulador de ecossistema de locadora brasileira dos anos 90
 
 ## 4. Requisitos Nao-Funcionais (SRE Stack)
 
-- **Tecnologia:** Go 1.22+, PostgreSQL 15, Docker Compose.
+- **Tecnologia:** Go 1.24+, PostgreSQL 15, Docker Compose.
 - **Seguranca:** Senhas protegidas com bcrypt; Cookies assinados com HMAC-SHA256.
 - **Performance:** Interface estritamente SSR (Server-Side Rendering) para manter a leveza e velocidade.
 - **Design:** CSS Grid responsivo com fidelidade aos componentes NES.css.
@@ -61,13 +61,20 @@ O Modo Locadora e um simulador de ecossistema de locadora brasileira dos anos 90
 | `rentals` | Historico de locacao, prazos e vereditos |
 | `activities` | Logs de eventos para o feed social |
 
+### 3.5. Auditoria do Acervo (Admin)
+
+- **Saude do Acervo:** Indicador visual no inventario: Cartucho Novo (0-1 alugueis), Classico Eterno (<25% ruins), Precisa Soprar (25-49%), Fita Gasta (50%+).
+- **Historico de Alugueis:** Ficha do jogo mostra ultimos 5 alugueis com socio, datas, veredito e indicador de atraso.
+- **Modo de Exibicao:** Campo `cover_display` controla CSS object-fit das capas (preencher, mostrar inteira, esticar).
+
 ## 6. Plano de Lancamento (Roadmap)
 
 | Versao | Status | Escopo |
 |--------|--------|--------|
 | V0.1-0.3 | Concluido | Base tecnica, Auth, Docker e Prateleira Basica |
-| V0.4 | Atual | Implementacao de Vereditos, Feed, Estrela Dourada e Seed Acao Games #1 |
-| V0.5 | Proximo | Implementacao da "Roleta do Tio", Mural de Placares e Titulos de Status |
+| V0.4 | Concluido | Vereditos, Feed, Estrela Dourada, Seed Acao Games #1 |
+| V0.5 | Atual | Titulos de Status, Saude do Acervo, Cover Display, Taskfile, golangci-lint |
+| V0.6 | Proximo | Roleta do Tio, Verso da Capa, Regra da Sexta |
 
 ---
 

@@ -8,6 +8,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Member progression titles** (`Status de Veterano`): Carteirinha now displays a progression badge — Sócio Novato (default), Sócio Prata (10+ on-time returns), Sócio Ouro (25+ on-time returns), Dono da Calçada (5+ games completed). Debtors see their title faded with "(EM DÉBITO)". Pure Go computation via `ComputeMemberTitle()` in `internal/models/member.go`.
+- **Game health indicators** (`Saúde do Acervo`): Admin inventory shows a health column per game — Cartucho Novo (0-1 rentals), Clássico Eterno (<25% bad verdicts), Precisa Soprar (25-49%), Fita Gasta (50%+). Computed from rental verdicts and late returns via `ListGamesWithHealth()`.
+- **Rental history on edit page**: Admin game edit page shows the last 5 rental records (member, dates, verdict, late flag) via `ListGameRentalHistory()`.
+- **Cover display mode**: Games now have a `cover_display` field (cover/contain/fill) controlling CSS `object-fit` for cover images. Editable in admin edit page. Migration `008_cover_display.sql`.
+- **golangci-lint configuration** (`.golangci.yml`): Linters — errcheck, staticcheck, unused, gosec, govet, ineffassign, typecheck.
+- **Taskfile** (`Taskfile.yml`): SRE task runner with commands for build, vet, lint, check, dev, seed, up, down, reset, logs, psql.
+- **Migration path auto-detection**: `--seed` flag now detects migration directory automatically (`migrations/` in Docker, `internal/database/migrations/` locally).
 - **Activities feed** (`Aconteceu na Locadora`): Real-time event feed on platforms page showing new games, verdicts, penalties, and redemptions. Migration `006_activities_feed.sql`.
 - **Gaming almanac** (`internal/almanac/`): Static gaming ephemerides by day-of-year shown alongside the activities feed.
 - **Verdict system**: On game return, members choose a verdict (Zerei / Joguei um pouco / Desisti). Verdicts stored in `public_legacy` column and generate activity events.

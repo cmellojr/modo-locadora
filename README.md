@@ -16,11 +16,11 @@ O **Modo Locadora** é uma homenagem a essa era dourada. Um sistema web que recr
 
 **A Prateleira** — Organizada por console (Mega Drive, SNES, NES...). Escolha a plataforma, navegue pelos cartuchos e veja os detalhes de cada fita — resumo, revista de origem, quantas vezes foi alugada e quem é o fã número 1.
 
-**A Carteirinha de Sócio** — Cada membro recebe um número no formato `1991-XXX`. É digital, mas carrega o espírito daquele cartão plastificado com foto 3x4.
+**A Carteirinha de Sócio** — Cada membro recebe um número no formato `1991-XXX`. É digital, mas carrega o espírito daquele cartão plastificado com foto 3x4. Conforme você aluga e devolve, conquista títulos: Sócio Novato, Sócio Prata, Sócio Ouro, até Dono da Calçada.
 
 **O Caderno de Passwords** — Espaço pessoal para anotar senhas, códigos e mapas. Porque ninguém merece perder o progresso do Metroid.
 
-**O Tio da Locadora** — O administrador. Abastece as prateleiras com capas brasileiras (TecToy, Playtronic), cuida do acervo e dá baixa nas devoluções.
+**O Tio da Locadora** — O administrador. Abastece as prateleiras com capas brasileiras (TecToy, Playtronic), cuida do acervo e dá baixa nas devoluções. No inventário, cada fita tem um indicador de saúde (Cartucho Novo, Clássico Eterno, Precisa Soprar, Fita Gasta) baseado no histórico de vereditos.
 
 **O Veredito** — Ao devolver uma fita, diga ao Tio se você zerou, jogou um pouco ou desistiu. Quem zerou ganha uma estrela dourada na prateleira.
 
@@ -66,7 +66,7 @@ git clone https://github.com/cmellojr/modo-locadora.git
 cd modo-locadora
 cp .env.example .env        # preencha com seus valores
 docker compose up -d --build # sobe tudo: app + banco
-go run ./cmd/server --seed   # popula com dados de teste (opcional)
+docker exec modo_locadora_app /app/server --seed  # popula com dados de teste (opcional)
 ```
 
 Acesse `http://localhost:8080` — a locadora está aberta.
@@ -88,6 +88,17 @@ Para desenvolvimento local sem Docker, migrações manuais e criação do primei
 | [docs/CHANGELOG.md](docs/CHANGELOG.md) | Histórico de mudanças |
 
 ---
+
+## Automação
+
+O projeto usa [Task](https://taskfile.dev/) para comandos comuns:
+
+```bash
+task check     # build + vet + lint
+task seed      # aplica migrações + dados de teste
+task reset     # reset completo (down + up + seed)
+task logs      # logs do container
+```
 
 ## Funcionalidades Futuras
 
