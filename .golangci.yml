@@ -1,0 +1,22 @@
+run:
+  timeout: 3m
+
+linters:
+  enable:
+    - errcheck
+    - staticcheck
+    - unused
+    - gosec
+    - govet
+    - ineffassign
+    - typecheck
+
+linters-settings:
+  gosec:
+    excludes:
+      - G104 # unhandled errors on deferred closes — too noisy
+      - G304 # file path from variable — needed for migrations
+
+issues:
+  exclude-dirs:
+    - web

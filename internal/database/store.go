@@ -68,6 +68,27 @@ type GameDetail struct {
 	CurrentRenter   string
 }
 
+// GameHealth holds a game's health classification based on rental verdicts.
+type GameHealth struct {
+	Label    string // Portuguese display label
+	BadgeCSS string // CSS class for the health indicator
+}
+
+// GameInventoryItem holds a game with its computed health for the admin inventory.
+type GameInventoryItem struct {
+	Game   models.Game
+	Health GameHealth
+}
+
+// GameRentalHistoryEntry holds one rental record for the admin edit page.
+type GameRentalHistoryEntry struct {
+	MemberName string
+	RentedAt   string // Formatted date
+	ReturnedAt string // Formatted date or "Ativa"
+	Verdict    string // "zerei", "joguei_um_pouco", "desisti", or ""
+	IsLate     bool
+}
+
 // Store defines the set of operations for the database layer.
 type Store interface {
 	// CreateMember persists a new member in the database.
@@ -154,4 +175,10 @@ type Store interface {
 
 	// ListCompletedGameIDs returns game IDs that the member has completed ("zerei").
 	ListCompletedGameIDs(ctx context.Context, memberID uuid.UUID) ([]uuid.UUID, error)
+
+	// ListGamesWithHealth returns all games with their health classification for admin inventory.
+	ListGamesWithHealth(ctx context.Context) ([]GameInventoryItem, error)
+
+	// ListGameRentalHistory returns the last N rental entries for a specific game.
+	ListGameRentalHistory(ctx context.Context, gameID uuid.UUID, limit int) ([]GameRentalHistoryEntry, error)
 }

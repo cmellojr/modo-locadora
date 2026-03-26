@@ -52,15 +52,20 @@ func main() {
 			log.Fatal("Store does not support raw SQL execution.")
 		}
 		// Apply all migrations in order, then seed.
+		// Try "migrations/" first (Docker), fall back to "internal/database/migrations/" (local dev).
+		migrationsDir := "internal/database/migrations/"
+		if _, err := os.Stat("migrations"); err == nil {
+			migrationsDir = "migrations/"
+		}
 		sqlFiles := []string{
-			"internal/database/migrations/001_initial_schema.sql",
-			"internal/database/migrations/002_update_games_table.sql",
-			"internal/database/migrations/003_membership_and_rental_support.sql",
-			"internal/database/migrations/004_password_notes.sql",
-			"internal/database/migrations/005_auto_return_reputation.sql",
-			"internal/database/migrations/006_activities_feed.sql",
-			"internal/database/migrations/007_seed_initial_data.sql",
-			"internal/database/migrations/008_cover_display.sql",
+			migrationsDir + "001_initial_schema.sql",
+			migrationsDir + "002_update_games_table.sql",
+			migrationsDir + "003_membership_and_rental_support.sql",
+			migrationsDir + "004_password_notes.sql",
+			migrationsDir + "005_auto_return_reputation.sql",
+			migrationsDir + "006_activities_feed.sql",
+			migrationsDir + "007_seed_initial_data.sql",
+			migrationsDir + "008_cover_display.sql",
 		}
 		for _, f := range sqlFiles {
 			data, err := os.ReadFile(f)

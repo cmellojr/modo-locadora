@@ -146,6 +146,52 @@
             </div>
         </div>
 
+        {{if .RentalHistory}}
+        <div style="margin-top: 2rem;">
+            <div class="nes-container with-title is-dark">
+                <p class="title">
+                    <span class="title-main">&Uacute;LTIMOS ALUGU&Eacute;IS</span>
+                    <span class="title-sub">{{len .RentalHistory}} registros</span>
+                </p>
+                <div class="nes-table-responsive">
+                    <table class="nes-table is-bordered is-dark" style="width: 100%; font-size: 9px;">
+                        <thead>
+                            <tr>
+                                <th>S&oacute;cio</th>
+                                <th>Alugou</th>
+                                <th>Devolveu</th>
+                                <th>Veredito</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {{range .RentalHistory}}
+                            <tr>
+                                <td>{{.MemberName}}</td>
+                                <td>{{.RentedAt}}</td>
+                                <td>
+                                    {{.ReturnedAt}}
+                                    {{if .IsLate}}<span style="color: #e74c3c; font-size: 7px;">(ATRASADO)</span>{{end}}
+                                </td>
+                                <td>
+                                    {{if eq .Verdict "zerei"}}
+                                        <span style="color: #92cc41;">Zerei!</span>
+                                    {{else if eq .Verdict "joguei_um_pouco"}}
+                                        <span style="color: #3498db;">Joguei um pouco</span>
+                                    {{else if eq .Verdict "desisti"}}
+                                        <span style="color: #e74c3c;">Desisti</span>
+                                    {{else}}
+                                        <span style="color: #555;">&mdash;</span>
+                                    {{end}}
+                                </td>
+                            </tr>
+                            {{end}}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        {{end}}
+
         <p class="footer-copyright">&copy; 1991-2026 Modo Locadora - Sob licen&ccedil;a GPLv3. Criado pelo Tio da Locadora.</p>
     </div>
 </body>

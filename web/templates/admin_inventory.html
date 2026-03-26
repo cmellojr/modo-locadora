@@ -54,6 +54,18 @@
             color: #92cc41;
             margin-top: 4px;
         }
+
+        .health-badge {
+            display: inline-block;
+            font-size: 8px;
+            padding: 3px 8px;
+            color: #fff;
+            white-space: nowrap;
+        }
+        .health-badge.is-health-new   { background-color: #3498db; }
+        .health-badge.is-health-good  { background-color: #92cc41; color: #111; }
+        .health-badge.is-health-mixed { background-color: #f7d51d; color: #111; }
+        .health-badge.is-health-bad   { background-color: #e74c3c; }
     </style>
 </head>
 
@@ -85,35 +97,39 @@
         <div class="nes-container with-title is-dark">
             <p class="title">
                 <span class="title-main">JOGOS CADASTRADOS</span>
-                <span class="title-sub">{{len .Games}} fitas</span>
+                <span class="title-sub">{{len .Items}} fitas</span>
             </p>
 
-            {{if .Games}}
+            {{if .Items}}
             <div class="nes-table-responsive">
                 <table class="nes-table is-bordered is-dark inventory-table">
                     <thead>
                         <tr>
                             <th>Capa</th>
                             <th>T&iacute;tulo</th>
+                            <th>Sa&uacute;de</th>
                             <th>A&ccedil;&otilde;es</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {{range .Games}}
+                        {{range .Items}}
                         <tr>
                             <td>
-                                {{if .CoverURL}}
-                                <img src="{{.CoverURL}}" alt="{{.Title}}" class="cover-thumb" style="object-fit: {{.CoverDisplay}}">
+                                {{if .Game.CoverURL}}
+                                <img src="{{.Game.CoverURL}}" alt="{{.Game.Title}}" class="cover-thumb" style="object-fit: {{.Game.CoverDisplay}}">
                                 {{else}}
                                 <span class="nes-text is-disabled">N/A</span>
                                 {{end}}
                             </td>
                             <td>
-                                <div class="game-title">{{.Title}}</div>
-                                <div class="game-magazine">{{.Platform}}</div>
+                                <div class="game-title">{{.Game.Title}}</div>
+                                <div class="game-magazine">{{.Game.Platform}}</div>
                             </td>
                             <td>
-                                <a href="/admin/edit/{{.ID}}" class="nes-btn is-warning btn-sm">Editar</a>
+                                <span class="health-badge {{.Health.BadgeCSS}}">{{.Health.Label}}</span>
+                            </td>
+                            <td>
+                                <a href="/admin/edit/{{.Game.ID}}" class="nes-btn is-warning btn-sm">Editar</a>
                             </td>
                         </tr>
                         {{end}}

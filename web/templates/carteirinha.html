@@ -164,6 +164,21 @@
         .status-badge-label.is-error   { background-color: #e74c3c; }
         .status-badge-label.is-primary { background-color: #209cee; }
 
+        /* Member progression title badges */
+        .title-badge-label {
+            display: inline-block;
+            font-size: 9px;
+            padding: 4px 12px;
+            color: #fff;
+            text-align: center;
+            letter-spacing: 1px;
+        }
+        .title-badge-label.is-title-legend { background-color: #e74c3c; }
+        .title-badge-label.is-title-gold   { background-color: #f7d51d; color: #111; }
+        .title-badge-label.is-title-silver { background-color: #aaa; color: #111; }
+        .title-badge-label.is-title-novice { background-color: #555; }
+        .title-badge-debtor { opacity: 0.5; }
+
         .notebook-section {
             margin-top: 2rem;
         }
@@ -235,6 +250,11 @@
 
             <div class="membership-number">
                 {{.Member.MembershipNumber}}
+            </div>
+
+            <div style="text-align: center; margin-bottom: 1rem;">
+                <span class="title-badge-label {{.Title.BadgeCSS}}{{if .IsEmDebito}} title-badge-debtor{{end}}">{{.Title.Label}}</span>
+                {{if .IsEmDebito}}<div style="font-size: 7px; color: #e74c3c; margin-top: 2px;">(EM D&Eacute;BITO)</div>{{end}}
             </div>
 
             <div class="card-row">

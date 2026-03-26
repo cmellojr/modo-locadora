@@ -1,0 +1,68 @@
+version: "3"
+
+dotenv: [".env"]
+
+tasks:
+  build:
+    desc: Build the server binary
+    cmds:
+      - go build -o modo-locadora ./cmd/server
+
+  vet:
+    desc: Run go vet
+    cmds:
+      - go vet ./...
+
+  lint:
+    desc: Run golangci-lint
+    cmds:
+      - golangci-lint run ./...
+
+  dev:
+    desc: Run the server locally (requires DATABASE_URL in .env)
+    cmds:
+      - go run ./cmd/server
+
+  seed:
+    desc: Apply all migrations and seed data (requires DATABASE_URL in .env)
+    cmds:
+      - go run ./cmd/server --seed
+
+  up:
+    desc: Start Docker Compose stack (build + detach)
+    cmds:
+      - docker compose up -d --build
+
+  down:
+    desc: Stop Docker Compose stack
+    cmds:
+      - docker compose down
+
+  reset:
+    desc: Destroy volumes, rebuild, and re-seed
+    cmds:
+      - docker compose down -v
+      - docker compose up -d --build
+      - defer: { task: logs }
+      - sleep 5
+      - docker exec modo_locadora_app /app/server --seed
+
+  logs:
+    desc: Tail app container logs
+    cmds:
+      - docker logs -f modo_locadora_app
+
+  psql:
+    desc: Open psql shell in the database container
+    cmds:
+      - docker exec -it modo_locadora_db psql -U {{.DB_USER}} -d {{.DB_NAME}}
+    vars:
+      DB_USER: '{{.DB_USER | default "tio_da_locadora"}}'
+      DB_NAME: '{{.DB_NAME | default "modo_locadora"}}'
+
+  check:
+    desc: Run all checks (vet + lint + build)
+    cmds:
+      - task: vet
+      - task: lint
+      - task: build

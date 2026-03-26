@@ -528,6 +528,11 @@ func (h *Handler) Carteirinha(w http.ResponseWriter, r *http.Request, tmpl *temp
 	var memberRentals []database.MemberRental
 	memberRentals, _ = h.store.ListMemberActiveRentals(r.Context(), id)
 
+	// Compute member progression title.
+	onTimeCount, _ := h.store.CountOnTimeReturns(r.Context(), id)
+	completedGameIDs, _ := h.store.ListCompletedGameIDs(r.Context(), id)
+	memberTitle := models.ComputeMemberTitle(len(completedGameIDs), onTimeCount)
+
 	data := struct {
 		Member        *models.Member
 		ActiveRentals int
@@ -538,6 +543,7 @@ func (h *Handler) Carteirinha(w http.ResponseWriter, r *http.Request, tmpl *temp
 		IsEmDebito    bool
 		LateCount     int
 		Rentals       []database.MemberRental
+		Title         models.MemberTitle
 	}{
 		Member:        member,
 		ActiveRentals: activeCount,
@@ -548,6 +554,7 @@ func (h *Handler) Carteirinha(w http.ResponseWriter, r *http.Request, tmpl *temp
 		IsEmDebito:    isEmDebito,
 		LateCount:     member.LateCount,
 		Rentals:       memberRentals,
+		Title:         memberTitle,
 	}
 
 	if err := tmpl.Execute(w, data); err != nil {
@@ -785,7 +792,7 @@ func (h *Handler) AdminInventory(w http.ResponseWriter, r *http.Request, tmpl *t
 	memberName, _, _ := h.getSessionMember(r)
 	successMsg := r.URL.Query().Get("success")
 
-	games, err := h.store.ListGames(r.Context())
+	items, err := h.store.ListGamesWithHealth(r.Context())
 	if err != nil {
 		http.Error(w, "Failed to list games: "+err.Error(), http.StatusInternalServerError)
 		return
@@ -793,11 +800,11 @@ func (h *Handler) AdminInventory(w http.ResponseWriter, r *http.Request, tmpl *t
 
 	data := struct {
 		MemberName string
-		Games      []models.Game
+		Items      []database.GameInventoryItem
 		Success    string
 	}{
 		MemberName: memberName,
-		Games:      games,
+		Items:      items,
 		Success:    successMsg,
 	}
 
@@ -832,12 +839,16 @@ func (h *Handler) EditGame(w http.ResponseWriter, r *http.Request, tmpl *templat
 
 	memberName, _, _ := h.getSessionMember(r)
 
+	rentalHistory, _ := h.store.ListGameRentalHistory(r.Context(), id, 5)
+
 	data := struct {
-		MemberName string
-		Game       *models.Game
+		MemberName    string
+		Game          *models.Game
+		RentalHistory []database.GameRentalHistoryEntry
 	}{
-		MemberName: memberName,
-		Game:       game,
+		MemberName:    memberName,
+		Game:          game,
+		RentalHistory: rentalHistory,
 	}
 
 	if err := tmpl.Execute(w, data); err != nil {
