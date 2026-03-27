@@ -1,0 +1,1 @@
+Sopre a fita e prepare a carteirinha! O Modo Locadora recria a nostalgia das locadoras dos anos 90. Alugue clássicos, anote códigos no caderno de passwords e evite o Painel da Vergonha se esquecer de devolver ao Tio da Locadora. Um sistema em Go com visual 8-bit para quem viveu a era de ouro dos cartuchos.
