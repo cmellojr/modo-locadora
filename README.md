@@ -1,5 +1,7 @@
 # Modo Locadora
 
+**Reviva a era de ouro das locadoras dos anos 90! 🕹️ Sopre a fita, mostre sua carteirinha e alugue clássicos com o Tio da Locadora. Um sistema que recria a experiência real: cópias limitadas, caderno de passwords grudento de guaraná e a missão de devolver na segunda. Nostalgia em 8-bit com Go, PostgreSQL e NES.css. Respeite o tempo!**
+
 > **"Sopre a fita, pegue o controle e respeite o tempo."**
 
 ---
