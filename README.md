@@ -2,6 +2,16 @@
 
 > **"Sopre a fita, pegue o controle e respeite o tempo."**
 
+![Go](https://img.shields.io/badge/go-1.24-00ADD8?logo=go&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/postgresql-15-336791?logo=postgresql&logoColor=white)
+![Docker](https://img.shields.io/badge/docker-compose-2496ED?logo=docker&logoColor=white)
+![NES.css](https://img.shields.io/badge/nes.css-2.3.0-E76F51)
+![Retro](https://img.shields.io/badge/%F0%9F%95%B9%EF%B8%8F_era-8--bit_e_16--bit-E76F51)
+![License](https://img.shields.io/badge/license-GPL%20v3-blue)
+![SSR](https://img.shields.io/badge/rendering-SSR-green)
+![JS](https://img.shields.io/badge/javascript-zero-red)
+![Style](https://img.shields.io/badge/style-Conventional%20Commits-FE5196?logo=conventionalcommits&logoColor=white)
+
 ---
 
 Era sexta-feira. Você corria da escola, passava no balcão, mostrava a carteirinha e rezava para aquele cartucho ainda estar na prateleira. O tio conferia o caderno, pegava a fita, soprava o conector e dizia: *"Devolve na segunda, hein?"*
