@@ -6,11 +6,10 @@
 ![PostgreSQL](https://img.shields.io/badge/postgresql-15-336791?logo=postgresql&logoColor=white)
 ![Docker](https://img.shields.io/badge/docker-compose-2496ED?logo=docker&logoColor=white)
 ![NES.css](https://img.shields.io/badge/nes.css-2.3.0-E76F51)
-![Retro](https://img.shields.io/badge/%F0%9F%95%B9%EF%B8%8F_8--bit-E76F51)
+![Retro](https://img.shields.io/badge/visual-8--bit-E76F51)
 ![License](https://img.shields.io/badge/license-GPL%20v3-blue)
 ![SSR](https://img.shields.io/badge/rendering-SSR-green)
 ![JS](https://img.shields.io/badge/javascript-zero-red)
-![Status](https://img.shields.io/badge/status-em%20desenvolvimento-yellow)
 
 ---
 
