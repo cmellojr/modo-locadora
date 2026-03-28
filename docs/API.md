@@ -1,148 +1,148 @@
-# API Reference
+# Referência da API
 
-Modo Locadora uses server-rendered pages (HTML) and a few JSON endpoints. For authentication details, see [SECURITY.md](SECURITY.md).
+O Modo Locadora usa páginas renderizadas no servidor (HTML) e alguns endpoints JSON. Para detalhes de autenticação, veja [Política de Segurança](SECURITY.md).
 
-## Pages (SSR)
+## Páginas (SSR)
 
 ### `GET /`
 
-Landing page (Balcão) with login form and Wall of Shame (top late returners). Authenticated members are redirected to `/games`.
+Página de entrada (Balcão) com formulário de login e Painel da Vergonha (maiores devedores). Sócios autenticados são redirecionados para `/games`.
 
 ### `GET /games`
 
-Without query parameters: 3-column layout with member mini-card + Wall of Shame (left), platform selection grid (center), activities feed + gaming almanac (right).
+Sem parâmetros: layout 3 colunas com mini-card do sócio + Painel da Vergonha (esquerda), grade de plataformas (centro), feed de atividades + almanaque (direita).
 
-With `?platform=X`: simplified cartridge cards for that console — cover, title, copy count, availability status, golden star for completed games. Each card links to the game detail page.
+Com `?platform=X`: cards simplificados de cartucho para o console — capa, título, número de cópias, disponibilidade e estrela dourada para jogos completados. Cada card leva à página de detalhe.
 
 ### `GET /games/{id}`
 
-Game detail page. Shows cover, title, platform, summary, source magazine, copy availability, total rentals, top renter, current renter, and acquired date. Logged-in members see the [ALUGAR] button if copies are available.
+Página de detalhe do jogo. Mostra capa, título, plataforma, resumo, revista de origem, disponibilidade de cópias, total de aluguéis, fã número 1, sócio atual e data de aquisição. Sócios logados veem o botão [ALUGAR] se houver cópias disponíveis.
 
-Query parameter: `error=em_debito` shows debt warning.
+Parâmetro: `error=em_debito` exibe aviso de débito.
 
 ### `GET /carteirinha`
 
-Digital membership card. Requires authentication. Shows membership number, progression title (Sócio Novato / Prata / Ouro / Dono da Calçada), profile, rental stats, status, password notebook, and active rentals with self-return (verdict selection).
+Carteirinha digital de sócio. Requer autenticação. Mostra número de matrícula, título de progressão (Sócio Novato / Prata / Ouro / Dono da Calçada), perfil, stats de aluguel, status, caderno de passwords e aluguéis ativos com auto-devolução (seleção de veredito).
 
-Query parameter: `success` shows notification.
+Parâmetro: `success` exibe notificação.
 
 ### `GET /admin/stock`
 
-IGDB search and game acquisition page. Requires admin role. Query parameters: `q`, `magazine`, `selected`, `success`.
+Busca IGDB e página de aquisição de jogos. Requer acesso de administrador. Parâmetros: `q`, `magazine`, `selected`, `success`.
 
 ### `GET /admin/inventory`
 
-Full catalog table with edit buttons and game health indicators (Cartucho Novo, Clássico Eterno, Precisa Soprar, Fita Gasta). Requires admin role. Query parameter: `success`.
+Tabela completa do acervo com botões de edição e indicadores de saúde (Cartucho Novo, Clássico Eterno, Precisa Soprar, Fita Gasta). Requer acesso de administrador. Parâmetro: `success`.
 
 ### `GET /admin/edit/{id}`
 
-Game edit form with cover upload (multipart) and cover display mode selector. Shows rental history (last 5 records). Requires admin role.
+Formulário de edição do jogo com upload de capa (multipart) e seletor de modo de exibição. Mostra histórico de aluguéis (últimos 5 registros). Requer acesso de administrador.
 
 ### `GET /admin/returns`
 
-Active rentals dashboard with return buttons. Requires admin role. Query parameter: `success`.
+Dashboard de aluguéis ativos com botões de devolução. Requer acesso de administrador. Parâmetro: `success`.
 
 ---
 
-## Form Endpoints
+## Endpoints de Formulário
 
 ### `POST /login`
 
-Authenticate and set session cookie. Content-Type: `application/x-www-form-urlencoded`.
+Autenticar e definir cookie de sessão. Content-Type: `application/x-www-form-urlencoded`.
 
-| Field | Description |
-|-------|-------------|
-| `profile_name` | Member profile name |
-| `password` | Member password |
+| Campo | Descrição |
+|-------|-----------|
+| `profile_name` | Nome de perfil do sócio |
+| `password` | Senha do sócio |
 
-**Success:** 303 redirect to `/games`, sets `session_member` cookie.
+**Sucesso:** redireciona (303) para `/games`, define cookie `session_member`.
 
 ### `POST /rent`
 
-Rent a game. Requires authentication.
+Alugar um jogo. Requer autenticação.
 
-| Field | Description |
-|-------|-------------|
-| `game_id` | Game UUID |
+| Campo | Descrição |
+|-------|-----------|
+| `game_id` | UUID do jogo |
 
-**Success:** 303 redirect to `/games/{id}`. Members in debt are redirected with `?error=em_debito`.
+**Sucesso:** redireciona (303) para `/games/{id}`. Sócios em débito são redirecionados com `?error=em_debito`.
 
 ### `POST /carteirinha/notes`
 
-Save password notebook. Requires authentication.
+Salvar caderno de passwords. Requer autenticação.
 
-| Field | Description |
-|-------|-------------|
-| `notes` | Password notes text |
+| Campo | Descrição |
+|-------|-----------|
+| `notes` | Texto do caderno de passwords |
 
-**Success:** 303 redirect to `/carteirinha?success=1`.
+**Sucesso:** redireciona (303) para `/carteirinha?success=1`.
 
 ### `POST /carteirinha/return`
 
-Self-return a rental with verdict. Requires authentication.
+Auto-devolução de aluguel com veredito. Requer autenticação.
 
-| Field | Description |
-|-------|-------------|
-| `rental_id` | Rental UUID |
-| `verdict` | Play status: `zerei`, `joguei_um_pouco`, or `desisti` |
+| Campo | Descrição |
+|-------|-----------|
+| `rental_id` | UUID do aluguel |
+| `verdict` | Status de jogo: `zerei`, `joguei_um_pouco` ou `desisti` |
 
-**Success:** 303 redirect to `/carteirinha?success=devolucao`. Fires an activity event based on the verdict.
+**Sucesso:** redireciona (303) para `/carteirinha?success=devolucao`. Dispara evento de atividade baseado no veredito.
 
 ### `POST /carteirinha/redeem`
 
-Clear member's debt status. Requires authentication. No fields needed.
+Limpar status de débito do sócio. Requer autenticação. Sem campos.
 
-**Success:** 303 redirect to `/carteirinha?success=redencao`.
+**Sucesso:** redireciona (303) para `/carteirinha?success=redencao`.
 
 ### `POST /admin/purchase`
 
-Add a game from IGDB to the catalog. Requires admin role. Creates a `game_copy` atomically.
+Adicionar um jogo do IGDB ao acervo. Requer acesso de administrador. Cria uma `game_copy` atomicamente.
 
-| Field | Description |
-|-------|-------------|
-| `title` | Game title |
-| `igdb_id` | IGDB game ID |
-| `platform` | Platform name (defaults to "N/A") |
-| `summary` | Game description |
-| `cover_url` | Cover image URL |
-| `magazine` | Source magazine label |
+| Campo | Descrição |
+|-------|-----------|
+| `title` | Título do jogo |
+| `igdb_id` | ID do jogo no IGDB |
+| `platform` | Nome da plataforma (padrão "N/A") |
+| `summary` | Descrição do jogo |
+| `cover_url` | URL da capa |
+| `magazine` | Revista de origem |
 
-**Success:** 303 redirect to `/admin/edit/{id}`.
+**Sucesso:** redireciona (303) para `/admin/edit/{id}`.
 
 ### `POST /admin/update-game`
 
-Update game details. Requires admin role. Content-Type: `multipart/form-data` (supports cover file upload).
+Atualizar dados do jogo. Requer acesso de administrador. Content-Type: `multipart/form-data` (suporta upload de capa).
 
-| Field | Description |
-|-------|-------------|
-| `id` | Game UUID |
-| `title` | Game title |
-| `platform` | Platform name |
-| `summary` | Description |
-| `magazine` | Source magazine |
-| `cover_url` | Existing cover URL (hidden, fallback) |
-| `cover_display` | CSS object-fit mode: `cover` (default), `contain`, or `fill` |
-| `cover_file` | Cover image file upload (optional) |
+| Campo | Descrição |
+|-------|-----------|
+| `id` | UUID do jogo |
+| `title` | Título do jogo |
+| `platform` | Nome da plataforma |
+| `summary` | Descrição |
+| `magazine` | Revista de origem |
+| `cover_url` | URL da capa existente (hidden, fallback) |
+| `cover_display` | Modo CSS object-fit: `cover` (padrão), `contain` ou `fill` |
+| `cover_file` | Arquivo de imagem da capa (opcional) |
 
-**Success:** 303 redirect to `/admin/inventory?success={title}`.
+**Sucesso:** redireciona (303) para `/admin/inventory?success={title}`.
 
 ### `POST /admin/return-game`
 
-Process a game return. Requires admin role.
+Processar devolução de jogo. Requer acesso de administrador.
 
-| Field | Description |
-|-------|-------------|
-| `rental_id` | Rental UUID |
+| Campo | Descrição |
+|-------|-----------|
+| `rental_id` | UUID do aluguel |
 
-**Success:** 303 redirect to `/admin/returns?success=Fita+devolvida`.
+**Sucesso:** redireciona (303) para `/admin/returns?success=Fita+devolvida`.
 
 ---
 
-## JSON API
+## API JSON
 
 ### `POST /members`
 
-Register a new member.
+Registrar um novo sócio.
 
 ```json
 {
@@ -153,8 +153,8 @@ Register a new member.
 }
 ```
 
-**Response** `201 Created`: Member object with auto-assigned `MembershipNumber`. `PasswordHash` is always empty.
+**Resposta** `201 Created`: objeto do sócio com `MembershipNumber` auto-atribuído. `PasswordHash` é sempre vazio.
 
 ### `GET /search?q={query}`
 
-Search IGDB database. Returns up to 10 results with name, summary, cover, and platforms.
+Buscar na base IGDB. Retorna até 10 resultados com nome, resumo, capa e plataformas.

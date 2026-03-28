@@ -1,17 +1,17 @@
-# Development Setup
+# Configuração do Ambiente
 
-Step-by-step guide for setting up Modo Locadora locally.
+Guia passo a passo para configurar o Modo Locadora localmente.
 
-## Prerequisites
+## Pré-requisitos
 
-| Tool       | Version | Purpose                       |
-|------------|---------|-------------------------------|
-| Docker     | 20+     | App + PostgreSQL containers   |
-| Git        | 2.x     | Version control               |
+| Ferramenta | Versão | Função |
+|------------|--------|--------|
+| Docker     | 20+    | Containers da app + PostgreSQL |
+| Git        | 2.x    | Controle de versão |
 
-For local development without Docker, you also need **Go 1.24+** and a **PostgreSQL 15+** instance.
+Para desenvolvimento local sem Docker, você também precisa de **Go 1.24+** e uma instância **PostgreSQL 15+**.
 
-## 1. Clone and Configure
+## 1. Clone e Configuração
 
 ```bash
 git clone https://github.com/cmellojr/modo-locadora.git
@@ -19,44 +19,44 @@ cd modo-locadora
 cp .env.example .env
 ```
 
-Edit `.env` with your values:
+Edite o `.env` com seus valores:
 
 ```env
-# IGDB API — Get credentials at https://dev.twitch.tv/console
+# IGDB API — Obtenha credenciais em https://dev.twitch.tv/console
 TWITCH_CLIENT_ID=your_client_id
 TWITCH_CLIENT_SECRET=your_client_secret
 
-# Database (used by Docker Compose)
+# Banco de dados (usado pelo Docker Compose)
 DB_USER=tio_da_locadora
 DB_PASSWORD=sopre_a_fita
 DB_NAME=modo_locadora
 
-# Security
+# Segurança
 COOKIE_SECRET=generate-a-random-secret-here-min-32-chars
 ADMIN_EMAIL=your_admin_email@example.com
 ```
 
-### Getting IGDB Credentials
+### Obtendo Credenciais da IGDB
 
-1. Create an account at [Twitch Developer Console](https://dev.twitch.tv/console).
-2. Register a new application (any category).
-3. Copy the **Client ID** and generate a **Client Secret**.
+1. Crie uma conta no [Twitch Developer Console](https://dev.twitch.tv/console).
+2. Registre uma nova aplicação (qualquer categoria).
+3. Copie o **Client ID** e gere um **Client Secret**.
 
-## 2. Start with Docker (recommended)
+## 2. Iniciar com Docker (recomendado)
 
 ```bash
 docker compose up -d --build
 ```
 
-This starts both the Go app and PostgreSQL. The app auto-connects to the database. Access at `http://localhost:8080`.
+Isso inicia a aplicação Go e o PostgreSQL. A app conecta ao banco automaticamente. Acesse em `http://localhost:8080`.
 
-Migrations are applied manually (see step 3).
+As migrations são aplicadas manualmente (veja passo 3).
 
-## 3. Run Migrations
+## 3. Executar Migrations
 
-Migrations are in `internal/database/migrations/` and must be applied in order.
+As migrations ficam em `internal/database/migrations/` e devem ser aplicadas em ordem.
 
-### Via Docker container:
+### Via container Docker:
 
 ```bash
 docker exec -i modo_locadora_db psql -U tio_da_locadora -d modo_locadora < internal/database/migrations/001_initial_schema.sql
@@ -68,7 +68,7 @@ docker exec -i modo_locadora_db psql -U tio_da_locadora -d modo_locadora < inter
 docker exec -i modo_locadora_db psql -U tio_da_locadora -d modo_locadora < internal/database/migrations/008_cover_display.sql
 ```
 
-### Via psql directly:
+### Via psql direto:
 
 ```bash
 psql $DATABASE_URL -f internal/database/migrations/001_initial_schema.sql
@@ -80,57 +80,67 @@ psql $DATABASE_URL -f internal/database/migrations/006_activities_feed.sql
 psql $DATABASE_URL -f internal/database/migrations/008_cover_display.sql
 ```
 
-### Quick setup with seed data:
+### Setup rápido com dados de teste:
 
 ```bash
-# Local development:
+# Desenvolvimento local:
 go run ./cmd/server --seed
 
-# Inside Docker (after docker compose up):
+# Dentro do Docker (após docker compose up):
 docker exec modo_locadora_app /app/server --seed
 ```
 
-This applies all migrations (001-008) and populates the database with sample games, members, and rental history. The `--seed` flag auto-detects the migration directory (`migrations/` in Docker, `internal/database/migrations/` locally). Test credentials: `MegaDriveKid` / `sega1991`, `Devedor` / `atrasado123`, `Novato` / `novato2026`.
+Isso aplica todas as migrations (001-008) e popula o banco com jogos, sócios e histórico de aluguéis. A flag `--seed` auto-detecta o diretório de migrations (`migrations/` no Docker, `internal/database/migrations/` localmente).
 
-### Migration Summary
+### Contas de teste
 
-| Migration | Description |
-|-----------|-------------|
-| `001_initial_schema.sql` | Base tables: `members`, `games`, `game_copies`, `rentals` |
-| `002_update_games_table.sql` | Adds `cover_url`, `source_magazine`, `acquired_at` to `games` |
-| `003_membership_and_rental_support.sql` | Adds membership fields, `membership_seq` sequence, auto-creates copies |
-| `004_password_notes.sql` | Adds `password_notes` field to `members` |
-| `005_auto_return_reputation.sql` | Adds `status` and `late_count` fields to `members` |
-| `006_activities_feed.sql` | Creates `activities` table for event feed |
-| `007_seed_initial_data.sql` | Sample data (applied via `--seed` flag, not manually) |
-| `008_cover_display.sql` | Adds `cover_display` column to `games` (CSS object-fit mode) |
+| Sócio | Senha | Perfil |
+|-------|-------|--------|
+| `MegaDriveKid` | `sega1991` | Sócio com histórico de aluguéis |
+| `Devedor` | `atrasado123` | Sócio em débito |
+| `Novato` | `novato2026` | Sócio sem histórico |
 
-## 4. Local Development (without Docker for the app)
+Admin: `tio_da_locadora` / `sopre_a_fita` (e-mail deve bater com `ADMIN_EMAIL`).
 
-If you prefer running the Go server locally while keeping PostgreSQL in Docker:
+### Resumo das Migrations
+
+| Migration | Descrição |
+|-----------|-----------|
+| `001_initial_schema.sql` | Tabelas base: `members`, `games`, `game_copies`, `rentals` |
+| `002_update_games_table.sql` | Adiciona `cover_url`, `source_magazine`, `acquired_at` a `games` |
+| `003_membership_and_rental_support.sql` | Campos de matrícula, sequência `membership_seq`, auto-criação de cópias |
+| `004_password_notes.sql` | Campo `password_notes` em `members` |
+| `005_auto_return_reputation.sql` | Campos `status` e `late_count` em `members` |
+| `006_activities_feed.sql` | Tabela `activities` para feed de eventos |
+| `007_seed_initial_data.sql` | Dados de teste (aplicado via flag `--seed`, não manualmente) |
+| `008_cover_display.sql` | Campo `cover_display` em `games` (modo CSS object-fit) |
+
+## 4. Desenvolvimento Local (sem Docker para a app)
+
+Se preferir rodar o servidor Go localmente mantendo o PostgreSQL no Docker:
 
 ```bash
-docker compose up -d db       # start only PostgreSQL
-go run ./cmd/server            # run the Go server locally
+docker compose up -d db       # inicia apenas o PostgreSQL
+go run ./cmd/server            # roda o servidor Go localmente
 ```
 
-Set `DATABASE_URL` in `.env` to point to `localhost:5432` (not `db:5432`).
+Configure `DATABASE_URL` no `.env` apontando para `localhost:5432` (não `db:5432`).
 
 ```bash
-# Build binary
+# Build do binário
 go build -o modo-locadora ./cmd/server
 
-# Static analysis
+# Análise estática
 go vet ./...
 
-# Lint (requires golangci-lint)
+# Lint (requer golangci-lint)
 golangci-lint run ./...
 
-# Or use the Task runner for all checks
+# Ou use o Task runner para todas as verificações
 task check
 ```
 
-## 5. Create Your First Member
+## 5. Criando o Primeiro Sócio
 
 ```bash
 curl -X POST http://localhost:8080/members \
@@ -143,37 +153,37 @@ curl -X POST http://localhost:8080/members \
   }'
 ```
 
-The email must match `ADMIN_EMAIL` for admin access. A membership number (`1991-001`) is auto-assigned.
+O e-mail deve bater com `ADMIN_EMAIL` para acesso de administrador. Um número de matrícula (`1991-001`) é auto-atribuído.
 
-## 6. Verify
+## 6. Verificação
 
-| Check | Expected |
-|-------|----------|
-| `http://localhost:8080` | Login page loads |
-| Login with member credentials | Redirects to `/games` (platform grid) |
-| Click a platform | Shows cartridge cards |
-| Click a cartridge | Shows game detail page |
-| `/carteirinha` (logged in) | Membership card with `1991-XXX` |
-| `/admin/stock` (as admin) | IGDB search page |
+| Verificação | Esperado |
+|-------------|----------|
+| `http://localhost:8080` | Página de login carrega |
+| Login com credenciais | Redireciona para `/games` (grade de plataformas) |
+| Clicar numa plataforma | Mostra cards de cartucho |
+| Clicar num cartucho | Mostra página de detalhe do jogo |
+| `/carteirinha` (logado) | Carteirinha com `1991-XXX` |
+| `/admin/stock` (como admin) | Página de busca IGDB |
 
-## Troubleshooting
+## Resolução de Problemas
 
 ### "No DATABASE_URL provided"
-Ensure `DATABASE_URL` is set in `.env`. When using Docker Compose for the full stack, it's set automatically via `docker-compose.yml`.
+Verifique se `DATABASE_URL` está definido no `.env`. Ao usar Docker Compose para o stack completo, é definido automaticamente via `docker-compose.yml`.
 
 ### "COOKIE_SECRET not set"
-The server falls back to an insecure default in development. For production, set a strong random value (at least 32 characters).
+O servidor usa um valor padrão inseguro em desenvolvimento. Para produção, defina um valor aleatório forte (pelo menos 32 caracteres).
 
 ### "ADMIN_EMAIL not set"
-Admin routes (`/admin/*`) are inaccessible without this. Set it to the admin member's email.
+As rotas admin (`/admin/*`) ficam inacessíveis sem isso. Defina com o e-mail do sócio administrador.
 
-### IGDB search returns no results
-Verify Twitch credentials:
+### Busca IGDB não retorna resultados
+Verifique as credenciais Twitch:
 ```bash
 curl -X POST "https://id.twitch.tv/oauth2/token?client_id=YOUR_ID&client_secret=YOUR_SECRET&grant_type=client_credentials"
 ```
 
-### Port 8080 already in use
+### Porta 8080 já em uso
 ```bash
 # Linux/Mac
 lsof -ti:8080 | xargs kill -9

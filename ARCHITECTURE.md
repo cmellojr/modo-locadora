@@ -1,76 +1,76 @@
-# Modo Locadora - System Architecture
+# Modo Locadora — Arquitetura do Sistema
 
-## Vision
+## Visão Geral
 
-Retro-gaming session manager emulating 90s Brazilian video rental stores ("locadoras"). Scarcity is a core design principle: each game has limited physical copies, and if all are rented, the game is unavailable. Overdue rentals are auto-returned with reputation penalties.
+Gerenciador de sessões retro-gaming que emula as videolocadoras brasileiras dos anos 90. A escassez é princípio de design: cada jogo tem cópias físicas limitadas — se todas estiverem alugadas, o jogo fica indisponível. Aluguéis atrasados são devolvidos automaticamente com penalização de reputação.
 
-## Entity Model
+## Modelo de Entidades
 
 ```
-Member (1991-XXX)
-  ├── status: active | em_debito
-  ├── late_count: permanent penalty counter
-  ├── password_notes: personal game codes notebook
-  └── MemberTitle: computed progression (Novato → Prata → Ouro → Dono da Calçada)
+Sócio (1991-XXX)
+  ├── status: active | em débito
+  ├── late_count: contador permanente de penalidades
+  ├── password_notes: caderno pessoal de códigos de jogos
+  └── MemberTitle: progressão calculada (Novato → Prata → Ouro → Dono da Calçada)
 
-Game (IGDB metadata)
+Jogo (metadados IGDB)
   ├── platform, summary, cover_url, cover_display, source_magazine
   └── GameCopy (1:N)
         ├── status: available | rented
         └── Rental (1:N)
-              ├── member_id, rented_at, due_at (3 days)
-              ├── returned_at (NULL = active)
-              └── public_legacy (verdict: zerei | joguei_um_pouco | desisti)
+              ├── member_id, rented_at, due_at (3 dias)
+              ├── returned_at (NULL = ativo)
+              └── public_legacy (veredito: zerei | joguei_um_pouco | desisti)
 
-Activity (denormalized feed)
+Atividade (feed desnormalizado)
   ├── event_type: penalty | redemption | new_game | verdict_complete | verdict_partial | verdict_quit
   ├── member_name, game_title
   └── created_at
 ```
 
-## Rental Flow
+## Fluxo de Locação
 
 ```
-1. Member browses /games → selects console → selects game → /games/{id}
-2. Clicks [ALUGAR] → POST /rent → copy marked rented, rental created (3-day due)
-3. Game detail shows "ALUGADO - Com o Sócio: Nome"
-4a. Admin visits /admin/returns → clicks [Devolver] → copy available again
-4b. Member visits /carteirinha → chooses verdict (Zerei/Joguei/Desisti) → POST /carteirinha/return
-5. Verdict saved in public_legacy, activity event fired to feed
-6. If overdue: background job auto-returns, member gets em_debito + late_count++
-7. Member can redeem via POST /carteirinha/redeem
+1. Sócio navega /games → seleciona console → seleciona jogo → /games/{id}
+2. Clica [ALUGAR] → POST /rent → cópia marcada como rented, aluguel criado (3 dias de prazo)
+3. Detalhe do jogo mostra "ALUGADO - Com o Sócio: Nome"
+4a. Admin visita /admin/returns → clica [Devolver] → cópia disponível novamente
+4b. Sócio visita /carteirinha → escolhe veredito (Zerei/Joguei/Desisti) → POST /carteirinha/return
+5. Veredito salvo em public_legacy, evento de atividade dispara no feed
+6. Se atrasado: job de background auto-devolve, sócio recebe em débito + late_count++
+7. Sócio pode se redimir via POST /carteirinha/redeem
 ```
 
-## Navigation Map
+## Mapa de Navegação
 
 ```
-GET /                     → Login (Balcão) — redirects to /games if authenticated
-GET /games                → Platform selection grid (Mega Drive, SNES, ...)
-GET /games?platform=X     → Cartridge cards for that console
-GET /games/{id}           → Game detail (stats, rent button)
-GET /carteirinha          → Membership card + password notebook
-GET /admin/stock          → IGDB search & acquisition
-GET /admin/inventory      → Catalog table with edit links
-GET /admin/edit/{id}      → Edit game (cover upload, metadata)
-GET /admin/returns        → Active rentals check-in
+GET /                     → Login (Balcão) — redireciona para /games se autenticado
+GET /games                → Grade de seleção de plataformas (Mega Drive, SNES, ...)
+GET /games?platform=X     → Cartuchos da plataforma selecionada
+GET /games/{id}           → Detalhe do jogo (stats, botão de aluguel)
+GET /carteirinha          → Carteirinha de sócio + caderno de passwords
+GET /admin/stock          → Busca IGDB e aquisição de jogos
+GET /admin/inventory      → Tabela do acervo com links de edição
+GET /admin/edit/{id}      → Edição do jogo (upload de capa, metadados)
+GET /admin/returns        → Check-in de aluguéis ativos
 ```
 
 ## Templates
 
-| Template | Route | Page |
-|----------|-------|------|
-| `index.html` | `GET /` | Login + Wall of Shame |
-| `platforms.html` | `GET /games` | 3-column layout: member card + shame, platform grid, activities + almanac |
-| `games.html` | `GET /games?platform=X` | Cartridge shelf (simplified cards) |
-| `game_detail.html` | `GET /games/{id}` | Game detail + rental stats |
-| `carteirinha.html` | `GET /carteirinha` | Membership card + title badge + notebook + active rentals with self-return |
-| `admin_stock.html` | `GET /admin/stock` | IGDB search & acquisition |
-| `admin_inventory.html` | `GET /admin/inventory` | Catalog table with game health indicators |
-| `admin_edit.html` | `GET /admin/edit/{id}` | Game edit form + rental history |
-| `admin_returns.html` | `GET /admin/returns` | Returns counter |
+| Template | Rota | Página |
+|----------|------|--------|
+| `index.html` | `GET /` | Login + Painel da Vergonha |
+| `platforms.html` | `GET /games` | Layout 3 colunas: mini-card + vergonha, plataformas, atividades + almanaque |
+| `games.html` | `GET /games?platform=X` | Prateleira de cartuchos (cards simplificados) |
+| `game_detail.html` | `GET /games/{id}` | Detalhe do jogo + stats de aluguel |
+| `carteirinha.html` | `GET /carteirinha` | Carteirinha + badge de título + caderno + aluguéis ativos com auto-devolução |
+| `admin_stock.html` | `GET /admin/stock` | Busca IGDB e aquisição |
+| `admin_inventory.html` | `GET /admin/inventory` | Tabela do acervo com indicadores de saúde |
+| `admin_edit.html` | `GET /admin/edit/{id}` | Formulário de edição + histórico de aluguéis |
+| `admin_returns.html` | `GET /admin/returns` | Balcão de devoluções |
 
-## Deployment
+## Deploy
 
-Multi-stage Docker build (`golang:1.24-alpine` → `alpine:3.21`). Docker Compose orchestrates app + PostgreSQL with health checks. Two volumes: `postgres_data` (DB) and `covers_data` (uploaded covers).
+Build Docker multi-stage (`golang:1.24-alpine` → `alpine:3.21`). Docker Compose orquestra app + PostgreSQL com health checks. Dois volumes: `postgres_data` (banco) e `covers_data` (capas enviadas).
 
-For build commands, package structure, DB schema, and conventions, see [CLAUDE.md](CLAUDE.md).
+Para configuração do ambiente, veja [SETUP.md](docs/SETUP.md). Para convenções de código, veja [CONTRIBUTING.md](docs/CONTRIBUTING.md).

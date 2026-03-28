@@ -1,69 +1,69 @@
-# Security Policy
+# Política de Segurança
 
-## Supported Versions
+## Versões Suportadas
 
-| Version | Supported          |
-|---------|--------------------|
-| main    | :white_check_mark: |
+| Versão | Suportada          |
+|--------|--------------------|
+| main   | :white_check_mark: |
 
-Only the latest version on `main` receives security updates.
+Apenas a versão mais recente em `main` recebe atualizações de segurança.
 
-## Reporting a Vulnerability
+## Reportando Vulnerabilidades
 
-**Do not open a public issue for security vulnerabilities.**
+**Não abra uma issue pública para vulnerabilidades de segurança.**
 
-Report privately via email to the project maintainer or use [GitHub's private vulnerability reporting](https://docs.github.com/en/code-security/security-advisories/guidance-on-reporting-and-writing-information-about-vulnerabilities/privately-reporting-a-security-vulnerability).
+Reporte de forma privada por e-mail ao mantenedor do projeto ou use o [reporte privado de vulnerabilidades do GitHub](https://docs.github.com/en/code-security/security-advisories/guidance-on-reporting-and-writing-information-about-vulnerabilities/privately-reporting-a-security-vulnerability).
 
-Include: description, steps to reproduce, potential impact, and any suggested fix.
+Inclua: descrição, passos para reproduzir, impacto potencial e sugestão de correção.
 
-## Authentication & Sessions
+## Autenticação e Sessões
 
-- Passwords hashed with **bcrypt** (default cost). Never logged or exposed in API responses.
-- Sessions use a signed cookie (`session_member`): `{member_uuid}.{hmac_sha256_hex}`
-- Cookie flags: `HttpOnly`, `SameSite=Strict`, `MaxAge=604800` (7 days), `Path=/`
-- `COOKIE_SECRET` must be at least 32 characters.
+- Senhas protegidas com **bcrypt** (custo padrão). Nunca logadas ou expostas em respostas da API.
+- Sessões usam cookie assinado (`session_member`): `{member_uuid}.{hmac_sha256_hex}`
+- Flags do cookie: `HttpOnly`, `SameSite=Strict`, `MaxAge=604800` (7 dias), `Path=/`
+- `COOKIE_SECRET` deve ter pelo menos 32 caracteres.
 
-## Authorization
+## Autorização
 
-| Scope | Middleware | Check |
-|-------|-----------|-------|
-| Member routes | `RequireAuth` | Valid signed cookie |
-| Admin routes (`/admin/*`) | `RequireAdmin` | Valid cookie + email matches `ADMIN_EMAIL` |
+| Escopo | Middleware | Verificação |
+|--------|-----------|-------------|
+| Rotas de sócio | `RequireAuth` | Cookie assinado válido |
+| Rotas admin (`/admin/*`) | `RequireAdmin` | Cookie válido + e-mail bate com `ADMIN_EMAIL` |
 
-Unauthenticated requests redirect to `/`. Non-admin users receive `403 Forbidden`.
+Requisições não autenticadas redirecionam para `/`. Usuários não-admin recebem `403 Forbidden`.
 
-## Member Reputation
+## Reputação do Sócio
 
-- Overdue rentals are auto-returned by a background job (5-minute interval).
-- Offending members are marked `em_debito` with a permanent `late_count` increment.
-- Members in debt cannot rent games until they redeem themselves via `/carteirinha/redeem`.
-- The Wall of Shame on the landing page displays top offenders.
+- Aluguéis atrasados são auto-devolvidos por um job de background (intervalo de 5 minutos).
+- Sócios infratores são marcados como "em débito" com incremento permanente do `late_count`.
+- Sócios em débito não podem alugar até se redimirem via `/carteirinha/redeem`.
+- O Painel da Vergonha na página de entrada exibe os maiores infratores.
 
-## Data Integrity
+## Integridade de Dados
 
-- Rental, return, and game acquisition operations use **database transactions**.
-- All SQL queries use parameterized placeholders (no string interpolation).
+- Operações de aluguel, devolução e aquisição usam **transações de banco de dados**.
+- Todas as queries SQL usam placeholders parametrizados (sem interpolação de strings).
 
-## File Uploads
+## Upload de Arquivos
 
-- Cover uploads are restricted to image files (`accept="image/*"`).
-- Maximum form size: 10 MB.
-- Files are saved with the game UUID as filename (prevents path traversal).
+- Uploads de capa restritos a arquivos de imagem (`accept="image/*"`).
+- Tamanho máximo do formulário: 10 MB.
+- Arquivos salvos com UUID do jogo como nome (previne path traversal).
 
-## Static Analysis
+## Análise Estática
 
-The project uses `golangci-lint` (`.golangci.yml`) with security-relevant linters:
-- **gosec** — Detects common Go security issues (hardcoded credentials, weak crypto, SQL injection patterns).
-- **errcheck** — Ensures error return values are checked.
-- **staticcheck** — Catches suspicious constructs.
+O projeto usa `golangci-lint` (`.golangci.yml`) com linters de segurança:
+- **gosec** — Detecta problemas comuns de segurança em Go (credenciais hardcoded, criptografia fraca, padrões de SQL injection).
+- **errcheck** — Garante que valores de retorno de erro são verificados.
+- **staticcheck** — Captura construções suspeitas.
 
-Run `task check` or `golangci-lint run ./...` before commits.
+Execute `task check` ou `golangci-lint run ./...` antes de commits.
 
-## Deployment Checklist
+## Checklist de Deploy
 
-- Set a strong, random `COOKIE_SECRET` (minimum 32 characters).
-- Set `ADMIN_EMAIL` to restrict admin access.
-- Use **HTTPS** in production to protect cookies and form data.
-- Restrict database access to the application server only.
-- Rotate Twitch API credentials if compromised.
-- Credentials loaded from `.env` (never committed — listed in `.gitignore`).
+- Defina um `COOKIE_SECRET` forte e aleatório (mínimo 32 caracteres).
+- Defina `ADMIN_EMAIL` para restringir acesso admin.
+- Use **HTTPS** em produção para proteger cookies e dados de formulário.
+- Restrinja acesso ao banco apenas ao servidor da aplicação.
+- Rotacione credenciais da API Twitch se comprometidas.
+- Credenciais carregadas via `.env` (nunca commitado — listado no `.gitignore`).

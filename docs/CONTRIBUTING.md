@@ -1,66 +1,67 @@
-# Contributing to Modo Locadora
+# Contribuindo com o Modo Locadora
 
-Thanks for contributing! Every contribution matters, whether it's a bug report, feature suggestion, or pull request.
+Obrigado por contribuir! Toda contribuição importa, seja um relato de bug, sugestão de funcionalidade ou pull request.
 
-## Reporting Bugs
+## Reportando Bugs
 
-Check existing [Issues](https://github.com/cmellojr/modo-locadora/issues) first.
+Verifique as [Issues](https://github.com/cmellojr/modo-locadora/issues) existentes primeiro.
 
-Include: clear title, steps to reproduce, expected vs. actual behavior, environment details (OS, Go version, browser), and logs or screenshots if applicable.
+Inclua: título claro, passos para reproduzir, comportamento esperado vs. real, detalhes do ambiente (OS, versão do Go, navegador) e logs ou screenshots se aplicável.
 
-## Suggesting Features
+## Sugerindo Funcionalidades
 
-Open an issue with the `enhancement` label. Describe the problem it solves, how you envision it working, and any alternatives you've considered.
+Abra uma issue com o label `enhancement`. Descreva o problema que resolve, como você imagina funcionando e alternativas consideradas.
 
 ## Pull Requests
 
-1. Fork the repository and clone your fork.
-2. Create a branch from `develop`: `git checkout -b feature/your-feature-name`
-3. Follow the conventions below.
-4. Verify with `task check` (or `go build ./...`, `go vet ./...`, `golangci-lint run ./...`).
-5. Commit with a descriptive message (see conventions below).
-6. Push to your fork and open a PR against `develop`.
-7. In the PR description, tell us **which game you were playing while coding** (it's tradition).
+1. Faça fork do repositório e clone seu fork.
+2. Crie uma branch a partir de `develop`: `git checkout -b feature/nome-da-feature`
+3. Siga as convenções abaixo.
+4. Verifique com `task check` (ou `go build ./...`, `go vet ./...`, `golangci-lint run ./...`).
+5. Faça commit com mensagem descritiva (veja convenções abaixo).
+6. Faça push para seu fork e abra um PR contra `develop`.
+7. Na descrição do PR, conte qual jogo você estava jogando enquanto programava (é tradição).
 
-## Conventions
+## Convenções
 
-### Language
+### Idiomas
 
-- **Code, routes, database, and documentation**: English.
-- **UI templates** (`web/templates/`): Portuguese (BR).
+- **Código, rotas, colunas de banco e variáveis**: inglês.
+- **Documentação (.md)**: português (BR), exceto CLAUDE.md e AGENTS.md (guias para agentes de IA, em inglês).
+- **Templates de UI** (`web/templates/`): português (BR).
 
-### Go Style
+### Estilo Go
 
-- Follow the [Google Go Style Guide](https://google.github.io/styleguide/go/guide.html).
-- Run `go vet ./...` and `golangci-lint run ./...` before committing (or use `task check`).
-- Keep functions short and focused.
+- Siga o [Google Go Style Guide](https://google.github.io/styleguide/go/guide.html).
+- Execute `task check` antes de commitar.
+- Mantenha funções curtas e focadas.
 
-### Commit Messages
+### Mensagens de Commit
 
 Use [Conventional Commits](https://www.conventionalcommits.org/): `feat:`, `fix:`, `docs:`, `style:`, `refactor:`.
 
-### Branching
+### Branches
 
-- `main` — stable releases
-- `develop` — active development (PR target)
-- Feature branches: `feature/*`, `fix/*`, `hotfix/*`, `docs/*`
+- `main` — releases estáveis
+- `develop` — desenvolvimento ativo (alvo de PRs)
+- Branches de feature: `feature/*`, `fix/*`, `hotfix/*`, `docs/*`
 
-### CSS & Templates
+### CSS e Templates
 
-- NES.css classes with dark theme overrides in `retro.css`.
-- Shared utility classes go in `retro.css`. Page-specific styles go in the template's inline `<style>`.
+- Classes NES.css com overrides de tema escuro em `retro.css`.
+- Classes utilitárias compartilhadas vão no `retro.css`. Estilos específicos da página vão no `<style>` inline do template.
 
-### Database Migrations
+### Migrations de Banco de Dados
 
-- Place new migrations in `internal/database/migrations/`.
-- Use incremental numbering: `009_description.sql`, `010_description.sql`.
-- Add the file to the `sqlFiles` list in `cmd/server/main.go` (for `--seed` flag).
-- Document what each migration does in the file header.
+- Coloque novas migrations em `internal/database/migrations/`.
+- Use numeração incremental: `009_description.sql`, `010_description.sql`.
+- Adicione o arquivo à lista `sqlFiles` em `cmd/server/main.go` (para a flag `--seed`).
+- Documente o que cada migration faz no cabeçalho do arquivo.
 
-## Development Setup
+## Configuração do Ambiente
 
-See [SETUP.md](SETUP.md) for local environment instructions.
+Veja [Configuração do Ambiente](SETUP.md) para instruções de instalação.
 
-## License
+## Licença
 
-By contributing, you agree that your contributions will be licensed under the [GPL v3](../LICENSE).
+Ao contribuir, você concorda que suas contribuições serão licenciadas sob a [GPL v3](../LICENSE).

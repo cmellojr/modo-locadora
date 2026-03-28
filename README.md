@@ -80,9 +80,10 @@ Para desenvolvimento local sem Docker, migrações manuais e criação do primei
 
 | Documento | Conteúdo |
 |-----------|---------|
-| [ARCHITECTURE.md](ARCHITECTURE.md) | Entidades, fluxos e navegação |
-| [docs/SETUP.md](docs/SETUP.md) | Guia completo de instalação |
-| [docs/API.md](docs/API.md) | Referência de endpoints |
+| [ARCHITECTURE.md](ARCHITECTURE.md) | Arquitetura do sistema |
+| [ROADMAP.md](ROADMAP.md) | Plano de evolução e versões |
+| [docs/SETUP.md](docs/SETUP.md) | Configuração do ambiente |
+| [docs/API.md](docs/API.md) | Referência da API |
 | [docs/SECURITY.md](docs/SECURITY.md) | Política de segurança |
 | [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md) | Como contribuir |
 | [docs/CHANGELOG.md](docs/CHANGELOG.md) | Histórico de mudanças |
@@ -100,11 +101,15 @@ task reset     # reset completo (down + up + seed)
 task logs      # logs do container
 ```
 
-## Funcionalidades Futuras
+## Próximos Passos
 
-- **Verso da Capa** — Deixe dicas públicas para os próximos jogadores ao devolver uma fita.
-- **Regra da Sexta** — Alugou na sexta? Só precisa devolver na segunda!
-- **Menções na Mídia** — Registre em quais podcasts, sites ou reportagens cada jogo foi mencionado.
+Confira o [ROADMAP.md](ROADMAP.md) para o plano completo de evolução — versões lançadas, em andamento e futuras.
+
+---
+
+## Contribuindo
+
+Pull requests são bem-vindos. Leia o [guia de contribuição](docs/CONTRIBUTING.md) antes de abrir um PR. Issues e discussões em português, por favor.
 
 ---
 
