@@ -17,7 +17,7 @@ Era sexta-feira. Você corria da escola, passava no balcão, mostrava a carteiri
 
 O **Modo Locadora** é um diário de bordo de jogatinas disfarçado de videolocadora. Na prática, funciona como um rastreador de backlog pessoal — você aluga jogos, registra se zerou ou desistiu, acumula títulos de reputação e acompanha seu progresso numa carteirinha de sócio — tudo com a estética e as regras de uma locadora brasileira dos anos 90, onde a escassez era real e o tempo era um compromisso.
 
-O projeto é uma homenagem ao **Projeto Jogatina** e ao **Fórum NES Archive** — iniciativas da comunidade retrogamer brasileira que combatiam a *Síndrome do Labirinto* (ter jogos demais e não terminar nenhum) através do registro e compartilhamento de jogatinas. Inspirado também pelo **[Backloggery](https://backloggery.com/)**, o Modo Locadora adiciona mecânicas de escassez e reputação social para transformar o simples ato de jogar em uma experiência coletiva e com consequências.
+O projeto é uma homenagem aos antigos **Projeto Jogatina** e **Fórum NES Archive** — iniciativas da comunidade retrogamer brasileira que combatiam a *Síndrome do Labirinto* (ter jogos demais e não terminar nenhum) através do registro e compartilhamento de jogatinas. Inspirado também pelo **[Backloggery](https://backloggery.com/)**, o Modo Locadora adiciona mecânicas de escassez e reputação social para transformar o simples ato de jogar em uma experiência coletiva e com consequências.
 
 ---
 
