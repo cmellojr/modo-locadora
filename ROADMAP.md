@@ -41,7 +41,7 @@ O projeto segue [Versionamento Semântico](https://semver.org/). Enquanto estive
 - Seed com dados da Ação Games #1
 - Migrations `004` a `007`
 
-### 0.1.4 — Acervo e Progressão (atual)
+### 0.1.4 — Acervo e Progressão
 
 - Títulos de progressão (Sócio Novato → Prata → Ouro → Dono da Calçada)
 - Indicadores de saúde do acervo (Cartucho Novo / Clássico Eterno / Precisa Soprar / Fita Gasta)
@@ -52,11 +52,23 @@ O projeto segue [Versionamento Semântico](https://semver.org/). Enquanto estive
 - golangci-lint configurado
 - Migration `008_cover_display.sql`
 
+### 0.1.5 — Turmas (atual)
+
+- Turmas (comunidades gamers): podcasts, canais YouTube, grupos WhatsApp
+- Criação, edição e exclusão de turmas com badge personalizado
+- Relação M2M: sócios podem participar de múltiplas turmas
+- Múltiplos admins por turma (promover/remover membros)
+- Listagem pública, ações requerem autenticação
+- Seção "MINHAS TURMAS" na carteirinha
+- Feed de atividades registra criação e entrada em turmas
+- Botão TURMAS em todas as páginas
+- Migration `009_clubs.sql`
+
 ---
 
 ## Próximas
 
-### 0.1.5+ — Interação Social
+### 0.1.6+ — Interação Social
 
 - **Verso da Capa** — Dicas públicas para os próximos jogadores ao devolver uma fita.
 - **Regra da Sexta** — Alugou na sexta? Só precisa devolver na segunda!

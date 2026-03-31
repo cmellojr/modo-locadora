@@ -40,10 +40,19 @@ O Modo Locadora é um simulador de ecossistema de locadora brasileira dos anos 9
 
 ### 3.4. Social e Conteúdo (Feed)
 
-- **Aconteceu na Locadora:** Feed de atividades em tempo real (Novas fitas, Vereditos, Punições).
+- **Aconteceu na Locadora:** Feed de atividades em tempo real (Novas fitas, Vereditos, Punições, Turmas).
 - **Almanaque do Tio:** Notícias históricas baseadas em efemérides reais da indústria de games.
 
-### 3.5. Auditoria do Acervo (Admin)
+### 3.5. Turmas (Comunidades Gamers)
+
+- **Criação de Turmas:** Sócios podem criar turmas representando podcasts, canais YouTube, grupos WhatsApp ou qualquer comunidade gamer. Cada turma tem nome, descrição, badge (upload de imagem) e URL.
+- **Participação Múltipla:** Sócios podem participar de quantas turmas quiserem.
+- **Administração Distribuída:** Turmas podem ter múltiplos admins. Admins podem promover membros e remover participantes. O criador é automaticamente o primeiro admin.
+- **Listagem Pública:** Qualquer visitante pode ver as turmas. Ações (criar, entrar, sair, editar) requerem login.
+- **Exclusão:** Apenas o criador original pode excluir uma turma.
+- **Integração com Carteirinha:** Seção "MINHAS TURMAS" exibe turmas do sócio com badge, nome e cargo.
+
+### 3.6. Auditoria do Acervo (Admin)
 
 - **Saúde do Acervo:** Indicador visual no inventário: Cartucho Novo (0-1 aluguéis), Clássico Eterno (<25% ruins), Precisa Soprar (25-49%), Fita Gasta (50%+).
 - **Histórico de Aluguéis:** Ficha do jogo mostra últimos 5 aluguéis com sócio, datas, veredito e indicador de atraso.
@@ -66,6 +75,8 @@ O Modo Locadora é um simulador de ecossistema de locadora brasileira dos anos 9
 | `game_copies` | Instâncias físicas dos cartuchos e seu estado atual |
 | `rentals` | Histórico de locação, prazos e vereditos |
 | `activities` | Logs de eventos para o feed social |
+| `clubs` | Turmas (comunidades gamers) com badge e URL |
+| `club_members` | Relação M2M entre turmas e sócios (com cargo) |
 
 ## 6. Plano de Lançamento
 

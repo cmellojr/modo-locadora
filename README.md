@@ -37,6 +37,8 @@ O projeto é uma homenagem aos antigos **Projeto Jogatina** e **Fórum NES Archi
 
 **Aconteceu na Locadora** — Feed de atividades em tempo real. Quem alugou, quem zerou, quem foi pro Painel da Vergonha — tudo aparece no balcão.
 
+**As Turmas** — Crie ou entre numa turma — representando seu podcast favorito, canal do YouTube, grupo de WhatsApp ou qualquer comunidade gamer. Cada turma tem badge, descrição e URL. Múltiplos admins, participação livre em quantas turmas quiser. A carteirinha mostra suas turmas com cargo.
+
 **O Fiscal Automático** — Não devolveu no prazo? O sistema devolve a fita automaticamente e marca seu nome no Painel da Vergonha.
 
 ---

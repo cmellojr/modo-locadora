@@ -23,9 +23,16 @@ Jogo (metadados IGDB)
               └── public_legacy (veredito: zerei | joguei_um_pouco | desisti)
 
 Atividade (feed desnormalizado)
-  ├── event_type: penalty | redemption | new_game | verdict_complete | verdict_partial | verdict_quit
+  ├── event_type: penalty | redemption | new_game | verdict_complete | verdict_partial | verdict_quit | club_created | club_joined
   ├── member_name, game_title
   └── created_at
+
+Turma (comunidade gamer)
+  ├── name, description, badge_url, website_url
+  ├── created_by → Sócio (criador)
+  └── ClubMember (M2M com Sócio)
+        ├── role: admin | member
+        └── joined_at
 ```
 
 ## Fluxo de Locação
@@ -53,6 +60,10 @@ GET /admin/stock          → Busca IGDB e aquisição de jogos
 GET /admin/inventory      → Tabela do acervo com links de edição
 GET /admin/edit/{id}      → Edição do jogo (upload de capa, metadados)
 GET /admin/returns        → Check-in de aluguéis ativos
+GET /clubs                → Listagem pública de turmas
+GET /clubs/new            → Formulário de criação de turma (auth)
+GET /clubs/{id}           → Detalhe da turma (público)
+GET /clubs/{id}/edit      → Formulário de edição (admin da turma)
 ```
 
 ## Templates
@@ -68,9 +79,12 @@ GET /admin/returns        → Check-in de aluguéis ativos
 | `admin_inventory.html` | `GET /admin/inventory` | Tabela do acervo com indicadores de saúde |
 | `admin_edit.html` | `GET /admin/edit/{id}` | Formulário de edição + histórico de aluguéis |
 | `admin_returns.html` | `GET /admin/returns` | Balcão de devoluções |
+| `clubs.html` | `GET /clubs` | Listagem de turmas (grid de cards) |
+| `club_detail.html` | `GET /clubs/{id}` | Detalhe da turma + tabela de membros |
+| `club_form.html` | `GET /clubs/new`, `GET /clubs/{id}/edit` | Formulário de criação/edição de turma |
 
 ## Deploy
 
-Build Docker multi-stage (`golang:1.24-alpine` → `alpine:3.21`). Docker Compose orquestra app + PostgreSQL com health checks. Dois volumes: `postgres_data` (banco) e `covers_data` (capas enviadas).
+Build Docker multi-stage (`golang:1.24-alpine` → `alpine:3.21`). Docker Compose orquestra app + PostgreSQL com health checks. Três volumes: `postgres_data` (banco), `covers_data` (capas enviadas) e `clubs_data` (badges de turmas).
 
 Para configuração do ambiente, veja [SETUP.md](docs/SETUP.md). Para convenções de código, veja [CONTRIBUTING.md](docs/CONTRIBUTING.md).
