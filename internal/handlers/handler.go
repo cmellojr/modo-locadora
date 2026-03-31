@@ -32,22 +32,6 @@ func NewHandler(store database.Store, cookieSecret, adminEmail string) *Handler 
 	return &Handler{store: store, cookieSecret: cookieSecret, adminEmail: adminEmail}
 }
 
-// getSessionMember returns the authenticated member's name, email and login status.
-func (h *Handler) getSessionMember(r *http.Request) (name, email string, loggedIn bool) {
-	rawID := auth.GetSessionMemberID(r, h.cookieSecret)
-	if rawID == "" || h.store == nil {
-		return "", "", false
-	}
-	id, err := uuid.Parse(rawID)
-	if err != nil {
-		return "", "", false
-	}
-	member, err := h.store.GetMemberByID(r.Context(), id)
-	if err != nil || member == nil {
-		return "", "", false
-	}
-	return member.ProfileName, member.Email, true
-}
 
 // Logout handles POST /logout by clearing the session cookie.
 func (h *Handler) Logout(w http.ResponseWriter, r *http.Request) {
@@ -129,6 +113,77 @@ func formatActivityMessage(a database.ActivityEntry) string {
 	default:
 		return ""
 	}
+}
+
+// LayoutData holds shared data for the layout template (top nav + sidebars).
+// Page-specific handler structs embed this to make all fields available at the top level.
+type LayoutData struct {
+	PageTitle    string
+	IsLoggedIn   bool
+	IsAdmin      bool
+	MemberName   string
+	MemberMini   *MemberMiniView
+	ShameEntries []database.ShameEntry
+	Activities   []ActivityView
+	AlmanacEntry string
+}
+
+// buildLayoutData loads shared layout data (auth state, sidebar content) for every page.
+func (h *Handler) buildLayoutData(r *http.Request, pageTitle string) LayoutData {
+	ld := LayoutData{PageTitle: pageTitle}
+
+	if h.store == nil {
+		return ld
+	}
+
+	// Authenticate
+	rawID := auth.GetSessionMemberID(r, h.cookieSecret)
+	if rawID != "" {
+		id, err := uuid.Parse(rawID)
+		if err == nil {
+			member, err := h.store.GetMemberByID(r.Context(), id)
+			if err == nil && member != nil {
+				ld.IsLoggedIn = true
+				ld.MemberName = member.ProfileName
+				ld.IsAdmin = h.adminEmail != "" && member.Email == h.adminEmail
+
+				// Left sidebar: member mini-card
+				activeCount, overdueCount, _ := h.store.GetMemberRentalStats(r.Context(), id)
+				statusLabel := "Ativo"
+				statusBadge := "is-success"
+				if member.Status == models.MemberStatusEmDebito || overdueCount > 0 {
+					statusLabel = "Em Debito"
+					statusBadge = "is-error"
+				} else if activeCount > 0 {
+					statusLabel = "Jogando"
+					statusBadge = "is-primary"
+				}
+				ld.MemberMini = &MemberMiniView{
+					ProfileName:      member.ProfileName,
+					MembershipNumber: member.MembershipNumber,
+					StatusLabel:      statusLabel,
+					StatusBadge:      statusBadge,
+					ActiveRentals:    activeCount,
+				}
+			}
+		}
+	}
+
+	// Right sidebar: activities, shame, almanac
+	activities, _ := h.store.ListRecentActivities(r.Context(), 5)
+	for _, a := range activities {
+		ld.Activities = append(ld.Activities, ActivityView{
+			EventType:  a.EventType,
+			MemberName: a.MemberName,
+			GameTitle:  a.GameTitle,
+			Message:    formatActivityMessage(a),
+			TimeAgo:    formatTimeAgo(a.CreatedAt),
+		})
+	}
+	ld.ShameEntries, _ = h.store.GetTopShameEntries(r.Context(), 5)
+	ld.AlmanacEntry = almanac.TodaysEphemeride()
+
+	return ld
 }
 
 // CreateMemberRequest defines the input for member registration.
@@ -273,28 +328,12 @@ type GameView struct {
 // ListGames handles GET /games. Without ?platform= it shows the platform selection page.
 // With ?platform=X it shows the filtered games shelf for that platform.
 func (h *Handler) ListGames(w http.ResponseWriter, r *http.Request, platformsTmpl, gamesTmpl *template.Template) {
-	memberName := "Visitante"
-	var memberID string
-	var isLoggedIn bool
-
-	rawMemberID := auth.GetSessionMemberID(r, h.cookieSecret)
-	if rawMemberID != "" && h.store != nil {
-		id, err := uuid.Parse(rawMemberID)
-		if err == nil {
-			member, err := h.store.GetMemberByID(r.Context(), id)
-			if err == nil && member != nil {
-				memberName = member.ProfileName
-				memberID = rawMemberID
-				isLoggedIn = true
-			}
-		}
-	}
-
 	platform := r.URL.Query().Get("platform")
 
 	// No platform filter → show platform selection page.
 	if platform == "" {
-		// Fixed platform list — always shown, even without games.
+		ld := h.buildLayoutData(r, "Acervo de Cartuchos")
+
 		fixedPlatforms := []string{"Mega Drive", "Super Nintendo", "NES", "Master System", "Atari 2600"}
 		platformCounts := make(map[string]int)
 		if h.store != nil {
@@ -312,71 +351,12 @@ func (h *Handler) ListGames(w http.ResponseWriter, r *http.Request, platformsTmp
 			})
 		}
 
-		var activityViews []ActivityView
-		if h.store != nil {
-			activities, _ := h.store.ListRecentActivities(r.Context(), 5)
-			for _, a := range activities {
-				av := ActivityView{
-					EventType:  a.EventType,
-					MemberName: a.MemberName,
-					GameTitle:  a.GameTitle,
-					Message:    formatActivityMessage(a),
-					TimeAgo:    formatTimeAgo(a.CreatedAt),
-				}
-				activityViews = append(activityViews, av)
-			}
-		}
-
-		// Build member mini-card for left sidebar.
-		var memberMini *MemberMiniView
-		if isLoggedIn && h.store != nil {
-			id, err := uuid.Parse(rawMemberID)
-			if err == nil {
-				member, err := h.store.GetMemberByID(r.Context(), id)
-				if err == nil && member != nil {
-					activeCount, overdueCount, _ := h.store.GetMemberRentalStats(r.Context(), id)
-					statusLabel := "Ativo"
-					statusBadge := "is-success"
-					if member.Status == models.MemberStatusEmDebito || overdueCount > 0 {
-						statusLabel = "Em Debito"
-						statusBadge = "is-error"
-					} else if activeCount > 0 {
-						statusLabel = "Jogando"
-						statusBadge = "is-primary"
-					}
-					memberMini = &MemberMiniView{
-						ProfileName:      member.ProfileName,
-						MembershipNumber: member.MembershipNumber,
-						StatusLabel:      statusLabel,
-						StatusBadge:      statusBadge,
-						ActiveRentals:    activeCount,
-					}
-				}
-			}
-		}
-
-		// Fetch Wall of Shame for left sidebar.
-		var shameEntries []database.ShameEntry
-		if h.store != nil {
-			shameEntries, _ = h.store.GetTopShameEntries(r.Context(), 5)
-		}
-
 		data := struct {
-			MemberName   string
-			IsLoggedIn   bool
-			Platforms    []PlatformView
-			Activities   []ActivityView
-			Ephemeride   string
-			MemberMini   *MemberMiniView
-			ShameEntries []database.ShameEntry
+			LayoutData
+			Platforms []PlatformView
 		}{
-			MemberName:   memberName,
-			IsLoggedIn:   isLoggedIn,
-			Platforms:    platformViews,
-			Activities:   activityViews,
-			Ephemeride:   almanac.TodaysEphemeride(),
-			MemberMini:   memberMini,
-			ShameEntries: shameEntries,
+			LayoutData: ld,
+			Platforms:  platformViews,
 		}
 
 		if err := platformsTmpl.Execute(w, data); err != nil {
@@ -386,8 +366,9 @@ func (h *Handler) ListGames(w http.ResponseWriter, r *http.Request, platformsTmp
 	}
 
 	// Platform filter present → show games for that platform.
-	var games []GameView
+	ld := h.buildLayoutData(r, platform)
 
+	var games []GameView
 	if h.store != nil {
 		gamesAvail, err := h.store.ListGamesWithAvailability(r.Context(), platform)
 		if err == nil {
@@ -408,10 +389,10 @@ func (h *Handler) ListGames(w http.ResponseWriter, r *http.Request, platformsTmp
 
 	debtError := r.URL.Query().Get("error") == "em_debito"
 
-	// Build completed games map for golden star display.
 	completedGames := make(map[string]bool)
-	if isLoggedIn && h.store != nil {
-		memberUUID, err := uuid.Parse(memberID)
+	if ld.IsLoggedIn && h.store != nil {
+		rawID := auth.GetSessionMemberID(r, h.cookieSecret)
+		memberUUID, err := uuid.Parse(rawID)
 		if err == nil {
 			completedIDs, _ := h.store.ListCompletedGameIDs(r.Context(), memberUUID)
 			for _, cid := range completedIDs {
@@ -421,17 +402,13 @@ func (h *Handler) ListGames(w http.ResponseWriter, r *http.Request, platformsTmp
 	}
 
 	data := struct {
-		MemberName     string
-		MemberID       string
-		IsLoggedIn     bool
+		LayoutData
 		Games          []GameView
 		Platform       string
 		DebtError      bool
 		CompletedGames map[string]bool
 	}{
-		MemberName:     memberName,
-		MemberID:       memberID,
-		IsLoggedIn:     isLoggedIn,
+		LayoutData:     ld,
 		Games:          games,
 		Platform:       platform,
 		DebtError:      debtError,
@@ -467,20 +444,16 @@ func (h *Handler) GameDetailPage(w http.ResponseWriter, r *http.Request, tmpl *t
 		return
 	}
 
-	memberName, _, isLoggedIn := h.getSessionMember(r)
-
-	debtError := r.URL.Query().Get("error") == "em_debito"
+	ld := h.buildLayoutData(r, detail.Game.Title)
 
 	data := struct {
-		Detail     *database.GameDetail
-		MemberName string
-		IsLoggedIn bool
-		DebtError  bool
+		LayoutData
+		Detail    *database.GameDetail
+		DebtError bool
 	}{
+		LayoutData: ld,
 		Detail:     detail,
-		MemberName: memberName,
-		IsLoggedIn: isLoggedIn,
-		DebtError:  debtError,
+		DebtError:  r.URL.Query().Get("error") == "em_debito",
 	}
 
 	if err := tmpl.Execute(w, data); err != nil {
@@ -513,8 +486,9 @@ func (h *Handler) Carteirinha(w http.ResponseWriter, r *http.Request, tmpl *temp
 		return
 	}
 
-	activeCount, overdueCount, _ := h.store.GetMemberRentalStats(r.Context(), id)
+	ld := h.buildLayoutData(r, "Carteirinha de Sócio")
 
+	activeCount, overdueCount, _ := h.store.GetMemberRentalStats(r.Context(), id)
 	isEmDebito := member.Status == models.MemberStatusEmDebito
 
 	statusLabel := "Jogador Honesto"
@@ -527,19 +501,14 @@ func (h *Handler) Carteirinha(w http.ResponseWriter, r *http.Request, tmpl *temp
 		statusBadge = "is-primary"
 	}
 
-	successMsg := r.URL.Query().Get("success")
-
-	var memberRentals []database.MemberRental
-	memberRentals, _ = h.store.ListMemberActiveRentals(r.Context(), id)
-
-	// Compute member progression title.
+	memberRentals, _ := h.store.ListMemberActiveRentals(r.Context(), id)
 	onTimeCount, _ := h.store.CountOnTimeReturns(r.Context(), id)
 	completedGameIDs, _ := h.store.ListCompletedGameIDs(r.Context(), id)
 	memberTitle := models.ComputeMemberTitle(len(completedGameIDs), onTimeCount)
-
 	memberClubs, _ := h.store.ListMemberClubs(r.Context(), id)
 
 	data := struct {
+		LayoutData
 		Member        *models.Member
 		ActiveRentals int
 		OverdueCount  int
@@ -552,12 +521,13 @@ func (h *Handler) Carteirinha(w http.ResponseWriter, r *http.Request, tmpl *temp
 		Title         models.MemberTitle
 		Clubs         []database.MemberClubView
 	}{
+		LayoutData:    ld,
 		Member:        member,
 		ActiveRentals: activeCount,
 		OverdueCount:  overdueCount,
 		StatusLabel:   statusLabel,
 		StatusBadge:   statusBadge,
-		Success:       successMsg,
+		Success:       r.URL.Query().Get("success"),
 		IsEmDebito:    isEmDebito,
 		LateCount:     member.LateCount,
 		Rentals:       memberRentals,
@@ -651,8 +621,7 @@ func (h *Handler) AdminReturns(w http.ResponseWriter, r *http.Request, tmpl *tem
 		return
 	}
 
-	memberName, _, _ := h.getSessionMember(r)
-	successMsg := r.URL.Query().Get("success")
+	ld := h.buildLayoutData(r, "Devoluções")
 
 	rentals, err := h.store.ListActiveRentals(r.Context())
 	if err != nil {
@@ -661,13 +630,13 @@ func (h *Handler) AdminReturns(w http.ResponseWriter, r *http.Request, tmpl *tem
 	}
 
 	data := struct {
-		MemberName string
-		Rentals    []database.ActiveRental
-		Success    string
+		LayoutData
+		Rentals []database.ActiveRental
+		Success string
 	}{
-		MemberName: memberName,
+		LayoutData: ld,
 		Rentals:    rentals,
-		Success:    successMsg,
+		Success:    r.URL.Query().Get("success"),
 	}
 
 	if err := tmpl.Execute(w, data); err != nil {
@@ -698,10 +667,11 @@ func (h *Handler) ReturnGame(w http.ResponseWriter, r *http.Request) {
 
 // AdminStock handles GET /admin/stock and renders the IGDB search page.
 func (h *Handler) AdminStock(w http.ResponseWriter, r *http.Request, tmpl *template.Template) {
+	ld := h.buildLayoutData(r, "Abastecer Prateleiras")
+
 	query := r.URL.Query().Get("q")
 	magazine := r.URL.Query().Get("magazine")
 	selectedIDStr := r.URL.Query().Get("selected")
-	successMsg := r.URL.Query().Get("success")
 
 	var results []igdb.GameData
 	var selected *igdb.GameData
@@ -729,22 +699,20 @@ func (h *Handler) AdminStock(w http.ResponseWriter, r *http.Request, tmpl *templ
 		}
 	}
 
-	memberName, _, _ := h.getSessionMember(r)
-
 	data := struct {
-		MemberName string
-		Query      string
-		Magazine   string
-		Results    []igdb.GameData
-		Selected   *igdb.GameData
-		Success    string
+		LayoutData
+		Query    string
+		Magazine string
+		Results  []igdb.GameData
+		Selected *igdb.GameData
+		Success  string
 	}{
-		MemberName: memberName,
+		LayoutData: ld,
 		Query:      query,
 		Magazine:   magazine,
 		Results:    results,
 		Selected:   selected,
-		Success:    successMsg,
+		Success:    r.URL.Query().Get("success"),
 	}
 
 	if err := tmpl.Execute(w, data); err != nil {
@@ -797,8 +765,7 @@ func (h *Handler) AdminInventory(w http.ResponseWriter, r *http.Request, tmpl *t
 		return
 	}
 
-	memberName, _, _ := h.getSessionMember(r)
-	successMsg := r.URL.Query().Get("success")
+	ld := h.buildLayoutData(r, "Acervo")
 
 	items, err := h.store.ListGamesWithHealth(r.Context())
 	if err != nil {
@@ -807,13 +774,13 @@ func (h *Handler) AdminInventory(w http.ResponseWriter, r *http.Request, tmpl *t
 	}
 
 	data := struct {
-		MemberName string
-		Items      []database.GameInventoryItem
-		Success    string
+		LayoutData
+		Items   []database.GameInventoryItem
+		Success string
 	}{
-		MemberName: memberName,
+		LayoutData: ld,
 		Items:      items,
-		Success:    successMsg,
+		Success:    r.URL.Query().Get("success"),
 	}
 
 	if err := tmpl.Execute(w, data); err != nil {
@@ -845,16 +812,16 @@ func (h *Handler) EditGame(w http.ResponseWriter, r *http.Request, tmpl *templat
 		return
 	}
 
-	memberName, _, _ := h.getSessionMember(r)
+	ld := h.buildLayoutData(r, "Editar "+game.Title)
 
 	rentalHistory, _ := h.store.ListGameRentalHistory(r.Context(), id, 5)
 
 	data := struct {
-		MemberName    string
+		LayoutData
 		Game          *models.Game
 		RentalHistory []database.GameRentalHistoryEntry
 	}{
-		MemberName:    memberName,
+		LayoutData:    ld,
 		Game:          game,
 		RentalHistory: rentalHistory,
 	}
@@ -976,31 +943,14 @@ func (h *Handler) SearchGame(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(games)
 }
 
-// HandleIndex handles GET / and renders the landing page with the Wall of Shame.
-// Authenticated members are redirected straight to the shelf.
+// HandleIndex handles GET / and renders the landing page.
 func (h *Handler) HandleIndex(w http.ResponseWriter, r *http.Request, tmpl *template.Template) {
-	memberName, memberEmail, isLoggedIn := h.getSessionMember(r)
-
-	isAdmin := isLoggedIn && h.adminEmail != "" && memberEmail == h.adminEmail
-
-	var shameEntries []database.ShameEntry
-	if h.store != nil {
-		entries, err := h.store.GetTopShameEntries(r.Context(), 5)
-		if err == nil {
-			shameEntries = entries
-		}
-	}
+	ld := h.buildLayoutData(r, "Bem-vindo ao Balcão")
 
 	data := struct {
-		MemberName   string
-		IsLoggedIn   bool
-		IsAdmin      bool
-		ShameEntries []database.ShameEntry
+		LayoutData
 	}{
-		MemberName:   memberName,
-		IsLoggedIn:   isLoggedIn,
-		IsAdmin:      isAdmin,
-		ShameEntries: shameEntries,
+		LayoutData: ld,
 	}
 
 	if err := tmpl.Execute(w, data); err != nil {
@@ -1148,7 +1098,7 @@ func (h *Handler) requireClubAdmin(w http.ResponseWriter, r *http.Request) (uuid
 
 // ListClubs handles GET /clubs.
 func (h *Handler) ListClubs(w http.ResponseWriter, r *http.Request, tmpl *template.Template) {
-	memberName, _, isLoggedIn := h.getSessionMember(r)
+	ld := h.buildLayoutData(r, "Turmas")
 
 	var viewerID *uuid.UUID
 	if id, ok := h.getSessionMemberID(r); ok {
@@ -1161,13 +1111,11 @@ func (h *Handler) ListClubs(w http.ResponseWriter, r *http.Request, tmpl *templa
 	}
 
 	data := struct {
-		MemberName string
-		IsLoggedIn bool
-		Clubs      []database.ClubListItem
-		Success    string
+		LayoutData
+		Clubs   []database.ClubListItem
+		Success string
 	}{
-		MemberName: memberName,
-		IsLoggedIn: isLoggedIn,
+		LayoutData: ld,
 		Clubs:      clubs,
 		Success:    r.URL.Query().Get("success"),
 	}
@@ -1200,7 +1148,8 @@ func (h *Handler) ClubDetail(w http.ResponseWriter, r *http.Request, tmpl *templ
 		return
 	}
 
-	memberName, _, isLoggedIn := h.getSessionMember(r)
+	ld := h.buildLayoutData(r, detail.Club.Name)
+
 	var viewerRole string
 	var viewerID uuid.UUID
 	if id, ok := h.getSessionMemberID(r); ok {
@@ -1209,23 +1158,21 @@ func (h *Handler) ClubDetail(w http.ResponseWriter, r *http.Request, tmpl *templ
 	}
 
 	data := struct {
-		Detail     *database.ClubDetail
-		MemberName string
-		IsLoggedIn bool
-		ViewerRole string
-		IsMember   bool
-		IsAdmin    bool
-		IsCreator  bool
-		Success    string
+		LayoutData
+		Detail      *database.ClubDetail
+		ViewerRole  string
+		IsMember    bool
+		IsClubAdmin bool
+		IsCreator   bool
+		Success     string
 	}{
-		Detail:     detail,
-		MemberName: memberName,
-		IsLoggedIn: isLoggedIn,
-		ViewerRole: viewerRole,
-		IsMember:   viewerRole != "",
-		IsAdmin:    viewerRole == models.ClubRoleAdmin,
-		IsCreator:  viewerID == detail.Club.CreatedBy,
-		Success:    r.URL.Query().Get("success"),
+		LayoutData:  ld,
+		Detail:      detail,
+		ViewerRole:  viewerRole,
+		IsMember:    viewerRole != "",
+		IsClubAdmin: viewerRole == models.ClubRoleAdmin,
+		IsCreator:   viewerID == detail.Club.CreatedBy,
+		Success:     r.URL.Query().Get("success"),
 	}
 
 	if err := tmpl.Execute(w, data); err != nil {
@@ -1235,8 +1182,6 @@ func (h *Handler) ClubDetail(w http.ResponseWriter, r *http.Request, tmpl *templ
 
 // ClubFormPage handles GET /clubs/new and GET /clubs/{id}/edit.
 func (h *Handler) ClubFormPage(w http.ResponseWriter, r *http.Request, tmpl *template.Template, isEdit bool) {
-	memberName, _, isLoggedIn := h.getSessionMember(r)
-
 	var club *models.Club
 	if isEdit {
 		_, clubID, ok := h.requireClubAdmin(w, r)
@@ -1251,14 +1196,18 @@ func (h *Handler) ClubFormPage(w http.ResponseWriter, r *http.Request, tmpl *tem
 		}
 	}
 
+	title := "Criar Turma"
+	if isEdit && club != nil {
+		title = "Editar " + club.Name
+	}
+	ld := h.buildLayoutData(r, title)
+
 	data := struct {
-		MemberName string
-		IsLoggedIn bool
-		Club       *models.Club
-		IsEdit     bool
+		LayoutData
+		Club   *models.Club
+		IsEdit bool
 	}{
-		MemberName: memberName,
-		IsLoggedIn: isLoggedIn,
+		LayoutData: ld,
 		Club:       club,
 		IsEdit:     isEdit,
 	}

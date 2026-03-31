@@ -100,62 +100,64 @@ func main() {
 		jobs.StartOverdueChecker(ctx, store, 5*time.Minute)
 	}
 
-	indexTmpl, err := template.ParseFiles("web/templates/index.html")
+	layout := "web/templates/layout.html"
+
+	indexTmpl, err := template.ParseFiles(layout, "web/templates/index.html")
 	if err != nil {
 		log.Fatalf("failed to parse index template: %v", err)
 	}
 
-	platformsTmpl, err := template.ParseFiles("web/templates/platforms.html")
+	platformsTmpl, err := template.ParseFiles(layout, "web/templates/platforms.html")
 	if err != nil {
 		log.Fatalf("failed to parse platforms template: %v", err)
 	}
 
-	gamesTmpl, err := template.ParseFiles("web/templates/games.html")
+	gamesTmpl, err := template.ParseFiles(layout, "web/templates/games.html")
 	if err != nil {
 		log.Fatalf("failed to parse games template: %v", err)
 	}
 
-	gameDetailTmpl, err := template.ParseFiles("web/templates/game_detail.html")
+	gameDetailTmpl, err := template.ParseFiles(layout, "web/templates/game_detail.html")
 	if err != nil {
 		log.Fatalf("failed to parse game detail template: %v", err)
 	}
 
-	adminStockTmpl, err := template.ParseFiles("web/templates/admin_stock.html")
+	adminStockTmpl, err := template.ParseFiles(layout, "web/templates/admin_stock.html")
 	if err != nil {
 		log.Fatalf("failed to parse admin stock template: %v", err)
 	}
 
-	adminInventoryTmpl, err := template.ParseFiles("web/templates/admin_inventory.html")
+	adminInventoryTmpl, err := template.ParseFiles(layout, "web/templates/admin_inventory.html")
 	if err != nil {
 		log.Fatalf("failed to parse admin inventory template: %v", err)
 	}
 
-	adminEditTmpl, err := template.ParseFiles("web/templates/admin_edit.html")
+	adminEditTmpl, err := template.ParseFiles(layout, "web/templates/admin_edit.html")
 	if err != nil {
 		log.Fatalf("failed to parse admin edit template: %v", err)
 	}
 
-	carteirinhaTmpl, err := template.ParseFiles("web/templates/carteirinha.html")
+	carteirinhaTmpl, err := template.ParseFiles(layout, "web/templates/carteirinha.html")
 	if err != nil {
 		log.Fatalf("failed to parse carteirinha template: %v", err)
 	}
 
-	adminReturnsTmpl, err := template.ParseFiles("web/templates/admin_returns.html")
+	adminReturnsTmpl, err := template.ParseFiles(layout, "web/templates/admin_returns.html")
 	if err != nil {
 		log.Fatalf("failed to parse admin returns template: %v", err)
 	}
 
-	clubsTmpl, err := template.ParseFiles("web/templates/clubs.html")
+	clubsTmpl, err := template.ParseFiles(layout, "web/templates/clubs.html")
 	if err != nil {
 		log.Fatalf("failed to parse clubs template: %v", err)
 	}
 
-	clubDetailTmpl, err := template.ParseFiles("web/templates/club_detail.html")
+	clubDetailTmpl, err := template.ParseFiles(layout, "web/templates/club_detail.html")
 	if err != nil {
 		log.Fatalf("failed to parse club detail template: %v", err)
 	}
 
-	clubFormTmpl, err := template.ParseFiles("web/templates/club_form.html")
+	clubFormTmpl, err := template.ParseFiles(layout, "web/templates/club_form.html")
 	if err != nil {
 		log.Fatalf("failed to parse club form template: %v", err)
 	}

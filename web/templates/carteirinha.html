@@ -1,26 +1,5 @@
-<!DOCTYPE html>
-<html lang="pt-br">
-
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Carteirinha - Modo Locadora</title>
-    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
-    <link href="https://unpkg.com/nes.css@2.3.0/css/nes.min.css" rel="stylesheet" />
-    <link rel="stylesheet" href="/static/css/retro.css">
+{{define "page-styles"}}
     <style>
-        body {
-            font-family: 'Press Start 2P', cursive;
-            padding: 20px;
-            display: flex;
-            justify-content: center;
-        }
-
-        .container-wrapper {
-            max-width: 750px;
-            width: 100%;
-        }
-
         .card-header {
             text-align: center;
             margin-bottom: 2rem;
@@ -200,17 +179,9 @@
             color: #555;
         }
     </style>
-</head>
+{{end}}
 
-<body>
-    <div class="container-wrapper">
-        <div class="auth-bar">
-            <span class="auth-member">S&oacute;cio: {{.Member.ProfileName}}</span>
-            <form action="/logout" method="POST" style="margin:0;">
-                <button type="submit" class="auth-logout">[DESCONECTAR]</button>
-            </form>
-        </div>
-
+{{define "content"}}
         <header class="card-header">
             <h2 class="pixel-aligned-title">CARTEIRINHA DE S&Oacute;CIO</h2>
             <p class="pixel-aligned-subtitle">[MODO LOCADORA &mdash; DESDE 1991]</p>
@@ -389,15 +360,4 @@
             </div>
         </div>
         {{end}}
-
-        <div class="nav-bar">
-            <a href="/games" class="nes-btn is-primary btn-nav">PRATELEIRA</a>
-            <a href="/clubs" class="nes-btn is-success btn-nav">TURMAS</a>
-            <a href="/" class="nes-btn btn-nav">BALC&Atilde;O</a>
-        </div>
-
-        <p class="footer-copyright">&copy; 1991-2026 Modo Locadora - Sob licen&ccedil;a GPLv3. Criado pelo Tio da Locadora.</p>
-    </div>
-</body>
-
-</html>
+{{end}}

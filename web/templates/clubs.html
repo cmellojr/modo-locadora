@@ -1,27 +1,5 @@
-<!DOCTYPE html>
-<html lang="pt-br">
-
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Turmas - Modo Locadora</title>
-    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
-    <link href="https://unpkg.com/nes.css@2.3.0/css/nes.min.css" rel="stylesheet" />
-    <link rel="stylesheet" href="/static/css/retro.css">
+{{define "page-styles"}}
     <style>
-        body {
-            margin: 0;
-            padding: 20px;
-            height: auto;
-            overflow-y: auto;
-            display: flex;
-            justify-content: center;
-        }
-
-        .container-wrapper {
-            max-width: 1000px;
-        }
-
         .turma-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
@@ -97,19 +75,9 @@
             }
         }
     </style>
-</head>
+{{end}}
 
-<body>
-    <div class="container-wrapper">
-        {{if .IsLoggedIn}}
-        <div class="auth-bar">
-            <span class="auth-member">S&oacute;cio: {{.MemberName}}</span>
-            <form action="/logout" method="POST" style="margin:0;">
-                <button type="submit" class="auth-logout">[DESCONECTAR]</button>
-            </form>
-        </div>
-        {{end}}
-
+{{define "content"}}
         {{if eq .Success "criada"}}
         <div class="success-balloon">
             <div class="nes-balloon from-left is-dark">
@@ -160,18 +128,4 @@
             <p class="empty-state">Nenhuma turma formada ainda. Crie a sua!</p>
             {{end}}
         </div>
-
-        <div class="nav-bar">
-            {{if .IsLoggedIn}}
-            <a href="/clubs/new" class="nes-btn is-success btn-nav">CRIAR TURMA</a>
-            <a href="/carteirinha" class="nes-btn is-warning btn-nav">CARTEIRINHA</a>
-            {{end}}
-            <a href="/games" class="nes-btn btn-nav">PRATELEIRA</a>
-            <a href="/" class="nes-btn is-primary btn-nav">BALC&Atilde;O</a>
-        </div>
-
-        <p class="footer-copyright">&copy; 1991-2026 Modo Locadora - Sob licen&ccedil;a GPLv3. Criado pelo Tio da Locadora.</p>
-    </div>
-</body>
-
-</html>
+{{end}}

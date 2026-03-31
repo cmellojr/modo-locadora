@@ -1,21 +1,5 @@
-<!DOCTYPE html>
-<html lang="pt-br">
-
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Abastecer Prateleiras - Modo Locadora</title>
-    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
-    <link href="https://unpkg.com/nes.css@2.3.0/css/nes.min.css" rel="stylesheet" />
-    <link rel="stylesheet" href="/static/css/retro.css">
+{{define "page-styles"}}
     <style>
-        body {
-            font-family: 'Press Start 2P', cursive;
-            padding: 20px;
-            display: flex;
-            justify-content: center;
-        }
-
         .admin-header {
             text-align: center;
             margin-bottom: 2rem;
@@ -113,19 +97,9 @@
             font-size: 7px;
         }
     </style>
-</head>
+{{end}}
 
-<body>
-    <div class="container-wrapper">
-        {{if .MemberName}}
-        <div class="auth-bar">
-            <span class="auth-member">S&oacute;cio: {{.MemberName}}</span>
-            <form action="/logout" method="POST" style="margin:0;">
-                <button type="submit" class="auth-logout">[DESCONECTAR]</button>
-            </form>
-        </div>
-        {{end}}
-
+{{define "content"}}
         <header class="admin-header">
             <h2 class="pixel-aligned-title">ABASTECER PRATELEIRAS</h2>
             <p class="pixel-aligned-subtitle">[INTERFACE DO TIO DA LOCADORA]</p>
@@ -245,15 +219,4 @@
             </div>
         </div>
         {{end}}
-
-        <div class="nav-bar" style="margin-top: 2rem;">
-            <a href="/admin/inventory" class="nes-btn is-warning btn-nav">ACERVO</a>
-            <a href="/games" class="nes-btn is-primary btn-nav">PRATELEIRA</a>
-            <a href="/" class="nes-btn btn-nav">BALC&Atilde;O</a>
-        </div>
-
-        <p class="footer-copyright">&copy; 1991-2026 Modo Locadora - Sob licen&ccedil;a GPLv3. Criado pelo Tio da Locadora.</p>
-    </div>
-</body>
-
-</html>
+{{end}}

@@ -1,170 +1,110 @@
-<!DOCTYPE html>
-<html lang="pt-br">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Modo Locadora - Bem-vindo ao Balc&atilde;o</title>
-    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
-    <link href="https://unpkg.com/nes.css@2.3.0/css/nes.min.css" rel="stylesheet" />
-    <link rel="stylesheet" href="/static/css/retro.css">
-    <style>
-        body {
-            font-family: 'Press Start 2P', cursive;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            padding: 20px;
-        }
+{{define "page-styles"}}
+<style>
+    .balcao-layout {
+        display: flex;
+        gap: 20px;
+        align-items: stretch;
+    }
+    .balcao-main {
+        flex: 1;
+        min-width: 0;
+        display: flex;
+    }
+    .balcao-main > .nes-container {
+        flex: 1;
+    }
+    .balcao-sidebar {
+        width: 320px;
+        flex-shrink: 0;
+        display: flex;
+    }
+    .balcao-sidebar > .nes-container {
+        flex: 1;
+    }
+    @media (max-width: 700px) {
         .balcao-layout {
-            display: flex;
-            gap: 20px;
-            align-items: stretch;
-        }
-        .balcao-main {
-            flex: 1;
-            min-width: 0;
-            display: flex;
-        }
-        .balcao-main > .nes-container {
-            flex: 1;
+            flex-direction: column;
         }
         .balcao-sidebar {
-            width: 320px;
-            flex-shrink: 0;
-            display: flex;
+            width: 100%;
         }
-        .balcao-sidebar > .nes-container {
-            flex: 1;
-        }
-        @media (max-width: 700px) {
-            .balcao-layout {
-                flex-direction: column;
-            }
-            .balcao-sidebar {
-                width: 100%;
-            }
-        }
-        .input-group {
-            margin-top: 1.5rem;
-            margin-bottom: 1.5rem;
-        }
-        .btn-group {
-            text-align: right;
-        }
-        .manifesto-text {
-            font-size: 11px;
-            color: #f7d51d;
-            line-height: 1.8;
-            margin-bottom: 1.5rem;
-            padding: 12px;
-            border-left: 4px solid #f7d51d;
-        }
-        .statute-list {
-            font-size: 10px;
-            color: #92cc41;
-            line-height: 2;
-        }
-        .statute-list li {
-            margin-bottom: 14px;
-        }
-    </style>
-</head>
-<body>
-    <div class="container-wrapper">
-        {{if .IsLoggedIn}}
-        <div class="auth-bar">
-            <span class="auth-member">S&oacute;cio: {{.MemberName}}</span>
-            <form action="/logout" method="POST" style="margin:0;">
-                <button type="submit" class="auth-logout">[DESCONECTAR]</button>
-            </form>
-        </div>
-        {{end}}
+    }
+    .input-group {
+        margin-top: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+    .btn-group {
+        text-align: right;
+    }
+    .manifesto-text {
+        font-size: 11px;
+        color: #f7d51d;
+        line-height: 1.8;
+        margin-bottom: 1.5rem;
+        padding: 12px;
+        border-left: 4px solid #f7d51d;
+    }
+    .statute-list {
+        font-size: 10px;
+        color: #92cc41;
+        line-height: 2;
+    }
+    .statute-list li {
+        margin-bottom: 14px;
+    }
+</style>
+{{end}}
 
-        <div class="balcao-layout">
-            <div class="balcao-main">
-                <div class="nes-container with-title is-dark">
-                    <p class="title">
-                        <span class="pixel-aligned-title">Modo Locadora</span>
-                        <span class="title-sub">[BALC&Atilde;O]</span>
-                    </p>
-                    <div class="forum-body">
-                        <div class="manifesto-text">
-                            &ldquo;Aqui n&atilde;o h&aacute; lugar para pirataria desenfreada ou abandono de cl&aacute;ssicos. Escolha sua fita, sopre os contatos e jogue at&eacute; o fim. Honre sua carteirinha!&rdquo;
-                        </div>
+{{define "content"}}
+<div class="balcao-layout">
+    <div class="balcao-main">
+        <div class="nes-container with-title is-dark">
+            <p class="title">
+                <span class="pixel-aligned-title">Modo Locadora</span>
+                <span class="title-sub">[BALC&Atilde;O]</span>
+            </p>
+            <div class="forum-body">
+                <div class="manifesto-text">
+                    &ldquo;Aqui n&atilde;o h&aacute; lugar para pirataria desenfreada ou abandono de cl&aacute;ssicos. Escolha sua fita, sopre os contatos e jogue at&eacute; o fim. Honre sua carteirinha!&rdquo;
+                </div>
 
-                        {{if .IsLoggedIn}}
-                        <p class="nes-text is-success" style="margin-bottom: 20px;">Bem-vindo de volta, {{.MemberName}}!</p>
-                        <div class="nav-bar" style="margin-top: 0;">
-                            <a href="/games" class="nes-btn is-primary btn-nav">IR PARA A PRATELEIRA</a>
-                            <a href="/carteirinha" class="nes-btn is-warning btn-nav">MINHA CARTEIRINHA</a>
-                            <a href="/clubs" class="nes-btn is-success btn-nav">TURMAS</a>
-                            {{if .IsAdmin}}
-                            <a href="/admin/stock" class="nes-btn is-success btn-nav">ABASTECER PRATELEIRAS</a>
-                            <a href="/admin/inventory" class="nes-btn btn-nav">ACERVO</a>
-                            {{end}}
-                        </div>
-                        {{else}}
-                        <p class="nes-text is-primary" style="margin-bottom: 20px;">Identifique-se no balc&atilde;o para acessar a prateleira.</p>
+                {{if .IsLoggedIn}}
+                <p class="nes-text is-success" style="margin-bottom: 20px;">Bem-vindo de volta, {{.MemberName}}!</p>
+                {{else}}
+                <p class="nes-text is-primary" style="margin-bottom: 20px;">Identifique-se no balc&atilde;o para acessar a prateleira.</p>
 
-                        <form action="/login" method="POST">
-                            <div class="input-group nes-field">
-                                <label for="profile_name">Nome do S&oacute;cio</label>
-                                <input type="text" id="profile_name" name="profile_name" class="nes-input" placeholder="Seu nome aqui..." required>
-                            </div>
-
-                            <div class="input-group nes-field">
-                                <label for="password">Senha</label>
-                                <input type="password" id="password" name="password" class="nes-input" placeholder="Sua senha..." required>
-                            </div>
-
-                            <div class="btn-group">
-                                <button type="submit" class="nes-btn is-primary btn-nav">ENTRAR NO MODO LOCADORA</button>
-                            </div>
-                        </form>
-                        {{end}}
+                <form action="/login" method="POST">
+                    <div class="input-group nes-field">
+                        <label for="profile_name">Nome do S&oacute;cio</label>
+                        <input type="text" id="profile_name" name="profile_name" class="nes-input" placeholder="Seu nome aqui..." required>
                     </div>
-                </div>
-            </div>
 
-            <div class="balcao-sidebar">
-                <div class="nes-container with-title is-dark">
-                    <p class="title">
-                        <span class="title-main">Estatuto</span>
-                    </p>
-                    <ul class="nes-list is-disc statute-list">
-                        <li><i class="nes-icon trophy is-small"></i> Os jogos deste acervo s&atilde;o para serem deliciados como um bom vinho. Sem pressa, sem desperd&iacute;cio.</li>
-                        <li><i class="nes-icon star is-small"></i> Cada fita &eacute; &uacute;nica. Se todas as c&oacute;pias estiverem alugadas, aguarde sua vez com paci&ecirc;ncia.</li>
-                        <li><i class="nes-icon heart is-small"></i> Devolva no prazo. O pr&oacute;ximo s&oacute;cio conta com voc&ecirc;.</li>
-                        <li><i class="nes-icon like is-small"></i> Anote seus passwords no caderninho. N&atilde;o abandone um cl&aacute;ssico pela metade.</li>
-                    </ul>
-                </div>
-            </div>
-        </div>
+                    <div class="input-group nes-field">
+                        <label for="password">Senha</label>
+                        <input type="password" id="password" name="password" class="nes-input" placeholder="Sua senha..." required>
+                    </div>
 
-        {{if .ShameEntries}}
-        <div style="margin-top: 20px;">
-            <div class="nes-container with-title is-dark">
-                <p class="title">
-                    <span class="title-main">Painel da Vergonha</span>
-                    <span class="title-sub">[DEVEDORES]</span>
-                </p>
-                <p class="nes-text is-error" style="font-size: 10px; margin-bottom: 16px;">
-                    S&oacute;cios que n&atilde;o devolveram no prazo:
-                </p>
-                {{range .ShameEntries}}
-                <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px dashed #333; font-size: 11px;">
-                    <span>
-                        <span style="color: #e74c3c;">&#9760; {{.ProfileName}}</span>
-                    </span>
-                    <span class="nes-text is-warning">{{.LateCount}}x atrasado(a)</span>
-                </div>
+                    <div class="btn-group">
+                        <button type="submit" class="nes-btn is-primary btn-nav">ENTRAR NO MODO LOCADORA</button>
+                    </div>
+                </form>
                 {{end}}
             </div>
         </div>
-        {{end}}
-
-        <p class="footer-copyright">&copy; 1991-2026 Modo Locadora - Sob licen&ccedil;a GPLv3. Criado pelo Tio da Locadora.</p>
     </div>
-</body>
-</html>
+
+    <div class="balcao-sidebar">
+        <div class="nes-container with-title is-dark">
+            <p class="title">
+                <span class="title-main">Estatuto</span>
+            </p>
+            <ul class="nes-list is-disc statute-list">
+                <li><i class="nes-icon trophy is-small"></i> Os jogos deste acervo s&atilde;o para serem deliciados como um bom vinho. Sem pressa, sem desperd&iacute;cio.</li>
+                <li><i class="nes-icon star is-small"></i> Cada fita &eacute; &uacute;nica. Se todas as c&oacute;pias estiverem alugadas, aguarde sua vez com paci&ecirc;ncia.</li>
+                <li><i class="nes-icon heart is-small"></i> Devolva no prazo. O pr&oacute;ximo s&oacute;cio conta com voc&ecirc;.</li>
+                <li><i class="nes-icon like is-small"></i> Anote seus passwords no caderninho. N&atilde;o abandone um cl&aacute;ssico pela metade.</li>
+            </ul>
+        </div>
+    </div>
+</div>
+{{end}}

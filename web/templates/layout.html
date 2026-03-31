@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{.PageTitle}} - Modo Locadora</title>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <link href="https://unpkg.com/nes.css@2.3.0/css/nes.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="/static/css/retro.css">
+    {{block "page-styles" .}}{{end}}
+</head>
+<body>
+    <div class="site-layout">
+        <!-- TOP NAV -->
+        <nav class="top-nav">
+            <a href="/" class="top-nav-brand">MODO LOCADORA</a>
+            <div class="top-nav-links">
+                <a href="/games">PRATELEIRA</a>
+                <a href="/clubs">TURMAS</a>
+                {{if .IsLoggedIn}}
+                <a href="/carteirinha">CARTEIRINHA</a>
+                {{end}}
+                {{if .IsAdmin}}
+                <a href="/admin/stock">ESTOQUE</a>
+                <a href="/admin/inventory">ACERVO</a>
+                <a href="/admin/returns">DEVOLU&Ccedil;&Otilde;ES</a>
+                {{end}}
+            </div>
+            {{if .IsLoggedIn}}
+            <div class="top-nav-auth">
+                <span class="auth-member">S&oacute;cio: {{.MemberName}}</span>
+                <form action="/logout" method="POST" style="margin:0;display:inline;">
+                    <button type="submit" class="auth-logout">[SAIR]</button>
+                </form>
+            </div>
+            {{end}}
+        </nav>
+
+        <!-- LEFT SIDEBAR -->
+        <aside class="left-sidebar">
+            <div class="sidebar-section">
+                <h3 class="sidebar-title">NAVEGA&Ccedil;&Atilde;O</h3>
+                <nav class="sidebar-nav">
+                    <a href="/">Balc&atilde;o</a>
+                    <a href="/games">Prateleira</a>
+                    <a href="/clubs">Turmas</a>
+                    {{if .IsLoggedIn}}
+                    <a href="/carteirinha">Carteirinha</a>
+                    {{end}}
+                    {{if .IsAdmin}}
+                    <a href="/admin/stock">Estoque</a>
+                    <a href="/admin/inventory">Acervo</a>
+                    <a href="/admin/returns">Devolu&ccedil;&otilde;es</a>
+                    {{end}}
+                </nav>
+            </div>
+
+            {{if .IsLoggedIn}}
+            {{if .MemberMini}}
+            <div class="sidebar-section">
+                <h3 class="sidebar-title">S&Oacute;CIO</h3>
+                <div class="member-mini-card">
+                    <i class="nes-avatar is-rounded"></i>
+                    <p class="mini-name">{{.MemberMini.ProfileName}}</p>
+                    <p class="mini-number">{{.MemberMini.MembershipNumber}}</p>
+                    <span class="status-badge-label {{.MemberMini.StatusBadge}}">{{.MemberMini.StatusLabel}}</span>
+                    {{if gt .MemberMini.ActiveRentals 0}}
+                    <p style="font-size:8px;color:#999;margin-top:8px;">{{.MemberMini.ActiveRentals}} fita(s) alugada(s)</p>
+                    {{end}}
+                </div>
+            </div>
+            {{end}}
+            {{else}}
+            <div class="sidebar-section">
+                <h3 class="sidebar-title">BEM-VINDO</h3>
+                <p style="font-size:9px;color:#999;line-height:1.8;">Fa&ccedil;a login no balc&atilde;o para alugar fitas e acessar sua carteirinha.</p>
+            </div>
+            {{end}}
+        </aside>
+
+        <!-- MAIN CONTENT -->
+        <main class="main-content">
+            {{template "content" .}}
+        </main>
+
+        <!-- RIGHT SIDEBAR -->
+        <aside class="right-sidebar">
+            {{if .Activities}}
+            <div class="sidebar-section">
+                <h3 class="sidebar-title">ACONTECEU NA LOCADORA</h3>
+                {{range .Activities}}
+                <div class="activity-item-compact">
+                    <p class="activity-msg">{{.Message}}</p>
+                    <span class="activity-time">{{.TimeAgo}}</span>
+                </div>
+                {{end}}
+            </div>
+            {{end}}
+
+            {{if .ShameEntries}}
+            <div class="sidebar-section">
+                <h3 class="sidebar-title">PAINEL DA VERGONHA</h3>
+                {{range .ShameEntries}}
+                <div class="shame-compact">
+                    <span class="shame-name">&#9760; {{.ProfileName}}</span>
+                    <span class="shame-count">{{.LateCount}}x</span>
+                </div>
+                {{end}}
+            </div>
+            {{end}}
+
+            <div class="sidebar-section">
+                <h3 class="sidebar-title">ALMANAQUE DO TIO</h3>
+                <p class="sidebar-almanac">{{.AlmanacEntry}}</p>
+            </div>
+        </aside>
+
+        <!-- FOOTER -->
+        <footer class="site-footer">
+            <p class="footer-copyright">&copy; 1991-2026 Modo Locadora - Sob licen&ccedil;a GPLv3. Criado pelo Tio da Locadora.</p>
+        </footer>
+    </div>
+</body>
+</html>

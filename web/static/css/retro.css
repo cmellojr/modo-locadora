@@ -183,14 +183,6 @@ img, .nes-icon {
     margin-top: 1rem;
 }
 
-/* Navigation bar - shared across pages */
-.nav-bar {
-    margin-top: 2rem;
-    display: flex;
-    gap: 10px;
-    flex-wrap: wrap;
-}
-
 /* Empty state - shared across admin pages */
 .empty-state {
     text-align: center;
@@ -207,11 +199,11 @@ img, .nes-icon {
     font-size: 12px;
 }
 
-/* Footer copyright - consistent across all templates */
+/* Footer copyright */
 .footer-copyright {
     font-size: 9px;
     text-align: center;
-    margin-top: 40px;
+    margin-top: 0;
     color: #555;
 }
 
@@ -226,31 +218,81 @@ img, .nes-icon {
     height: 12px;
 }
 
-/* Shared container wrapper - consistent max-width */
-.container-wrapper {
-    max-width: 960px;
-    width: 100%;
+
+/* ═══════════════════════════════════════════════════════════════
+   Site Layout — 3-Column (Left Sidebar | Content | Right Sidebar)
+   Inspired by 2000s gaming sites (GameFAQs, Backloggery)
+   ═══════════════════════════════════════════════════════════════ */
+
+.site-layout {
+    display: grid;
+    grid-template-columns: 220px 1fr 280px;
+    grid-template-rows: auto 1fr auto;
+    min-height: 100vh;
 }
 
-/* Auth bar - shown at top right on all pages */
-.auth-bar {
+/* Top navigation bar — spans all columns */
+.top-nav {
+    grid-column: 1 / -1;
     display: flex;
-    justify-content: flex-end;
     align-items: center;
-    gap: 12px;
-    margin-bottom: 12px;
+    padding: 10px 16px;
+    background: #0D1117;
+    border-bottom: 3px solid #1F3A5F;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.top-nav-brand {
+    font-size: 14px;
+    color: #f7d51d !important;
+    text-decoration: none !important;
+    margin-right: 16px;
+    white-space: nowrap;
+}
+
+.top-nav-brand:hover {
+    color: #fff !important;
+    text-decoration: none !important;
+}
+
+.top-nav-links {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    flex: 1;
+}
+
+.top-nav-links a {
+    font-size: 10px;
+    color: #3498DB;
+    padding: 6px 10px;
+    border: 2px solid transparent;
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+.top-nav-links a:hover {
+    color: #fff;
+    border-color: #3498DB;
+    background: #1F3A5F;
+    text-decoration: none;
+}
+
+.top-nav-auth {
+    display: flex;
+    align-items: center;
+    gap: 10px;
     font-size: 9px;
-    flex-wrap: nowrap;
+    margin-left: auto;
+    white-space: nowrap;
 }
-.auth-bar form {
-    display: inline;
-    margin: 0;
-    padding: 0;
-}
-.auth-bar .auth-member {
+
+.top-nav-auth .auth-member {
     color: #92cc41;
 }
-.auth-bar .auth-logout {
+
+.top-nav-auth .auth-logout {
     background: none;
     border: none;
     color: #e74c3c;
@@ -260,21 +302,148 @@ img, .nes-icon {
     padding: 0;
     text-decoration: underline;
 }
-.auth-bar .auth-logout:hover {
+
+.top-nav-auth .auth-logout:hover {
     color: #ff6b6b;
 }
 
-/* 3-Column Layout — Platforms Page */
-.locadora-grid {
-    display: grid;
-    grid-template-columns: 260px 1fr 320px;
-    gap: 24px;
-    align-items: start;
+/* Left sidebar */
+.left-sidebar {
+    background: #0D1117;
+    border-right: 2px solid #1F3A5F;
+    padding: 16px 12px;
+    overflow-y: auto;
 }
 
+/* Right sidebar */
+.right-sidebar {
+    background: #0D1117;
+    border-left: 2px solid #1F3A5F;
+    padding: 16px 12px;
+    overflow-y: auto;
+}
+
+/* Sidebar section blocks */
+.sidebar-section {
+    margin-bottom: 20px;
+}
+
+.sidebar-section:last-child {
+    margin-bottom: 0;
+}
+
+.sidebar-title {
+    font-size: 10px;
+    color: #f7d51d;
+    margin: 0 0 12px 0;
+    padding-bottom: 8px;
+    border-bottom: 2px solid #333;
+}
+
+/* Sidebar navigation links */
+.sidebar-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+}
+
+.sidebar-nav a {
+    display: block;
+    font-size: 10px;
+    color: #3498DB;
+    padding: 8px 10px;
+    text-decoration: none;
+    border-left: 3px solid transparent;
+}
+
+.sidebar-nav a:hover {
+    color: #fff;
+    background: #1A1A2E;
+    border-left-color: #3498DB;
+    text-decoration: none;
+}
+
+/* Compact activity for right sidebar */
+.activity-item-compact {
+    padding: 8px 0;
+    border-bottom: 1px dashed #333;
+}
+
+.activity-item-compact:last-child {
+    border-bottom: none;
+}
+
+.activity-item-compact .activity-msg {
+    font-size: 9px;
+    color: #ccc;
+    line-height: 1.8;
+    margin: 0 0 4px 0;
+}
+
+.activity-item-compact .activity-time {
+    font-size: 8px;
+    color: #555;
+}
+
+/* Almanac text in sidebar */
+.sidebar-almanac {
+    font-size: 9px;
+    color: #ccc;
+    line-height: 1.8;
+}
+
+/* Main content area */
+.main-content {
+    padding: 20px;
+    overflow-y: auto;
+    min-width: 0;
+}
+
+/* Site footer — spans all columns */
+.site-footer {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 16px;
+    border-top: 2px solid #1F3A5F;
+}
+
+.site-footer .footer-copyright {
+    margin-top: 0;
+}
+
+/* Status badge used in sidebar mini-card */
+.status-badge-label {
+    display: inline-block;
+    font-size: 9px;
+    padding: 4px 12px;
+    color: #fff;
+    text-align: center;
+    margin-top: 6px;
+}
+.status-badge-label.is-success { background-color: #92cc41; color: #111; }
+.status-badge-label.is-error   { background-color: #e74c3c; }
+.status-badge-label.is-primary { background-color: #209cee; }
+
+/* Responsive: collapse to single column */
 @media (max-width: 1100px) {
-    .locadora-grid {
+    .site-layout {
         grid-template-columns: 1fr;
+    }
+
+    .left-sidebar,
+    .right-sidebar {
+        border-left: none;
+        border-right: none;
+        border-top: 2px solid #1F3A5F;
+    }
+
+    .top-nav {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .top-nav-auth {
+        margin-left: 0;
     }
 }
 
