@@ -228,12 +228,16 @@ img, .nes-icon {
     display: grid;
     grid-template-columns: 220px 1fr 280px;
     grid-template-rows: auto 1fr auto;
+    grid-template-areas:
+        "topnav  topnav  topnav"
+        "left    content right"
+        "footer  footer  footer";
     min-height: 100vh;
 }
 
 /* Top navigation bar — spans all columns */
 .top-nav {
-    grid-column: 1 / -1;
+    grid-area: topnav;
     display: flex;
     align-items: center;
     padding: 10px 16px;
@@ -309,6 +313,7 @@ img, .nes-icon {
 
 /* Left sidebar */
 .left-sidebar {
+    grid-area: left;
     background: #0D1117;
     border-right: 2px solid #1F3A5F;
     padding: 16px 12px;
@@ -317,6 +322,7 @@ img, .nes-icon {
 
 /* Right sidebar */
 .right-sidebar {
+    grid-area: right;
     background: #0D1117;
     border-left: 2px solid #1F3A5F;
     padding: 16px 12px;
@@ -332,12 +338,14 @@ img, .nes-icon {
     margin-bottom: 0;
 }
 
-.sidebar-title {
-    font-size: 10px;
-    color: #f7d51d;
-    margin: 0 0 12px 0;
-    padding-bottom: 8px;
-    border-bottom: 2px solid #333;
+/* Compact NES.css container for sidebars */
+.sidebar-container {
+    padding: 12px !important;
+}
+
+.sidebar-container > .title {
+    font-size: 10px !important;
+    padding: 6px 10px !important;
 }
 
 /* Sidebar navigation links */
@@ -394,6 +402,7 @@ img, .nes-icon {
 
 /* Main content area */
 .main-content {
+    grid-area: content;
     padding: 20px;
     overflow-y: auto;
     min-width: 0;
@@ -401,7 +410,7 @@ img, .nes-icon {
 
 /* Site footer — spans all columns */
 .site-footer {
-    grid-column: 1 / -1;
+    grid-area: footer;
     text-align: center;
     padding: 16px;
     border-top: 2px solid #1F3A5F;
@@ -428,6 +437,12 @@ img, .nes-icon {
 @media (max-width: 1100px) {
     .site-layout {
         grid-template-columns: 1fr;
+        grid-template-areas:
+            "topnav"
+            "left"
+            "content"
+            "right"
+            "footer";
     }
 
     .left-sidebar,
