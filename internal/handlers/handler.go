@@ -122,6 +122,10 @@ func formatActivityMessage(a database.ActivityEntry) string {
 		return fmt.Sprintf("%s jogou %s mas nao terminou.", a.MemberName, a.GameTitle)
 	case "verdict_quit":
 		return fmt.Sprintf("%s desistiu de %s. O Tio esta decepcionado!", a.MemberName, a.GameTitle)
+	case "club_created":
+		return fmt.Sprintf("%s formou a turma %s! Quem vai entrar?", a.MemberName, a.GameTitle)
+	case "club_joined":
+		return fmt.Sprintf("%s entrou na turma %s!", a.MemberName, a.GameTitle)
 	default:
 		return ""
 	}
@@ -533,6 +537,8 @@ func (h *Handler) Carteirinha(w http.ResponseWriter, r *http.Request, tmpl *temp
 	completedGameIDs, _ := h.store.ListCompletedGameIDs(r.Context(), id)
 	memberTitle := models.ComputeMemberTitle(len(completedGameIDs), onTimeCount)
 
+	memberClubs, _ := h.store.ListMemberClubs(r.Context(), id)
+
 	data := struct {
 		Member        *models.Member
 		ActiveRentals int
@@ -544,6 +550,7 @@ func (h *Handler) Carteirinha(w http.ResponseWriter, r *http.Request, tmpl *temp
 		LateCount     int
 		Rentals       []database.MemberRental
 		Title         models.MemberTitle
+		Clubs         []database.MemberClubView
 	}{
 		Member:        member,
 		ActiveRentals: activeCount,
@@ -555,6 +562,7 @@ func (h *Handler) Carteirinha(w http.ResponseWriter, r *http.Request, tmpl *temp
 		LateCount:     member.LateCount,
 		Rentals:       memberRentals,
 		Title:         memberTitle,
+		Clubs:         memberClubs,
 	}
 
 	if err := tmpl.Execute(w, data); err != nil {
@@ -1097,6 +1105,469 @@ func (h *Handler) HandleMemberReturn(w http.ResponseWriter, r *http.Request) {
 	}
 
 	http.Redirect(w, r, "/carteirinha?success=devolucao", http.StatusSeeOther)
+}
+
+// ── Club handlers ───────────────────────────────────────────────────────────
+
+// getSessionMemberID extracts and parses the member UUID from the session cookie.
+func (h *Handler) getSessionMemberID(r *http.Request) (uuid.UUID, bool) {
+	raw := auth.GetSessionMemberID(r, h.cookieSecret)
+	if raw == "" {
+		return uuid.UUID{}, false
+	}
+	id, err := uuid.Parse(raw)
+	if err != nil {
+		return uuid.UUID{}, false
+	}
+	return id, true
+}
+
+// requireClubAdmin verifies the session user is an admin of the club identified by {id} in the path.
+// Returns the member ID, club ID, and true if authorized. Writes an error response and returns false otherwise.
+func (h *Handler) requireClubAdmin(w http.ResponseWriter, r *http.Request) (uuid.UUID, uuid.UUID, bool) {
+	memberID, ok := h.getSessionMemberID(r)
+	if !ok {
+		http.Redirect(w, r, "/", http.StatusSeeOther)
+		return uuid.UUID{}, uuid.UUID{}, false
+	}
+
+	clubID, err := uuid.Parse(r.PathValue("id"))
+	if err != nil {
+		http.Error(w, "ID de turma invalido", http.StatusBadRequest)
+		return uuid.UUID{}, uuid.UUID{}, false
+	}
+
+	role, err := h.store.GetClubMemberRole(r.Context(), clubID, memberID)
+	if err != nil || role != models.ClubRoleAdmin {
+		http.Error(w, "Acesso restrito aos admins da turma", http.StatusForbidden)
+		return uuid.UUID{}, uuid.UUID{}, false
+	}
+
+	return memberID, clubID, true
+}
+
+// ListClubs handles GET /clubs.
+func (h *Handler) ListClubs(w http.ResponseWriter, r *http.Request, tmpl *template.Template) {
+	memberName, _, isLoggedIn := h.getSessionMember(r)
+
+	var viewerID *uuid.UUID
+	if id, ok := h.getSessionMemberID(r); ok {
+		viewerID = &id
+	}
+
+	var clubs []database.ClubListItem
+	if h.store != nil {
+		clubs, _ = h.store.ListClubs(r.Context(), viewerID)
+	}
+
+	data := struct {
+		MemberName string
+		IsLoggedIn bool
+		Clubs      []database.ClubListItem
+		Success    string
+	}{
+		MemberName: memberName,
+		IsLoggedIn: isLoggedIn,
+		Clubs:      clubs,
+		Success:    r.URL.Query().Get("success"),
+	}
+
+	if err := tmpl.Execute(w, data); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+}
+
+// ClubDetail handles GET /clubs/{id}.
+func (h *Handler) ClubDetail(w http.ResponseWriter, r *http.Request, tmpl *template.Template) {
+	if h.store == nil {
+		http.Error(w, "Database not configured", http.StatusServiceUnavailable)
+		return
+	}
+
+	clubID, err := uuid.Parse(r.PathValue("id"))
+	if err != nil {
+		http.Error(w, "ID de turma invalido", http.StatusBadRequest)
+		return
+	}
+
+	detail, err := h.store.GetClubDetail(r.Context(), clubID)
+	if err != nil {
+		http.Error(w, "Falha ao carregar turma: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+	if detail == nil {
+		http.Error(w, "Turma nao encontrada", http.StatusNotFound)
+		return
+	}
+
+	memberName, _, isLoggedIn := h.getSessionMember(r)
+	var viewerRole string
+	var viewerID uuid.UUID
+	if id, ok := h.getSessionMemberID(r); ok {
+		viewerID = id
+		viewerRole, _ = h.store.GetClubMemberRole(r.Context(), clubID, id)
+	}
+
+	data := struct {
+		Detail     *database.ClubDetail
+		MemberName string
+		IsLoggedIn bool
+		ViewerRole string
+		IsMember   bool
+		IsAdmin    bool
+		IsCreator  bool
+		Success    string
+	}{
+		Detail:     detail,
+		MemberName: memberName,
+		IsLoggedIn: isLoggedIn,
+		ViewerRole: viewerRole,
+		IsMember:   viewerRole != "",
+		IsAdmin:    viewerRole == models.ClubRoleAdmin,
+		IsCreator:  viewerID == detail.Club.CreatedBy,
+		Success:    r.URL.Query().Get("success"),
+	}
+
+	if err := tmpl.Execute(w, data); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+}
+
+// ClubFormPage handles GET /clubs/new and GET /clubs/{id}/edit.
+func (h *Handler) ClubFormPage(w http.ResponseWriter, r *http.Request, tmpl *template.Template, isEdit bool) {
+	memberName, _, isLoggedIn := h.getSessionMember(r)
+
+	var club *models.Club
+	if isEdit {
+		_, clubID, ok := h.requireClubAdmin(w, r)
+		if !ok {
+			return
+		}
+		var err error
+		club, err = h.store.GetClubByID(r.Context(), clubID)
+		if err != nil || club == nil {
+			http.Error(w, "Turma nao encontrada", http.StatusNotFound)
+			return
+		}
+	}
+
+	data := struct {
+		MemberName string
+		IsLoggedIn bool
+		Club       *models.Club
+		IsEdit     bool
+	}{
+		MemberName: memberName,
+		IsLoggedIn: isLoggedIn,
+		Club:       club,
+		IsEdit:     isEdit,
+	}
+
+	if err := tmpl.Execute(w, data); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+}
+
+// CreateClub handles POST /clubs.
+func (h *Handler) CreateClub(w http.ResponseWriter, r *http.Request) {
+	if h.store == nil {
+		http.Error(w, "Database not configured", http.StatusServiceUnavailable)
+		return
+	}
+
+	memberID, ok := h.getSessionMemberID(r)
+	if !ok {
+		http.Redirect(w, r, "/", http.StatusSeeOther)
+		return
+	}
+
+	if err := r.ParseMultipartForm(10 << 20); err != nil {
+		http.Error(w, "Falha ao processar formulario", http.StatusBadRequest)
+		return
+	}
+
+	name := strings.TrimSpace(r.FormValue("name"))
+	if name == "" {
+		http.Error(w, "Nome da turma e obrigatorio", http.StatusBadRequest)
+		return
+	}
+
+	now := time.Now()
+	club := &models.Club{
+		ID:          uuid.New(),
+		Name:        name,
+		Description: r.FormValue("description"),
+		WebsiteURL:  r.FormValue("website_url"),
+		CreatedBy:   memberID,
+		CreatedAt:   now,
+		UpdatedAt:   now,
+	}
+
+	// Handle badge file upload.
+	file, header, err := r.FormFile("badge_file")
+	if err == nil {
+		defer file.Close()
+		ext := filepath.Ext(header.Filename)
+		if ext == "" {
+			ext = ".png"
+		}
+		filename := club.ID.String() + ext
+		savePath := filepath.Join("web", "static", "clubs", filename)
+		dst, err := os.Create(savePath)
+		if err != nil {
+			http.Error(w, "Falha ao salvar badge: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+		defer dst.Close()
+		if _, err := io.Copy(dst, file); err != nil {
+			http.Error(w, "Falha ao gravar badge: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+		club.BadgeURL = "/static/clubs/" + filename
+	}
+
+	if err := h.store.CreateClub(r.Context(), club); err != nil {
+		if strings.Contains(err.Error(), "unique") || strings.Contains(err.Error(), "duplicate") {
+			http.Error(w, "Ja existe uma turma com esse nome", http.StatusConflict)
+			return
+		}
+		http.Error(w, "Falha ao criar turma: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	member, _ := h.store.GetMemberByID(r.Context(), memberID)
+	if member != nil {
+		_ = h.store.InsertActivity(r.Context(), "club_created", member.ProfileName, club.Name)
+	}
+
+	http.Redirect(w, r, "/clubs/"+club.ID.String()+"?success=criada", http.StatusSeeOther)
+}
+
+// UpdateClub handles POST /clubs/{id}/edit.
+func (h *Handler) UpdateClub(w http.ResponseWriter, r *http.Request) {
+	if h.store == nil {
+		http.Error(w, "Database not configured", http.StatusServiceUnavailable)
+		return
+	}
+
+	_, clubID, ok := h.requireClubAdmin(w, r)
+	if !ok {
+		return
+	}
+
+	if err := r.ParseMultipartForm(10 << 20); err != nil {
+		http.Error(w, "Falha ao processar formulario", http.StatusBadRequest)
+		return
+	}
+
+	club, err := h.store.GetClubByID(r.Context(), clubID)
+	if err != nil || club == nil {
+		http.Error(w, "Turma nao encontrada", http.StatusNotFound)
+		return
+	}
+
+	name := strings.TrimSpace(r.FormValue("name"))
+	if name == "" {
+		http.Error(w, "Nome da turma e obrigatorio", http.StatusBadRequest)
+		return
+	}
+
+	club.Name = name
+	club.Description = r.FormValue("description")
+	club.WebsiteURL = r.FormValue("website_url")
+
+	// Handle badge file upload.
+	file, header, err := r.FormFile("badge_file")
+	if err == nil {
+		defer file.Close()
+		ext := filepath.Ext(header.Filename)
+		if ext == "" {
+			ext = ".png"
+		}
+		filename := club.ID.String() + ext
+		savePath := filepath.Join("web", "static", "clubs", filename)
+		dst, err := os.Create(savePath)
+		if err != nil {
+			http.Error(w, "Falha ao salvar badge: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+		defer dst.Close()
+		if _, err := io.Copy(dst, file); err != nil {
+			http.Error(w, "Falha ao gravar badge: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+		club.BadgeURL = "/static/clubs/" + filename
+	}
+
+	if err := h.store.UpdateClub(r.Context(), club); err != nil {
+		http.Error(w, "Falha ao atualizar turma: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	http.Redirect(w, r, "/clubs/"+clubID.String()+"?success=atualizada", http.StatusSeeOther)
+}
+
+// JoinClub handles POST /clubs/{id}/join.
+func (h *Handler) JoinClub(w http.ResponseWriter, r *http.Request) {
+	if h.store == nil {
+		http.Error(w, "Database not configured", http.StatusServiceUnavailable)
+		return
+	}
+
+	memberID, ok := h.getSessionMemberID(r)
+	if !ok {
+		http.Redirect(w, r, "/", http.StatusSeeOther)
+		return
+	}
+
+	clubID, err := uuid.Parse(r.PathValue("id"))
+	if err != nil {
+		http.Error(w, "ID de turma invalido", http.StatusBadRequest)
+		return
+	}
+
+	if err := h.store.JoinClub(r.Context(), clubID, memberID); err != nil {
+		http.Error(w, "Falha ao entrar na turma: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Log activity.
+	member, _ := h.store.GetMemberByID(r.Context(), memberID)
+	club, _ := h.store.GetClubByID(r.Context(), clubID)
+	if member != nil && club != nil {
+		_ = h.store.InsertActivity(r.Context(), "club_joined", member.ProfileName, club.Name)
+	}
+
+	http.Redirect(w, r, "/clubs/"+clubID.String()+"?success=entrou", http.StatusSeeOther)
+}
+
+// LeaveClub handles POST /clubs/{id}/leave.
+func (h *Handler) LeaveClub(w http.ResponseWriter, r *http.Request) {
+	if h.store == nil {
+		http.Error(w, "Database not configured", http.StatusServiceUnavailable)
+		return
+	}
+
+	memberID, ok := h.getSessionMemberID(r)
+	if !ok {
+		http.Redirect(w, r, "/", http.StatusSeeOther)
+		return
+	}
+
+	clubID, err := uuid.Parse(r.PathValue("id"))
+	if err != nil {
+		http.Error(w, "ID de turma invalido", http.StatusBadRequest)
+		return
+	}
+
+	// Prevent last admin from leaving.
+	role, _ := h.store.GetClubMemberRole(r.Context(), clubID, memberID)
+	if role == models.ClubRoleAdmin {
+		detail, _ := h.store.GetClubDetail(r.Context(), clubID)
+		if detail != nil {
+			adminCount := 0
+			for _, m := range detail.Members {
+				if m.Role == models.ClubRoleAdmin {
+					adminCount++
+				}
+			}
+			if adminCount <= 1 {
+				http.Error(w, "Voce e o unico admin. Promova outro membro antes de sair.", http.StatusForbidden)
+				return
+			}
+		}
+	}
+
+	if err := h.store.LeaveClub(r.Context(), clubID, memberID); err != nil {
+		http.Error(w, "Falha ao sair da turma: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	http.Redirect(w, r, "/clubs?success=saiu", http.StatusSeeOther)
+}
+
+// PromoteClubMember handles POST /clubs/{id}/promote.
+func (h *Handler) PromoteClubMember(w http.ResponseWriter, r *http.Request) {
+	if h.store == nil {
+		http.Error(w, "Database not configured", http.StatusServiceUnavailable)
+		return
+	}
+
+	_, clubID, ok := h.requireClubAdmin(w, r)
+	if !ok {
+		return
+	}
+
+	targetID, err := uuid.Parse(r.FormValue("member_id"))
+	if err != nil {
+		http.Error(w, "ID de membro invalido", http.StatusBadRequest)
+		return
+	}
+
+	if err := h.store.PromoteClubMember(r.Context(), clubID, targetID); err != nil {
+		http.Error(w, "Falha ao promover membro: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	http.Redirect(w, r, "/clubs/"+clubID.String()+"?success=promovido", http.StatusSeeOther)
+}
+
+// RemoveClubMember handles POST /clubs/{id}/remove.
+func (h *Handler) RemoveClubMember(w http.ResponseWriter, r *http.Request) {
+	if h.store == nil {
+		http.Error(w, "Database not configured", http.StatusServiceUnavailable)
+		return
+	}
+
+	memberID, clubID, ok := h.requireClubAdmin(w, r)
+	if !ok {
+		return
+	}
+
+	targetID, err := uuid.Parse(r.FormValue("member_id"))
+	if err != nil {
+		http.Error(w, "ID de membro invalido", http.StatusBadRequest)
+		return
+	}
+
+	if targetID == memberID {
+		http.Error(w, "Use 'Sair da turma' para se remover.", http.StatusBadRequest)
+		return
+	}
+
+	if err := h.store.RemoveClubMember(r.Context(), clubID, targetID); err != nil {
+		http.Error(w, "Falha ao remover membro: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	http.Redirect(w, r, "/clubs/"+clubID.String()+"?success=removido", http.StatusSeeOther)
+}
+
+// DeleteClub handles POST /clubs/{id}/delete.
+func (h *Handler) DeleteClub(w http.ResponseWriter, r *http.Request) {
+	if h.store == nil {
+		http.Error(w, "Database not configured", http.StatusServiceUnavailable)
+		return
+	}
+
+	memberID, ok := h.getSessionMemberID(r)
+	if !ok {
+		http.Redirect(w, r, "/", http.StatusSeeOther)
+		return
+	}
+
+	clubID, err := uuid.Parse(r.PathValue("id"))
+	if err != nil {
+		http.Error(w, "ID de turma invalido", http.StatusBadRequest)
+		return
+	}
+
+	if err := h.store.DeleteClub(r.Context(), clubID, memberID); err != nil {
+		http.Error(w, "Falha ao excluir turma: "+err.Error(), http.StatusForbidden)
+		return
+	}
+
+	http.Redirect(w, r, "/clubs?success=excluida", http.StatusSeeOther)
 }
 
 // GetGame handles GET /games/{id}.

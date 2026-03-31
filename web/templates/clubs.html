@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Turmas - Modo Locadora</title>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <link href="https://unpkg.com/nes.css@2.3.0/css/nes.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="/static/css/retro.css">
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            height: auto;
+            overflow-y: auto;
+            display: flex;
+            justify-content: center;
+        }
+
+        .container-wrapper {
+            max-width: 1000px;
+        }
+
+        .turma-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 18px;
+            padding: 15px;
+        }
+
+        .turma-card {
+            background-color: #1A1A1A;
+            border: 2px solid #333;
+            border-top: 6px solid #92cc41;
+            padding: 14px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            text-decoration: none;
+            color: inherit;
+            transition: background-color 0.2s;
+        }
+
+        .turma-card:hover {
+            background-color: #222;
+            border-color: #92cc41;
+        }
+
+        .turma-badge {
+            width: 80px;
+            height: 80px;
+            object-fit: cover;
+            border: 2px solid #444;
+            margin-bottom: 10px;
+            image-rendering: pixelated;
+        }
+
+        .turma-badge-placeholder {
+            width: 80px;
+            height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #222;
+            border: 2px solid #444;
+            color: #666;
+            font-size: 8px;
+            margin-bottom: 10px;
+        }
+
+        .turma-name {
+            font-size: 11px;
+            color: #fff;
+            margin-bottom: 6px;
+        }
+
+        .turma-count {
+            font-size: 9px;
+            color: #92cc41;
+        }
+
+        .turma-member-tag {
+            font-size: 8px;
+            padding: 2px 8px;
+            margin-top: 6px;
+            background-color: #209cee;
+            color: #fff;
+        }
+
+        @media (max-width: 600px) {
+            .turma-grid {
+                grid-template-columns: 1fr 1fr;
+                gap: 10px;
+                padding: 8px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container-wrapper">
+        {{if .IsLoggedIn}}
+        <div class="auth-bar">
+            <span class="auth-member">S&oacute;cio: {{.MemberName}}</span>
+            <form action="/logout" method="POST" style="margin:0;">
+                <button type="submit" class="auth-logout">[DESCONECTAR]</button>
+            </form>
+        </div>
+        {{end}}
+
+        {{if eq .Success "criada"}}
+        <div class="success-balloon">
+            <div class="nes-balloon from-left is-dark">
+                <p class="balloon-text">Turma criada com sucesso! Chame a galera!</p>
+            </div>
+            <i class="nes-bcrikko"></i>
+        </div>
+        {{else if eq .Success "saiu"}}
+        <div class="success-balloon">
+            <div class="nes-balloon from-left is-dark">
+                <p class="balloon-text">Voc&ecirc; saiu da turma.</p>
+            </div>
+            <i class="nes-bcrikko"></i>
+        </div>
+        {{else if eq .Success "excluida"}}
+        <div class="success-balloon">
+            <div class="nes-balloon from-left is-dark">
+                <p class="balloon-text">Turma exclu&iacute;da.</p>
+            </div>
+            <i class="nes-bcrikko"></i>
+        </div>
+        {{end}}
+
+        <div class="nes-container with-title is-dark">
+            <p class="title">
+                <span class="title-main">TURMAS DA LOCADORA</span>
+                <span class="title-sub">{{len .Clubs}} turma(s)</span>
+            </p>
+
+            {{if .Clubs}}
+            <div class="turma-grid">
+                {{range .Clubs}}
+                <a href="/clubs/{{.Club.ID}}" class="turma-card">
+                    {{if .Club.BadgeURL}}
+                    <img src="{{.Club.BadgeURL}}" alt="{{.Club.Name}}" class="turma-badge">
+                    {{else}}
+                    <div class="turma-badge-placeholder">SEM BADGE</div>
+                    {{end}}
+                    <p class="turma-name">{{.Club.Name}}</p>
+                    <p class="turma-count">{{.MemberCount}} membro(s)</p>
+                    {{if .IsMember}}
+                    <span class="turma-member-tag">MEMBRO</span>
+                    {{end}}
+                </a>
+                {{end}}
+            </div>
+            {{else}}
+            <p class="empty-state">Nenhuma turma formada ainda. Crie a sua!</p>
+            {{end}}
+        </div>
+
+        <div class="nav-bar">
+            {{if .IsLoggedIn}}
+            <a href="/clubs/new" class="nes-btn is-success btn-nav">CRIAR TURMA</a>
+            <a href="/carteirinha" class="nes-btn is-warning btn-nav">CARTEIRINHA</a>
+            {{end}}
+            <a href="/games" class="nes-btn btn-nav">PRATELEIRA</a>
+            <a href="/" class="nes-btn is-primary btn-nav">BALC&Atilde;O</a>
+        </div>
+
+        <p class="footer-copyright">&copy; 1991-2026 Modo Locadora - Sob licen&ccedil;a GPLv3. Criado pelo Tio da Locadora.</p>
+    </div>
+</body>
+
+</html>

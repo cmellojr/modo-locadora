@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{if .IsEdit}}Editar Turma{{else}}Criar Turma{{end}} - Modo Locadora</title>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <link href="https://unpkg.com/nes.css@2.3.0/css/nes.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="/static/css/retro.css">
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            height: auto;
+            overflow-y: auto;
+            display: flex;
+            justify-content: center;
+        }
+
+        .container-wrapper {
+            max-width: 700px;
+        }
+
+        .field-row {
+            margin-bottom: 1.5rem;
+        }
+
+        .field-row label {
+            display: block;
+            font-size: 10px;
+            color: #92cc41;
+            margin-bottom: 6px;
+        }
+
+        .nes-input,
+        .nes-textarea {
+            font-size: 10px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container-wrapper">
+        {{if .IsLoggedIn}}
+        <div class="auth-bar">
+            <span class="auth-member">S&oacute;cio: {{.MemberName}}</span>
+            <form action="/logout" method="POST" style="margin:0;">
+                <button type="submit" class="auth-logout">[DESCONECTAR]</button>
+            </form>
+        </div>
+        {{end}}
+
+        <div class="nes-container with-title is-dark">
+            <p class="title">
+                <span class="title-main">{{if .IsEdit}}EDITAR TURMA{{else}}CRIAR TURMA{{end}}</span>
+            </p>
+
+            <form action="{{if .IsEdit}}/clubs/{{.Club.ID}}/edit{{else}}/clubs{{end}}" method="POST" enctype="multipart/form-data">
+
+                <div class="field-row nes-field">
+                    <label for="badge_file">Badge da Turma (upload)</label>
+                    <input type="file" id="badge_file" name="badge_file" accept="image/*" class="nes-input" style="font-size:9px;padding:8px;">
+                </div>
+
+                <div class="field-row nes-field">
+                    <label for="name">Nome da Turma</label>
+                    <input type="text" id="name" name="name" class="nes-input" required
+                           value="{{if .IsEdit}}{{.Club.Name}}{{end}}"
+                           placeholder="Ex: Retrogaming BR">
+                </div>
+
+                <div class="field-row nes-field">
+                    <label for="description">Descri&ccedil;&atilde;o</label>
+                    <textarea id="description" name="description" class="nes-textarea" rows="4"
+                              placeholder="Conte sobre a turma...">{{if .IsEdit}}{{.Club.Description}}{{end}}</textarea>
+                </div>
+
+                <div class="field-row nes-field">
+                    <label for="website_url">URL (site, canal, podcast...)</label>
+                    <input type="url" id="website_url" name="website_url" class="nes-input"
+                           value="{{if .IsEdit}}{{.Club.WebsiteURL}}{{end}}"
+                           placeholder="https://...">
+                </div>
+
+                <div class="form-actions">
+                    <a href="/clubs" class="nes-btn btn-nav">CANCELAR</a>
+                    <button type="submit" class="nes-btn is-success btn-nav">
+                        {{if .IsEdit}}SALVAR{{else}}CRIAR TURMA{{end}}
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <div class="nav-bar">
+            <a href="/clubs" class="nes-btn is-success btn-nav">TURMAS</a>
+            <a href="/games" class="nes-btn btn-nav">PRATELEIRA</a>
+            <a href="/" class="nes-btn is-primary btn-nav">BALC&Atilde;O</a>
+        </div>
+
+        <p class="footer-copyright">&copy; 1991-2026 Modo Locadora - Sob licen&ccedil;a GPLv3. Criado pelo Tio da Locadora.</p>
+    </div>
+</body>
+
+</html>

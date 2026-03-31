@@ -366,8 +366,33 @@
             </div>
         </div>
 
+        {{if .Clubs}}
+        <div style="margin-top: 2rem;">
+            <div class="nes-container with-title is-dark">
+                <p class="title">
+                    <span class="title-main">MINHAS TURMAS</span>
+                    <span class="title-sub">{{len .Clubs}} turma(s)</span>
+                </p>
+                {{range .Clubs}}
+                <a href="/clubs/{{.ClubID}}" style="display:flex;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid #333;text-decoration:none;color:inherit;">
+                    {{if .BadgeURL}}
+                    <img src="{{.BadgeURL}}" alt="{{.ClubName}}" style="width:40px;height:40px;object-fit:cover;border:2px solid #444;image-rendering:pixelated;">
+                    {{else}}
+                    <div style="width:40px;height:40px;display:flex;align-items:center;justify-content:center;background:#222;border:2px solid #444;color:#666;font-size:7px;">SEM</div>
+                    {{end}}
+                    <div style="flex:1;min-width:0;">
+                        <p style="font-size:10px;color:#fff;margin:0 0 2px 0;">{{.ClubName}}</p>
+                        <p style="font-size:8px;color:#92cc41;margin:0;">{{if eq .Role "admin"}}Admin{{else}}Membro{{end}}</p>
+                    </div>
+                </a>
+                {{end}}
+            </div>
+        </div>
+        {{end}}
+
         <div class="nav-bar">
             <a href="/games" class="nes-btn is-primary btn-nav">PRATELEIRA</a>
+            <a href="/clubs" class="nes-btn is-success btn-nav">TURMAS</a>
             <a href="/" class="nes-btn btn-nav">BALC&Atilde;O</a>
         </div>
 

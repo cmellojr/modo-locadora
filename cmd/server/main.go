@@ -66,6 +66,7 @@ func main() {
 			migrationsDir + "006_activities_feed.sql",
 			migrationsDir + "007_seed_initial_data.sql",
 			migrationsDir + "008_cover_display.sql",
+			migrationsDir + "009_clubs.sql",
 		}
 		for _, f := range sqlFiles {
 			data, err := os.ReadFile(f)
@@ -144,6 +145,21 @@ func main() {
 		log.Fatalf("failed to parse admin returns template: %v", err)
 	}
 
+	clubsTmpl, err := template.ParseFiles("web/templates/clubs.html")
+	if err != nil {
+		log.Fatalf("failed to parse clubs template: %v", err)
+	}
+
+	clubDetailTmpl, err := template.ParseFiles("web/templates/club_detail.html")
+	if err != nil {
+		log.Fatalf("failed to parse club detail template: %v", err)
+	}
+
+	clubFormTmpl, err := template.ParseFiles("web/templates/club_form.html")
+	if err != nil {
+		log.Fatalf("failed to parse club form template: %v", err)
+	}
+
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /{$}", func(w http.ResponseWriter, r *http.Request) {
 		h.HandleIndex(w, r, indexTmpl)
@@ -184,6 +200,27 @@ func main() {
 	// Serve static files from web/static
 	fileServer := http.FileServer(http.Dir("web/static"))
 	mux.Handle("GET /static/", http.StripPrefix("/static", fileServer))
+
+	// Club routes — public listing and detail, auth-protected actions.
+	mux.HandleFunc("GET /clubs", func(w http.ResponseWriter, r *http.Request) {
+		h.ListClubs(w, r, clubsTmpl)
+	})
+	mux.HandleFunc("GET /clubs/new", middleware.RequireAuth(cookieSecret, func(w http.ResponseWriter, r *http.Request) {
+		h.ClubFormPage(w, r, clubFormTmpl, false)
+	}))
+	mux.HandleFunc("POST /clubs", middleware.RequireAuth(cookieSecret, h.CreateClub))
+	mux.HandleFunc("GET /clubs/{id}", func(w http.ResponseWriter, r *http.Request) {
+		h.ClubDetail(w, r, clubDetailTmpl)
+	})
+	mux.HandleFunc("GET /clubs/{id}/edit", middleware.RequireAuth(cookieSecret, func(w http.ResponseWriter, r *http.Request) {
+		h.ClubFormPage(w, r, clubFormTmpl, true)
+	}))
+	mux.HandleFunc("POST /clubs/{id}/edit", middleware.RequireAuth(cookieSecret, h.UpdateClub))
+	mux.HandleFunc("POST /clubs/{id}/join", middleware.RequireAuth(cookieSecret, h.JoinClub))
+	mux.HandleFunc("POST /clubs/{id}/leave", middleware.RequireAuth(cookieSecret, h.LeaveClub))
+	mux.HandleFunc("POST /clubs/{id}/promote", middleware.RequireAuth(cookieSecret, h.PromoteClubMember))
+	mux.HandleFunc("POST /clubs/{id}/remove", middleware.RequireAuth(cookieSecret, h.RemoveClubMember))
+	mux.HandleFunc("POST /clubs/{id}/delete", middleware.RequireAuth(cookieSecret, h.DeleteClub))
 
 	mux.HandleFunc("POST /members", h.CreateMember)
 	mux.HandleFunc("GET /games/{id}", func(w http.ResponseWriter, r *http.Request) {

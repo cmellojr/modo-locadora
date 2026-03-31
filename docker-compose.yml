@@ -14,6 +14,7 @@ services:
       - PORT=8080
     volumes:
       - covers_data:/app/web/static/covers
+      - clubs_data:/app/web/static/clubs
     depends_on:
       db:
         condition: service_healthy
@@ -39,3 +40,4 @@ services:
 volumes:
   postgres_data:
   covers_data:
+  clubs_data:
