@@ -11,28 +11,35 @@
 </head>
 <body>
     <div class="site-layout">
-        <!-- TOP NAV -->
-        <nav class="top-nav">
-            <a href="/" class="top-nav-brand">MODO LOCADORA</a>
-            <div class="top-nav-links">
-                <a href="/games">PRATELEIRA</a>
-                <a href="/clubs">TURMAS</a>
-                {{if .IsLoggedIn}}
-                <a href="/carteirinha">CARTEIRINHA</a>
-                {{end}}
-                {{if .IsAdmin}}
-                <a href="/admin/stock">ESTOQUE</a>
-                <a href="/admin/inventory">ACERVO</a>
-                <a href="/admin/returns">DEVOLU&Ccedil;&Otilde;ES</a>
-                {{end}}
+        <!-- SITE BANNER -->
+        <header class="site-banner">
+            <div class="banner-logo">
+                <a href="/" class="banner-title">M O D O &nbsp; L O C A D O R A</a>
+                <span class="banner-subtitle">[DESDE 1991]</span>
             </div>
             {{if .IsLoggedIn}}
-            <div class="top-nav-auth">
+            <div class="banner-auth">
                 <span class="auth-member">S&oacute;cio: {{.MemberName}}</span>
                 <form action="/logout" method="POST" style="margin:0;display:inline;">
                     <button type="submit" class="auth-logout">[SAIR]</button>
                 </form>
             </div>
+            {{end}}
+        </header>
+
+        <!-- NAV BAR -->
+        <nav class="top-nav-bar">
+            <a href="/">BALC&Atilde;O</a>
+            <a href="/games">PRATELEIRA</a>
+            <a href="/clubs">TURMAS</a>
+            {{if .IsLoggedIn}}
+            <a href="/carteirinha">CARTEIRINHA</a>
+            {{end}}
+            {{if .IsAdmin}}
+            <span class="nav-separator">|</span>
+            <a href="/admin/stock">ESTOQUE</a>
+            <a href="/admin/inventory">ACERVO</a>
+            <a href="/admin/returns">DEVOLU&Ccedil;&Otilde;ES</a>
             {{end}}
         </nav>
 

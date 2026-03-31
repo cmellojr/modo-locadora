@@ -227,76 +227,64 @@ img, .nes-icon {
 .site-layout {
     display: grid;
     grid-template-columns: 200px 1fr 260px;
-    grid-template-rows: auto 1fr auto;
+    grid-template-rows: auto auto 1fr auto;
     grid-template-areas:
-        "topnav  topnav  topnav"
+        "banner  banner  banner"
+        "navbar  navbar  navbar"
         "left    content right"
         "footer  footer  footer";
     min-height: 100vh;
 }
 
-/* Top navigation bar — spans all columns */
-.top-nav {
-    grid-area: topnav;
+/* ── Site Banner ── */
+.site-banner {
+    grid-area: banner;
     display: flex;
     align-items: center;
-    padding: 10px 16px;
-    background: #0D1117;
-    border-bottom: 3px solid #1F3A5F;
-    gap: 8px;
-    flex-wrap: wrap;
+    justify-content: space-between;
+    padding: 20px 24px;
+    background: linear-gradient(180deg, #0D1117 0%, #1F3A5F 100%);
+    border-bottom: 4px solid #3498DB;
 }
 
-.top-nav-brand {
-    font-size: 14px;
+.banner-logo {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.banner-title {
+    font-size: 18px;
     color: #f7d51d !important;
     text-decoration: none !important;
-    margin-right: 16px;
-    white-space: nowrap;
+    letter-spacing: 2px;
+    text-shadow: 2px 2px 0 #000, 4px 4px 0 rgba(0,0,0,0.3);
 }
 
-.top-nav-brand:hover {
+.banner-title:hover {
     color: #fff !important;
     text-decoration: none !important;
 }
 
-.top-nav-links {
-    display: flex;
-    gap: 6px;
-    flex-wrap: wrap;
-    flex: 1;
-}
-
-.top-nav-links a {
-    font-size: 10px;
+.banner-subtitle {
+    font-size: 9px;
     color: #3498DB;
-    padding: 6px 10px;
-    border: 2px solid transparent;
-    text-decoration: none;
-    white-space: nowrap;
+    letter-spacing: 3px;
 }
 
-.top-nav-links a:hover {
-    color: #fff;
-    border-color: #3498DB;
-    background: #1F3A5F;
-    text-decoration: none;
-}
-
-.top-nav-auth {
+.banner-auth {
     display: flex;
     align-items: center;
     gap: 10px;
     font-size: 9px;
-    margin-left: auto;
     white-space: nowrap;
 }
 
-.top-nav-auth .auth-member {
+.banner-auth .auth-member {
     color: #92cc41;
 }
 
-.top-nav-auth .auth-logout {
+.banner-auth .auth-logout {
     background: none;
     border: none;
     color: #e74c3c;
@@ -307,8 +295,45 @@ img, .nes-icon {
     text-decoration: underline;
 }
 
-.top-nav-auth .auth-logout:hover {
+.banner-auth .auth-logout:hover {
     color: #ff6b6b;
+}
+
+/* ── Navigation Bar ── */
+.top-nav-bar {
+    grid-area: navbar;
+    display: flex;
+    align-items: center;
+    padding: 0 8px;
+    background: #1F3A5F;
+    border-bottom: 2px solid #3498DB;
+    gap: 0;
+    flex-wrap: wrap;
+}
+
+.top-nav-bar a {
+    font-size: 10px;
+    color: #ccc;
+    padding: 10px 14px;
+    text-decoration: none;
+    white-space: nowrap;
+    border-right: 1px solid #2a5080;
+}
+
+.top-nav-bar a:first-child {
+    border-left: 1px solid #2a5080;
+}
+
+.top-nav-bar a:hover {
+    color: #fff;
+    background: #3498DB;
+    text-decoration: none;
+}
+
+.nav-separator {
+    color: #2a5080;
+    padding: 0 4px;
+    font-size: 10px;
 }
 
 /* Left sidebar */
@@ -438,7 +463,8 @@ img, .nes-icon {
     .site-layout {
         grid-template-columns: 1fr;
         grid-template-areas:
-            "topnav"
+            "banner"
+            "navbar"
             "left"
             "content"
             "right"
@@ -452,12 +478,15 @@ img, .nes-icon {
         border-top: 2px solid #1F3A5F;
     }
 
-    .top-nav {
+    .site-banner {
         flex-direction: column;
-        align-items: flex-start;
+        align-items: center;
+        text-align: center;
+        gap: 10px;
+        padding: 16px;
     }
 
-    .top-nav-auth {
+    .banner-auth {
         margin-left: 0;
     }
 }
