@@ -147,12 +147,18 @@
                                     {{if .IsLate}}<span style="color: #e74c3c; font-size: 7px;">(ATRASADO)</span>{{end}}
                                 </td>
                                 <td>
-                                    {{if eq .Verdict "zerei"}}
-                                        <span style="color: #92cc41;">Zerei!</span>
-                                    {{else if eq .Verdict "joguei_um_pouco"}}
-                                        <span style="color: #3498db;">Joguei um pouco</span>
-                                    {{else if eq .Verdict "desisti"}}
-                                        <span style="color: #e74c3c;">Desisti</span>
+                                    {{if eq .Verdict "completed"}}
+                                        <span style="color: #92cc41;">Detonei!</span>
+                                    {{else if eq .Verdict "enjoyed"}}
+                                        <span style="color: #92cc41;">Rendeu!</span>
+                                    {{else if eq .Verdict "quick_play"}}
+                                        <span style="color: #3498db;">Partidinha</span>
+                                    {{else if eq .Verdict "not_for_me"}}
+                                        <span style="color: #f7d51d;">N&atilde;o deu</span>
+                                    {{else if eq .Verdict "gave_up"}}
+                                        <span style="color: #e74c3c;">Desistiu</span>
+                                    {{else if eq .Verdict "auto_return"}}
+                                        <span style="color: #e74c3c;">Auto-devolvido</span>
                                     {{else}}
                                         <span style="color: #555;">&mdash;</span>
                                     {{end}}

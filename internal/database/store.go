@@ -68,16 +68,16 @@ type GameDetail struct {
 	CurrentRenter   string
 }
 
-// GameHealth holds a game's health classification based on rental verdicts.
-type GameHealth struct {
+// GamePopularity holds a game's popularity classification based on rental history.
+type GamePopularity struct {
 	Label    string // Portuguese display label
-	BadgeCSS string // CSS class for the health indicator
+	BadgeCSS string // CSS class for the popularity indicator
 }
 
-// GameInventoryItem holds a game with its computed health for the admin inventory.
+// GameInventoryItem holds a game with its computed popularity for the admin inventory.
 type GameInventoryItem struct {
-	Game   models.Game
-	Health GameHealth
+	Game       models.Game
+	Popularity GamePopularity
 }
 
 // GameRentalHistoryEntry holds one rental record for the admin edit page.
@@ -85,7 +85,7 @@ type GameRentalHistoryEntry struct {
 	MemberName string
 	RentedAt   string // Formatted date
 	ReturnedAt string // Formatted date or "Ativa"
-	Verdict    string // "zerei", "joguei_um_pouco", "desisti", or ""
+	Verdict    string // "completed", "enjoyed", "quick_play", "not_for_me", "gave_up", "auto_return", or ""
 	IsLate     bool
 }
 
@@ -197,17 +197,20 @@ type Store interface {
 	CountOnTimeReturns(ctx context.Context, memberID uuid.UUID) (int, error)
 
 	// ReturnGameByMember returns a game for a specific member (validates ownership).
-	// verdict stores the member's play status ("zerei", "joguei_um_pouco", "desisti").
+	// verdict stores the member's play status ("completed", "enjoyed", "quick_play", "not_for_me", "gave_up").
 	ReturnGameByMember(ctx context.Context, rentalID, memberID uuid.UUID, verdict string) error
 
 	// GetRentalGameTitle returns the game title for a rental (used for activity logging).
 	GetRentalGameTitle(ctx context.Context, rentalID uuid.UUID) (string, error)
 
-	// ListCompletedGameIDs returns game IDs that the member has completed ("zerei").
+	// ListCompletedGameIDs returns game IDs that the member has completed ("completed" verdict).
 	ListCompletedGameIDs(ctx context.Context, memberID uuid.UUID) ([]uuid.UUID, error)
 
-	// ListGamesWithHealth returns all games with their health classification for admin inventory.
-	ListGamesWithHealth(ctx context.Context) ([]GameInventoryItem, error)
+	// ListGamesWithPopularity returns all games with their popularity classification for admin inventory.
+	ListGamesWithPopularity(ctx context.Context) ([]GameInventoryItem, error)
+
+	// CountGameCompletions returns the number of "completed" verdicts for the game associated with a rental.
+	CountGameCompletions(ctx context.Context, rentalID uuid.UUID) (int, error)
 
 	// ListGameRentalHistory returns the last N rental entries for a specific game.
 	ListGameRentalHistory(ctx context.Context, gameID uuid.UUID, limit int) ([]GameRentalHistoryEntry, error)

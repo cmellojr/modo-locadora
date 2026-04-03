@@ -68,6 +68,7 @@ func main() {
 			migrationsDir + "008_cover_display.sql",
 			migrationsDir + "009_clubs.sql",
 			migrationsDir + "010_rename_status_english.sql",
+			migrationsDir + "011_verdict_popularity.sql",
 		}
 		for _, f := range sqlFiles {
 			data, err := os.ReadFile(f)

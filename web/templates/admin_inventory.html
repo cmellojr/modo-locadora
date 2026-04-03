@@ -39,17 +39,19 @@
             margin-top: 4px;
         }
 
-        .health-badge {
+        .pop-badge {
             display: inline-block;
             font-size: 8px;
             padding: 3px 8px;
             color: #fff;
             white-space: nowrap;
         }
-        .health-badge.is-health-new   { background-color: #3498db; }
-        .health-badge.is-health-good  { background-color: #92cc41; color: #111; }
-        .health-badge.is-health-mixed { background-color: #f7d51d; color: #111; }
-        .health-badge.is-health-bad   { background-color: #e74c3c; }
+        .pop-badge.is-pop-new   { background-color: #3498db; }
+        .pop-badge.is-pop-hot   { background-color: #92cc41; color: #111; }
+        .pop-badge.is-pop-relic { background-color: #92cc41; color: #111; }
+        .pop-badge.is-pop-stale { background-color: #f7d51d; color: #111; }
+        .pop-badge.is-pop-mico  { background-color: #e74c3c; }
+        .pop-badge.is-pop-shelf { background-color: #888; }
     </style>
 {{end}}
 
@@ -81,7 +83,7 @@
                         <tr>
                             <th>Capa</th>
                             <th>T&iacute;tulo</th>
-                            <th>Sa&uacute;de</th>
+                            <th>Popularidade</th>
                             <th>A&ccedil;&otilde;es</th>
                         </tr>
                     </thead>
@@ -100,7 +102,7 @@
                                 <div class="game-magazine">{{.Game.Platform}}</div>
                             </td>
                             <td>
-                                <span class="health-badge {{.Health.BadgeCSS}}">{{.Health.Label}}</span>
+                                <span class="pop-badge {{.Popularity.BadgeCSS}}">{{.Popularity.Label}}</span>
                             </td>
                             <td>
                                 <a href="/admin/edit/{{.Game.ID}}" class="nes-btn is-warning btn-sm">Editar</a>

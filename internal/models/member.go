@@ -34,7 +34,7 @@ type MemberTitle struct {
 }
 
 // ComputeMemberTitle determines the member title based on rental history.
-// completedGames = count of distinct games with "zerei" verdict.
+// completedGames = count of distinct games with "completed" verdict.
 // onTimeReturns  = count of rentals returned on or before due date.
 func ComputeMemberTitle(completedGames, onTimeReturns int) MemberTitle {
 	switch {
