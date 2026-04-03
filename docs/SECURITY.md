@@ -38,8 +38,8 @@ Requisições não autenticadas redirecionam para `/`. Usuários não-admin rece
 ## Reputação do Sócio
 
 - Aluguéis atrasados são auto-devolvidos por um job de background (intervalo de 5 minutos).
-- Sócios infratores são marcados como "em débito" com incremento permanente do `late_count`.
-- Sócios em débito não podem alugar até se redimirem via `/carteirinha/redeem`.
+- Sócios infratores são marcados como `in_debt` com incremento permanente do `late_count`.
+- Sócios em débito não podem alugar até se redimirem via `/membership/redeem`.
 - O Painel da Vergonha na página de entrada exibe os maiores infratores.
 
 ## Integridade de Dados

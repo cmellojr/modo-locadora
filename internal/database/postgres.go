@@ -506,7 +506,7 @@ func (s *PostgresStore) ProcessOverdueRentals(ctx context.Context) (int, error) 
 		}
 
 		_, err = tx.Exec(ctx,
-			`UPDATE members SET status = 'em_debito', late_count = late_count + 1 WHERE id = $1`,
+			`UPDATE members SET status = 'in_debt', late_count = late_count + 1 WHERE id = $1`,
 			o.memberID)
 		if err != nil {
 			return 0, fmt.Errorf("failed to penalize member %s: %w", o.memberID, err)
@@ -550,10 +550,10 @@ func (s *PostgresStore) GetTopShameEntries(ctx context.Context, limit int) ([]Sh
 	return entries, nil
 }
 
-// RedeemMember resets a member's status from 'em_debito' to 'active'.
+// RedeemMember resets a member's status from 'in_debt' to 'active'.
 func (s *PostgresStore) RedeemMember(ctx context.Context, memberID uuid.UUID) error {
 	tag, err := s.pool.Exec(ctx,
-		`UPDATE members SET status = 'active' WHERE id = $1 AND status = 'em_debito'`,
+		`UPDATE members SET status = 'active' WHERE id = $1 AND status = 'in_debt'`,
 		memberID)
 	if err != nil {
 		return fmt.Errorf("failed to redeem member: %w", err)

@@ -18,9 +18,9 @@ Com `?platform=X`: cards simplificados de cartucho para o console — capa, tít
 
 Página de detalhe do jogo. Mostra capa, título, plataforma, resumo, revista de origem, disponibilidade de cópias, total de aluguéis, fã número 1, sócio atual e data de aquisição. Sócios logados veem o botão [ALUGAR] se houver cópias disponíveis.
 
-Parâmetro: `error=em_debito` exibe aviso de débito.
+Parâmetro: `error=in_debt` exibe aviso de débito.
 
-### `GET /carteirinha`
+### `GET /membership`
 
 Carteirinha digital de sócio. Requer autenticação. Mostra número de matrícula, título de progressão (Sócio Novato / Prata / Ouro / Dono da Calçada), perfil, stats de aluguel, status, caderno de passwords e aluguéis ativos com auto-devolução (seleção de veredito).
 
@@ -85,9 +85,9 @@ Alugar um jogo. Requer autenticação.
 |-------|-----------|
 | `game_id` | UUID do jogo |
 
-**Sucesso:** redireciona (303) para `/games/{id}`. Sócios em débito são redirecionados com `?error=em_debito`.
+**Sucesso:** redireciona (303) para `/games/{id}`. Sócios em débito são redirecionados com `?error=in_debt`.
 
-### `POST /carteirinha/notes`
+### `POST /membership/notes`
 
 Salvar caderno de passwords. Requer autenticação.
 
@@ -95,9 +95,9 @@ Salvar caderno de passwords. Requer autenticação.
 |-------|-----------|
 | `notes` | Texto do caderno de passwords |
 
-**Sucesso:** redireciona (303) para `/carteirinha?success=1`.
+**Sucesso:** redireciona (303) para `/membership?success=1`.
 
-### `POST /carteirinha/return`
+### `POST /membership/return`
 
 Auto-devolução de aluguel com veredito. Requer autenticação.
 
@@ -106,13 +106,13 @@ Auto-devolução de aluguel com veredito. Requer autenticação.
 | `rental_id` | UUID do aluguel |
 | `verdict` | Status de jogo: `zerei`, `joguei_um_pouco` ou `desisti` |
 
-**Sucesso:** redireciona (303) para `/carteirinha?success=devolucao`. Dispara evento de atividade baseado no veredito.
+**Sucesso:** redireciona (303) para `/membership?success=devolucao`. Dispara evento de atividade baseado no veredito.
 
-### `POST /carteirinha/redeem`
+### `POST /membership/redeem`
 
 Limpar status de débito do sócio. Requer autenticação. Sem campos.
 
-**Sucesso:** redireciona (303) para `/carteirinha?success=redencao`.
+**Sucesso:** redireciona (303) para `/membership?success=redencao`.
 
 ### `POST /admin/purchase`
 

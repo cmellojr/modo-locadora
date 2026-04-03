@@ -37,9 +37,10 @@ psql $DATABASE_URL -f internal/database/migrations/006_activities_feed.sql
 # 007 is seed data — applied via --seed flag
 psql $DATABASE_URL -f internal/database/migrations/008_cover_display.sql
 psql $DATABASE_URL -f internal/database/migrations/009_clubs.sql
+psql $DATABASE_URL -f internal/database/migrations/010_rename_status_english.sql
 ```
 
-Shortcut: `go run ./cmd/server --seed` applies all migrations (001-009) + seed data in one step.
+Shortcut: `go run ./cmd/server --seed` applies all migrations (001-010) + seed data in one step.
 The `--seed` flag auto-detects the migration directory (`migrations/` in Docker, `internal/database/migrations/` locally).
 
 Default DB credentials: `tio_da_locadora` / `sopre_a_fita` / database `modo_locadora`.
@@ -88,7 +89,7 @@ Go 1.24, standard library `net/http.ServeMux` with method-pattern routing. Serve
 
 8 tables + 1 sequence. Key relationships: `Game -> GameCopy -> Rental <- Member`, `Club <-> ClubMembers <-> Member` (M2M).
 
-- `members` — profile_name, email, password_hash, membership_number (`1991-XXX`), status (`active`|`em_debito`), late_count
+- `members` — profile_name, email, password_hash, membership_number (`1991-XXX`), status (`active`|`in_debt`), late_count
 - `games` — title, igdb_id, platform, summary, cover_url, cover_display, source_magazine, acquired_at
 - `game_copies` — game_id, status (`available`|`rented`)
 - `rentals` — member_id, copy_id, rented_at, due_at (3 days), returned_at, public_legacy (verdict)
@@ -121,10 +122,10 @@ Go 1.24, standard library `net/http.ServeMux` with method-pattern routing. Serve
 ### Authenticated (RequireAuth middleware)
 - `GET /games` — Platform selection or filtered game shelf (`?platform=X`)
 - `GET /games/{id}` — Game detail page with rental stats
-- `GET /carteirinha` — Digital membership card
-- `POST /carteirinha/notes` — Save password notebook
-- `POST /carteirinha/redeem` — Clear debt status
-- `POST /carteirinha/return` — Self-return a rental (with verdict)
+- `GET /membership` — Digital membership card
+- `POST /membership/notes` — Save password notebook
+- `POST /membership/redeem` — Clear debt status
+- `POST /membership/return` — Self-return a rental (with verdict)
 - `POST /rent` — Rent a game
 
 ### Admin (RequireAdmin middleware)

@@ -67,6 +67,7 @@ func main() {
 			migrationsDir + "007_seed_initial_data.sql",
 			migrationsDir + "008_cover_display.sql",
 			migrationsDir + "009_clubs.sql",
+			migrationsDir + "010_rename_status_english.sql",
 		}
 		for _, f := range sqlFiles {
 			data, err := os.ReadFile(f)
@@ -137,9 +138,9 @@ func main() {
 		log.Fatalf("failed to parse admin edit template: %v", err)
 	}
 
-	carteirinhaTmpl, err := template.ParseFiles(layout, "web/templates/carteirinha.html")
+	membershipTmpl, err := template.ParseFiles(layout, "web/templates/membership.html")
 	if err != nil {
-		log.Fatalf("failed to parse carteirinha template: %v", err)
+		log.Fatalf("failed to parse membership template: %v", err)
 	}
 
 	adminReturnsTmpl, err := template.ParseFiles(layout, "web/templates/admin_returns.html")
@@ -191,13 +192,13 @@ func main() {
 	mux.HandleFunc("POST /admin/return-game", middleware.RequireAdmin(cookieSecret, adminEmail, store, h.ReturnGame))
 
 	// Member routes — protected by RequireAuth middleware.
-	mux.HandleFunc("GET /carteirinha", middleware.RequireAuth(cookieSecret, func(w http.ResponseWriter, r *http.Request) {
-		h.Carteirinha(w, r, carteirinhaTmpl)
+	mux.HandleFunc("GET /membership", middleware.RequireAuth(cookieSecret, func(w http.ResponseWriter, r *http.Request) {
+		h.Membership(w, r, membershipTmpl)
 	}))
 	mux.HandleFunc("POST /rent", middleware.RequireAuth(cookieSecret, h.RentGame))
-	mux.HandleFunc("POST /carteirinha/notes", middleware.RequireAuth(cookieSecret, h.SavePasswordNotes))
-	mux.HandleFunc("POST /carteirinha/redeem", middleware.RequireAuth(cookieSecret, h.HandleRedeem))
-	mux.HandleFunc("POST /carteirinha/return", middleware.RequireAuth(cookieSecret, h.HandleMemberReturn))
+	mux.HandleFunc("POST /membership/notes", middleware.RequireAuth(cookieSecret, h.SavePasswordNotes))
+	mux.HandleFunc("POST /membership/redeem", middleware.RequireAuth(cookieSecret, h.HandleRedeem))
+	mux.HandleFunc("POST /membership/return", middleware.RequireAuth(cookieSecret, h.HandleMemberReturn))
 
 	// Serve static files from web/static
 	fileServer := http.FileServer(http.Dir("web/static"))

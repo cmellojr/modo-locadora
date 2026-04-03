@@ -8,7 +8,7 @@ Gerenciador de sessões retro-gaming que emula as videolocadoras brasileiras dos
 
 ```
 Sócio (1991-XXX)
-  ├── status: active | em débito
+  ├── status: active | in_debt
   ├── late_count: contador permanente de penalidades
   ├── password_notes: caderno pessoal de códigos de jogos
   └── MemberTitle: progressão calculada (Novato → Prata → Ouro → Dono da Calçada)
@@ -42,10 +42,10 @@ Turma (comunidade gamer)
 2. Clica [ALUGAR] → POST /rent → cópia marcada como rented, aluguel criado (3 dias de prazo)
 3. Detalhe do jogo mostra "ALUGADO - Com o Sócio: Nome"
 4a. Admin visita /admin/returns → clica [Devolver] → cópia disponível novamente
-4b. Sócio visita /carteirinha → escolhe veredito (Zerei/Joguei/Desisti) → POST /carteirinha/return
+4b. Sócio visita /membership → escolhe veredito (Zerei/Joguei/Desisti) → POST /membership/return
 5. Veredito salvo em public_legacy, evento de atividade dispara no feed
-6. Se atrasado: job de background auto-devolve, sócio recebe em débito + late_count++
-7. Sócio pode se redimir via POST /carteirinha/redeem
+6. Se atrasado: job de background auto-devolve, sócio recebe in_debt + late_count++
+7. Sócio pode se redimir via POST /membership/redeem
 ```
 
 ## Mapa de Navegação
@@ -55,7 +55,7 @@ GET /                     → Login (Balcão) — redireciona para /games se aut
 GET /games                → Grade de seleção de plataformas (Mega Drive, SNES, ...)
 GET /games?platform=X     → Cartuchos da plataforma selecionada
 GET /games/{id}           → Detalhe do jogo (stats, botão de aluguel)
-GET /carteirinha          → Carteirinha de sócio + caderno de passwords
+GET /membership           → Carteirinha de sócio + caderno de passwords
 GET /admin/stock          → Busca IGDB e aquisição de jogos
 GET /admin/inventory      → Tabela do acervo com links de edição
 GET /admin/edit/{id}      → Edição do jogo (upload de capa, metadados)
@@ -74,7 +74,7 @@ GET /clubs/{id}/edit      → Formulário de edição (admin da turma)
 | `platforms.html` | `GET /games` | Layout 3 colunas: mini-card + vergonha, plataformas, atividades + almanaque |
 | `games.html` | `GET /games?platform=X` | Prateleira de cartuchos (cards simplificados) |
 | `game_detail.html` | `GET /games/{id}` | Detalhe do jogo + stats de aluguel |
-| `carteirinha.html` | `GET /carteirinha` | Carteirinha + badge de título + caderno + aluguéis ativos com auto-devolução |
+| `carteirinha.html` | `GET /membership` | Carteirinha + badge de título + caderno + aluguéis ativos com auto-devolução |
 | `admin_stock.html` | `GET /admin/stock` | Busca IGDB e aquisição |
 | `admin_inventory.html` | `GET /admin/inventory` | Tabela do acervo com indicadores de saúde |
 | `admin_edit.html` | `GET /admin/edit/{id}` | Formulário de edição + histórico de aluguéis |

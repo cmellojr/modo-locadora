@@ -8,7 +8,7 @@ import (
 
 const (
 	MemberStatusActive   = "active"
-	MemberStatusEmDebito = "em_debito"
+	MemberStatusInDebt = "in_debt"
 )
 
 // Member represents a user in the system.
@@ -22,7 +22,7 @@ type Member struct {
 	Address          string
 	Phone            string
 	PasswordNotes    string
-	Status           string // "active" or "em_debito"
+	Status           string // "active" or "in_debt"
 	LateCount        int
 	JoinedAt         time.Time
 }

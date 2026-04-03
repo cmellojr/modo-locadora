@@ -151,7 +151,7 @@ func (h *Handler) buildLayoutData(r *http.Request, pageTitle string) LayoutData 
 				activeCount, overdueCount, _ := h.store.GetMemberRentalStats(r.Context(), id)
 				statusLabel := "Ativo"
 				statusBadge := "is-success"
-				if member.Status == models.MemberStatusEmDebito || overdueCount > 0 {
+				if member.Status == models.MemberStatusInDebt || overdueCount > 0 {
 					statusLabel = "Em Debito"
 					statusBadge = "is-error"
 				} else if activeCount > 0 {
@@ -387,7 +387,7 @@ func (h *Handler) ListGames(w http.ResponseWriter, r *http.Request, platformsTmp
 		}
 	}
 
-	debtError := r.URL.Query().Get("error") == "em_debito"
+	debtError := r.URL.Query().Get("error") == "in_debt"
 
 	completedGames := make(map[string]bool)
 	if ld.IsLoggedIn && h.store != nil {
@@ -453,7 +453,7 @@ func (h *Handler) GameDetailPage(w http.ResponseWriter, r *http.Request, tmpl *t
 	}{
 		LayoutData: ld,
 		Detail:     detail,
-		DebtError:  r.URL.Query().Get("error") == "em_debito",
+		DebtError:  r.URL.Query().Get("error") == "in_debt",
 	}
 
 	if err := tmpl.Execute(w, data); err != nil {
@@ -461,8 +461,8 @@ func (h *Handler) GameDetailPage(w http.ResponseWriter, r *http.Request, tmpl *t
 	}
 }
 
-// Carteirinha handles GET /carteirinha and renders the member's profile card.
-func (h *Handler) Carteirinha(w http.ResponseWriter, r *http.Request, tmpl *template.Template) {
+// Membership handles GET /membership and renders the member's profile card.
+func (h *Handler) Membership(w http.ResponseWriter, r *http.Request, tmpl *template.Template) {
 	if h.store == nil {
 		http.Error(w, "Database not configured", http.StatusServiceUnavailable)
 		return
@@ -486,14 +486,14 @@ func (h *Handler) Carteirinha(w http.ResponseWriter, r *http.Request, tmpl *temp
 		return
 	}
 
-	ld := h.buildLayoutData(r, "Carteirinha de Sócio")
+	ld := h.buildLayoutData(r, "Membership de Sócio")
 
 	activeCount, overdueCount, _ := h.store.GetMemberRentalStats(r.Context(), id)
-	isEmDebito := member.Status == models.MemberStatusEmDebito
+	isInDebt := member.Status == models.MemberStatusInDebt
 
 	statusLabel := "Jogador Honesto"
 	statusBadge := "is-success"
-	if isEmDebito || overdueCount > 0 {
+	if isInDebt || overdueCount > 0 {
 		statusLabel = "Socio em Debito com o Tio"
 		statusBadge = "is-error"
 	} else if activeCount > 0 {
@@ -515,7 +515,7 @@ func (h *Handler) Carteirinha(w http.ResponseWriter, r *http.Request, tmpl *temp
 		StatusLabel   string
 		StatusBadge   string
 		Success       string
-		IsEmDebito    bool
+		IsInDebt    bool
 		LateCount     int
 		Rentals       []database.MemberRental
 		Title         models.MemberTitle
@@ -528,7 +528,7 @@ func (h *Handler) Carteirinha(w http.ResponseWriter, r *http.Request, tmpl *temp
 		StatusLabel:   statusLabel,
 		StatusBadge:   statusBadge,
 		Success:       r.URL.Query().Get("success"),
-		IsEmDebito:    isEmDebito,
+		IsInDebt:    isInDebt,
 		LateCount:     member.LateCount,
 		Rentals:       memberRentals,
 		Title:         memberTitle,
@@ -540,7 +540,7 @@ func (h *Handler) Carteirinha(w http.ResponseWriter, r *http.Request, tmpl *temp
 	}
 }
 
-// SavePasswordNotes handles POST /carteirinha/notes.
+// SavePasswordNotes handles POST /membership/notes.
 func (h *Handler) SavePasswordNotes(w http.ResponseWriter, r *http.Request) {
 	if h.store == nil {
 		http.Error(w, "Database not configured", http.StatusServiceUnavailable)
@@ -565,7 +565,7 @@ func (h *Handler) SavePasswordNotes(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	http.Redirect(w, r, "/carteirinha?success=1", http.StatusSeeOther)
+	http.Redirect(w, r, "/membership?success=1", http.StatusSeeOther)
 }
 
 // RentGame handles POST /rent.
@@ -595,8 +595,8 @@ func (h *Handler) RentGame(w http.ResponseWriter, r *http.Request) {
 	}
 	gameIDStr := r.FormValue("game_id")
 
-	if status == models.MemberStatusEmDebito {
-		http.Redirect(w, r, "/games/"+gameIDStr+"?error=em_debito", http.StatusSeeOther)
+	if status == models.MemberStatusInDebt {
+		http.Redirect(w, r, "/games/"+gameIDStr+"?error=in_debt", http.StatusSeeOther)
 		return
 	}
 
@@ -958,7 +958,7 @@ func (h *Handler) HandleIndex(w http.ResponseWriter, r *http.Request, tmpl *temp
 	}
 }
 
-// HandleRedeem handles POST /carteirinha/redeem, clearing the member's debt status.
+// HandleRedeem handles POST /membership/redeem, clearing the member's debt status.
 func (h *Handler) HandleRedeem(w http.ResponseWriter, r *http.Request) {
 	if h.store == nil {
 		http.Error(w, "Database not configured", http.StatusServiceUnavailable)
@@ -987,10 +987,10 @@ func (h *Handler) HandleRedeem(w http.ResponseWriter, r *http.Request) {
 		_ = h.store.InsertActivity(r.Context(), "redemption", member.ProfileName, "")
 	}
 
-	http.Redirect(w, r, "/carteirinha?success=redencao", http.StatusSeeOther)
+	http.Redirect(w, r, "/membership?success=redencao", http.StatusSeeOther)
 }
 
-// HandleMemberReturn handles POST /carteirinha/return, allowing a member to self-return a game.
+// HandleMemberReturn handles POST /membership/return, allowing a member to self-return a game.
 func (h *Handler) HandleMemberReturn(w http.ResponseWriter, r *http.Request) {
 	if h.store == nil {
 		http.Error(w, "Database not configured", http.StatusServiceUnavailable)
@@ -1054,7 +1054,7 @@ func (h *Handler) HandleMemberReturn(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	http.Redirect(w, r, "/carteirinha?success=devolucao", http.StatusSeeOther)
+	http.Redirect(w, r, "/membership?success=devolucao", http.StatusSeeOther)
 }
 
 // ── Club handlers ───────────────────────────────────────────────────────────

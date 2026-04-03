@@ -224,8 +224,8 @@
             </div>
 
             <div style="text-align: center; margin-bottom: 1rem;">
-                <span class="title-badge-label {{.Title.BadgeCSS}}{{if .IsEmDebito}} title-badge-debtor{{end}}">{{.Title.Label}}</span>
-                {{if .IsEmDebito}}<div style="font-size: 7px; color: #e74c3c; margin-top: 2px;">(EM D&Eacute;BITO)</div>{{end}}
+                <span class="title-badge-label {{.Title.BadgeCSS}}{{if .IsInDebt}} title-badge-debtor{{end}}">{{.Title.Label}}</span>
+                {{if .IsInDebt}}<div style="font-size: 7px; color: #e74c3c; margin-top: 2px;">(EM D&Eacute;BITO)</div>{{end}}
             </div>
 
             <div class="card-row">
@@ -256,12 +256,12 @@
                 </p>
             </div>
 
-            {{if .IsEmDebito}}
+            {{if .IsInDebt}}
             <div style="margin-top: 1.5rem; text-align: center; padding-top: 1rem; border-top: 2px dashed #e74c3c;">
                 <p class="nes-text is-error" style="font-size: 10px; margin-bottom: 12px;">
                     Voc&ecirc; est&aacute; em d&eacute;bito com o Tio! Sopre o cartucho e pe&ccedil;a desculpas.
                 </p>
-                <form action="/carteirinha/redeem" method="POST">
+                <form action="/membership/redeem" method="POST">
                     <button type="submit" class="nes-btn is-warning btn-nav">
                         SOPRAR O CARTUCHO E PEDIR DESCULPAS
                     </button>
@@ -296,7 +296,7 @@
                         <p class="rental-overdue">(ATRASADO!)</p>
                         {{end}}
                     </div>
-                    <form action="/carteirinha/return" method="POST" class="verdict-form">
+                    <form action="/membership/return" method="POST" class="verdict-form">
                         <input type="hidden" name="rental_id" value="{{.RentalID}}">
                         <div class="verdict-options">
                             <label class="verdict-label">
@@ -327,7 +327,7 @@
                     <span class="title-main">Caderno de Passwords</span>
                 </p>
                 <p class="nes-text is-disabled" style="margin-bottom: 12px;">Anote aqui seus c&oacute;digos, passwords e progressos. N&atilde;o abandone um cl&aacute;ssico pela metade!</p>
-                <form action="/carteirinha/notes" method="POST">
+                <form action="/membership/notes" method="POST">
                     <textarea name="notes" class="nes-textarea" rows="6"
                         placeholder="Ex: Mega Man 2 - Senha: A1 B3 C5 D2 E4&#10;Sonic 2 - Level Select: 19 65 09 17&#10;Metroid - JUSTIN BAILEY ------ ------">{{.Member.PasswordNotes}}</textarea>
                     <div class="form-actions" style="margin-top: 10px;">

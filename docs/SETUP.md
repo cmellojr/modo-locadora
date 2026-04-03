@@ -67,6 +67,7 @@ docker exec -i modo_locadora_db psql -U tio_da_locadora -d modo_locadora < inter
 docker exec -i modo_locadora_db psql -U tio_da_locadora -d modo_locadora < internal/database/migrations/006_activities_feed.sql
 docker exec -i modo_locadora_db psql -U tio_da_locadora -d modo_locadora < internal/database/migrations/008_cover_display.sql
 docker exec -i modo_locadora_db psql -U tio_da_locadora -d modo_locadora < internal/database/migrations/009_clubs.sql
+docker exec -i modo_locadora_db psql -U tio_da_locadora -d modo_locadora < internal/database/migrations/010_rename_status_english.sql
 ```
 
 ### Via psql direto:
@@ -80,6 +81,7 @@ psql $DATABASE_URL -f internal/database/migrations/005_auto_return_reputation.sq
 psql $DATABASE_URL -f internal/database/migrations/006_activities_feed.sql
 psql $DATABASE_URL -f internal/database/migrations/008_cover_display.sql
 psql $DATABASE_URL -f internal/database/migrations/009_clubs.sql
+psql $DATABASE_URL -f internal/database/migrations/010_rename_status_english.sql
 ```
 
 ### Setup rápido com dados de teste:
@@ -92,7 +94,7 @@ go run ./cmd/server --seed
 docker exec modo_locadora_app /app/server --seed
 ```
 
-Isso aplica todas as migrations (001-009) e popula o banco com jogos, sócios, turmas e histórico de aluguéis. A flag `--seed` auto-detecta o diretório de migrations (`migrations/` no Docker, `internal/database/migrations/` localmente).
+Isso aplica todas as migrations (001-010) e popula o banco com jogos, sócios, turmas e histórico de aluguéis. A flag `--seed` auto-detecta o diretório de migrations (`migrations/` no Docker, `internal/database/migrations/` localmente).
 
 ### Contas de teste
 
@@ -117,6 +119,7 @@ Admin: `tio_da_locadora` / `sopre_a_fita` (e-mail deve bater com `ADMIN_EMAIL`).
 | `007_seed_initial_data.sql` | Dados de teste (aplicado via flag `--seed`, não manualmente) |
 | `008_cover_display.sql` | Campo `cover_display` em `games` (modo CSS object-fit) |
 | `009_clubs.sql` | Tabelas `clubs` e `club_members` (turmas/comunidades gamers) + dados de seed |
+| `010_rename_status_english.sql` | Renomeia status `em_debito` para `in_debt` na tabela `members` |
 
 ## 4. Desenvolvimento Local (sem Docker para a app)
 
@@ -166,7 +169,7 @@ O e-mail deve bater com `ADMIN_EMAIL` para acesso de administrador. Um número d
 | Login com credenciais | Redireciona para `/games` (grade de plataformas) |
 | Clicar numa plataforma | Mostra cards de cartucho |
 | Clicar num cartucho | Mostra página de detalhe do jogo |
-| `/carteirinha` (logado) | Carteirinha com `1991-XXX` + MINHAS TURMAS |
+| `/membership` (logado) | Carteirinha com `1991-XXX` + MINHAS TURMAS |
 | `/clubs` | Listagem de turmas (com seed: "Turma da Acao Games") |
 | `/admin/stock` (como admin) | Página de busca IGDB |
 

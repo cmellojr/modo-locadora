@@ -46,7 +46,7 @@ type ActivityEntry struct {
 	CreatedAt  time.Time
 }
 
-// MemberRental holds a member's active rental for the carteirinha self-return.
+// MemberRental holds a member's active rental for the membership self-return.
 type MemberRental struct {
 	RentalID  uuid.UUID
 	GameTitle string
@@ -178,7 +178,7 @@ type Store interface {
 	// GetTopShameEntries returns the top N members with the most late returns.
 	GetTopShameEntries(ctx context.Context, limit int) ([]ShameEntry, error)
 
-	// RedeemMember resets a member's status from 'em_debito' to 'active'.
+	// RedeemMember resets a member's status from 'in_debt' to 'active'.
 	RedeemMember(ctx context.Context, memberID uuid.UUID) error
 
 	// GetMemberStatus returns the member's current status.
