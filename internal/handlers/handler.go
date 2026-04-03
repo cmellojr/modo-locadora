@@ -263,7 +263,7 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 	password := r.FormValue("password")
 
 	if profileName == "" || password == "" {
-		http.Error(w, "Nome e senha são obrigatórios", http.StatusBadRequest)
+		http.Error(w, "Name and password are required", http.StatusBadRequest)
 		return
 	}
 
@@ -279,12 +279,12 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if member == nil {
-		http.Error(w, "Nome ou senha inválidos", http.StatusUnauthorized)
+		http.Error(w, "Invalid name or password", http.StatusUnauthorized)
 		return
 	}
 
 	if err := bcrypt.CompareHashAndPassword([]byte(member.PasswordHash), []byte(password)); err != nil {
-		http.Error(w, "Nome ou senha inválidos", http.StatusUnauthorized)
+		http.Error(w, "Invalid name or password", http.StatusUnauthorized)
 		return
 	}
 
@@ -430,17 +430,17 @@ func (h *Handler) GameDetailPage(w http.ResponseWriter, r *http.Request, tmpl *t
 	idStr := r.PathValue("id")
 	id, err := uuid.Parse(idStr)
 	if err != nil {
-		http.Error(w, "ID de jogo inválido", http.StatusBadRequest)
+		http.Error(w, "Invalid game ID", http.StatusBadRequest)
 		return
 	}
 
 	detail, err := h.store.GetGameDetail(r.Context(), id)
 	if err != nil {
-		http.Error(w, "Falha ao carregar jogo: "+err.Error(), http.StatusInternalServerError)
+		http.Error(w, "Failed to load game: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 	if detail == nil {
-		http.Error(w, "Jogo não encontrado", http.StatusNotFound)
+		http.Error(w, "Game not found", http.StatusNotFound)
 		return
 	}
 
@@ -486,7 +486,7 @@ func (h *Handler) Membership(w http.ResponseWriter, r *http.Request, tmpl *templ
 		return
 	}
 
-	ld := h.buildLayoutData(r, "Membership de Sócio")
+	ld := h.buildLayoutData(r, "Membership Card")
 
 	activeCount, overdueCount, _ := h.store.GetMemberRentalStats(r.Context(), id)
 	isInDebt := member.Status == models.MemberStatusInDebt
@@ -561,7 +561,7 @@ func (h *Handler) SavePasswordNotes(w http.ResponseWriter, r *http.Request) {
 
 	notes := r.FormValue("notes")
 	if err := h.store.UpdateMemberNotes(r.Context(), memberID, notes); err != nil {
-		http.Error(w, "Falha ao salvar notas: "+err.Error(), http.StatusInternalServerError)
+		http.Error(w, "Failed to save notes: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
@@ -583,14 +583,14 @@ func (h *Handler) RentGame(w http.ResponseWriter, r *http.Request) {
 
 	memberID, err := uuid.Parse(rawMemberID)
 	if err != nil {
-		http.Error(w, "Sessão inválida", http.StatusBadRequest)
+		http.Error(w, "Invalid session", http.StatusBadRequest)
 		return
 	}
 
 	// Block rental if member is in debt.
 	status, err := h.store.GetMemberStatus(r.Context(), memberID)
 	if err != nil {
-		http.Error(w, "Falha ao verificar status: "+err.Error(), http.StatusInternalServerError)
+		http.Error(w, "Failed to check status: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 	gameIDStr := r.FormValue("game_id")
@@ -602,12 +602,12 @@ func (h *Handler) RentGame(w http.ResponseWriter, r *http.Request) {
 
 	gameID, err := uuid.Parse(gameIDStr)
 	if err != nil {
-		http.Error(w, "ID de jogo inválido", http.StatusBadRequest)
+		http.Error(w, "Invalid game ID", http.StatusBadRequest)
 		return
 	}
 
 	if err := h.store.RentGame(r.Context(), gameID, memberID); err != nil {
-		http.Error(w, "Falha ao alugar: "+err.Error(), http.StatusInternalServerError)
+		http.Error(w, "Failed to rent: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
@@ -621,7 +621,7 @@ func (h *Handler) AdminReturns(w http.ResponseWriter, r *http.Request, tmpl *tem
 		return
 	}
 
-	ld := h.buildLayoutData(r, "Devoluções")
+	ld := h.buildLayoutData(r, "Returns")
 
 	rentals, err := h.store.ListActiveRentals(r.Context())
 	if err != nil {
@@ -653,16 +653,16 @@ func (h *Handler) ReturnGame(w http.ResponseWriter, r *http.Request) {
 
 	rentalID, err := uuid.Parse(r.FormValue("rental_id"))
 	if err != nil {
-		http.Error(w, "ID de aluguel inválido", http.StatusBadRequest)
+		http.Error(w, "Invalid rental ID", http.StatusBadRequest)
 		return
 	}
 
 	if err := h.store.ReturnGame(r.Context(), rentalID); err != nil {
-		http.Error(w, "Falha ao devolver: "+err.Error(), http.StatusInternalServerError)
+		http.Error(w, "Failed to return: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	http.Redirect(w, r, "/admin/returns?success=Fita+devolvida", http.StatusSeeOther)
+	http.Redirect(w, r, "/admin/returns?success=Game+returned", http.StatusSeeOther)
 }
 
 // AdminStock handles GET /admin/stock and renders the IGDB search page.
@@ -798,7 +798,7 @@ func (h *Handler) EditGame(w http.ResponseWriter, r *http.Request, tmpl *templat
 	idStr := r.PathValue("id")
 	id, err := uuid.Parse(idStr)
 	if err != nil {
-		http.Error(w, "ID de jogo inválido", http.StatusBadRequest)
+		http.Error(w, "Invalid game ID", http.StatusBadRequest)
 		return
 	}
 
@@ -808,11 +808,11 @@ func (h *Handler) EditGame(w http.ResponseWriter, r *http.Request, tmpl *templat
 		return
 	}
 	if game == nil {
-		http.Error(w, "Jogo não encontrado", http.StatusNotFound)
+		http.Error(w, "Game not found", http.StatusNotFound)
 		return
 	}
 
-	ld := h.buildLayoutData(r, "Editar "+game.Title)
+	ld := h.buildLayoutData(r, "Edit "+game.Title)
 
 	rentalHistory, _ := h.store.ListGameRentalHistory(r.Context(), id, 5)
 
@@ -839,20 +839,20 @@ func (h *Handler) UpdateGame(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := r.ParseMultipartForm(10 << 20); err != nil {
-		http.Error(w, "Falha ao processar formulário", http.StatusBadRequest)
+		http.Error(w, "Failed to process form", http.StatusBadRequest)
 		return
 	}
 
 	idStr := r.FormValue("id")
 	id, err := uuid.Parse(idStr)
 	if err != nil {
-		http.Error(w, "ID de jogo inválido", http.StatusBadRequest)
+		http.Error(w, "Invalid game ID", http.StatusBadRequest)
 		return
 	}
 
 	game, err := h.store.GetGameByID(r.Context(), id)
 	if err != nil || game == nil {
-		http.Error(w, "Jogo não encontrado", http.StatusNotFound)
+		http.Error(w, "Game not found", http.StatusNotFound)
 		return
 	}
 
@@ -879,13 +879,13 @@ func (h *Handler) UpdateGame(w http.ResponseWriter, r *http.Request) {
 
 		dst, err := os.Create(savePath)
 		if err != nil {
-			http.Error(w, "Falha ao salvar capa: "+err.Error(), http.StatusInternalServerError)
+			http.Error(w, "Failed to save cover: "+err.Error(), http.StatusInternalServerError)
 			return
 		}
 		defer dst.Close()
 
 		if _, err := io.Copy(dst, file); err != nil {
-			http.Error(w, "Falha ao gravar capa: "+err.Error(), http.StatusInternalServerError)
+			http.Error(w, "Failed to write cover: "+err.Error(), http.StatusInternalServerError)
 			return
 		}
 
@@ -945,7 +945,7 @@ func (h *Handler) SearchGame(w http.ResponseWriter, r *http.Request) {
 
 // HandleIndex handles GET / and renders the landing page.
 func (h *Handler) HandleIndex(w http.ResponseWriter, r *http.Request, tmpl *template.Template) {
-	ld := h.buildLayoutData(r, "Bem-vindo ao Balcão")
+	ld := h.buildLayoutData(r, "Welcome")
 
 	data := struct {
 		LayoutData
@@ -978,7 +978,7 @@ func (h *Handler) HandleRedeem(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := h.store.RedeemMember(r.Context(), memberID); err != nil {
-		http.Error(w, "Falha na redenção: "+err.Error(), http.StatusInternalServerError)
+		http.Error(w, "Failed to redeem member: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
@@ -987,7 +987,7 @@ func (h *Handler) HandleRedeem(w http.ResponseWriter, r *http.Request) {
 		_ = h.store.InsertActivity(r.Context(), "redemption", member.ProfileName, "")
 	}
 
-	http.Redirect(w, r, "/membership?success=redencao", http.StatusSeeOther)
+	http.Redirect(w, r, "/membership?success=redeemed", http.StatusSeeOther)
 }
 
 // HandleMemberReturn handles POST /membership/return, allowing a member to self-return a game.
@@ -1011,7 +1011,7 @@ func (h *Handler) HandleMemberReturn(w http.ResponseWriter, r *http.Request) {
 
 	rentalID, err := uuid.Parse(r.FormValue("rental_id"))
 	if err != nil {
-		http.Error(w, "ID de aluguel invalido", http.StatusBadRequest)
+		http.Error(w, "Invalid rental ID", http.StatusBadRequest)
 		return
 	}
 
@@ -1024,7 +1024,7 @@ func (h *Handler) HandleMemberReturn(w http.ResponseWriter, r *http.Request) {
 	gameTitle, _ := h.store.GetRentalGameTitle(r.Context(), rentalID)
 
 	if err := h.store.ReturnGameByMember(r.Context(), rentalID, memberID, verdict); err != nil {
-		http.Error(w, "Falha ao devolver: "+err.Error(), http.StatusInternalServerError)
+		http.Error(w, "Failed to return: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
@@ -1054,7 +1054,7 @@ func (h *Handler) HandleMemberReturn(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	http.Redirect(w, r, "/membership?success=devolucao", http.StatusSeeOther)
+	http.Redirect(w, r, "/membership?success=returned", http.StatusSeeOther)
 }
 
 // ── Club handlers ───────────────────────────────────────────────────────────
@@ -1083,13 +1083,13 @@ func (h *Handler) requireClubAdmin(w http.ResponseWriter, r *http.Request) (uuid
 
 	clubID, err := uuid.Parse(r.PathValue("id"))
 	if err != nil {
-		http.Error(w, "ID de turma invalido", http.StatusBadRequest)
+		http.Error(w, "Invalid club ID", http.StatusBadRequest)
 		return uuid.UUID{}, uuid.UUID{}, false
 	}
 
 	role, err := h.store.GetClubMemberRole(r.Context(), clubID, memberID)
 	if err != nil || role != models.ClubRoleAdmin {
-		http.Error(w, "Acesso restrito aos admins da turma", http.StatusForbidden)
+		http.Error(w, "Restricted to club admins", http.StatusForbidden)
 		return uuid.UUID{}, uuid.UUID{}, false
 	}
 
@@ -1098,7 +1098,7 @@ func (h *Handler) requireClubAdmin(w http.ResponseWriter, r *http.Request) (uuid
 
 // ListClubs handles GET /clubs.
 func (h *Handler) ListClubs(w http.ResponseWriter, r *http.Request, tmpl *template.Template) {
-	ld := h.buildLayoutData(r, "Turmas")
+	ld := h.buildLayoutData(r, "Clubs")
 
 	var viewerID *uuid.UUID
 	if id, ok := h.getSessionMemberID(r); ok {
@@ -1134,17 +1134,17 @@ func (h *Handler) ClubDetail(w http.ResponseWriter, r *http.Request, tmpl *templ
 
 	clubID, err := uuid.Parse(r.PathValue("id"))
 	if err != nil {
-		http.Error(w, "ID de turma invalido", http.StatusBadRequest)
+		http.Error(w, "Invalid club ID", http.StatusBadRequest)
 		return
 	}
 
 	detail, err := h.store.GetClubDetail(r.Context(), clubID)
 	if err != nil {
-		http.Error(w, "Falha ao carregar turma: "+err.Error(), http.StatusInternalServerError)
+		http.Error(w, "Failed to load club: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 	if detail == nil {
-		http.Error(w, "Turma nao encontrada", http.StatusNotFound)
+		http.Error(w, "Club not found", http.StatusNotFound)
 		return
 	}
 
@@ -1191,14 +1191,14 @@ func (h *Handler) ClubFormPage(w http.ResponseWriter, r *http.Request, tmpl *tem
 		var err error
 		club, err = h.store.GetClubByID(r.Context(), clubID)
 		if err != nil || club == nil {
-			http.Error(w, "Turma nao encontrada", http.StatusNotFound)
+			http.Error(w, "Club not found", http.StatusNotFound)
 			return
 		}
 	}
 
-	title := "Criar Turma"
+	title := "Create Club"
 	if isEdit && club != nil {
-		title = "Editar " + club.Name
+		title = "Edit " + club.Name
 	}
 	ld := h.buildLayoutData(r, title)
 
@@ -1231,13 +1231,13 @@ func (h *Handler) CreateClub(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := r.ParseMultipartForm(10 << 20); err != nil {
-		http.Error(w, "Falha ao processar formulario", http.StatusBadRequest)
+		http.Error(w, "Failed to process form", http.StatusBadRequest)
 		return
 	}
 
 	name := strings.TrimSpace(r.FormValue("name"))
 	if name == "" {
-		http.Error(w, "Nome da turma e obrigatorio", http.StatusBadRequest)
+		http.Error(w, "Club name is required", http.StatusBadRequest)
 		return
 	}
 
@@ -1264,12 +1264,12 @@ func (h *Handler) CreateClub(w http.ResponseWriter, r *http.Request) {
 		savePath := filepath.Join("web", "static", "clubs", filename)
 		dst, err := os.Create(savePath)
 		if err != nil {
-			http.Error(w, "Falha ao salvar badge: "+err.Error(), http.StatusInternalServerError)
+			http.Error(w, "Failed to save badge: "+err.Error(), http.StatusInternalServerError)
 			return
 		}
 		defer dst.Close()
 		if _, err := io.Copy(dst, file); err != nil {
-			http.Error(w, "Falha ao gravar badge: "+err.Error(), http.StatusInternalServerError)
+			http.Error(w, "Failed to write badge: "+err.Error(), http.StatusInternalServerError)
 			return
 		}
 		club.BadgeURL = "/static/clubs/" + filename
@@ -1277,10 +1277,10 @@ func (h *Handler) CreateClub(w http.ResponseWriter, r *http.Request) {
 
 	if err := h.store.CreateClub(r.Context(), club); err != nil {
 		if strings.Contains(err.Error(), "unique") || strings.Contains(err.Error(), "duplicate") {
-			http.Error(w, "Ja existe uma turma com esse nome", http.StatusConflict)
+			http.Error(w, "A club with this name already exists", http.StatusConflict)
 			return
 		}
-		http.Error(w, "Falha ao criar turma: "+err.Error(), http.StatusInternalServerError)
+		http.Error(w, "Failed to create club: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
@@ -1289,7 +1289,7 @@ func (h *Handler) CreateClub(w http.ResponseWriter, r *http.Request) {
 		_ = h.store.InsertActivity(r.Context(), "club_created", member.ProfileName, club.Name)
 	}
 
-	http.Redirect(w, r, "/clubs/"+club.ID.String()+"?success=criada", http.StatusSeeOther)
+	http.Redirect(w, r, "/clubs/"+club.ID.String()+"?success=created", http.StatusSeeOther)
 }
 
 // UpdateClub handles POST /clubs/{id}/edit.
@@ -1305,19 +1305,19 @@ func (h *Handler) UpdateClub(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := r.ParseMultipartForm(10 << 20); err != nil {
-		http.Error(w, "Falha ao processar formulario", http.StatusBadRequest)
+		http.Error(w, "Failed to process form", http.StatusBadRequest)
 		return
 	}
 
 	club, err := h.store.GetClubByID(r.Context(), clubID)
 	if err != nil || club == nil {
-		http.Error(w, "Turma nao encontrada", http.StatusNotFound)
+		http.Error(w, "Club not found", http.StatusNotFound)
 		return
 	}
 
 	name := strings.TrimSpace(r.FormValue("name"))
 	if name == "" {
-		http.Error(w, "Nome da turma e obrigatorio", http.StatusBadRequest)
+		http.Error(w, "Club name is required", http.StatusBadRequest)
 		return
 	}
 
@@ -1337,23 +1337,23 @@ func (h *Handler) UpdateClub(w http.ResponseWriter, r *http.Request) {
 		savePath := filepath.Join("web", "static", "clubs", filename)
 		dst, err := os.Create(savePath)
 		if err != nil {
-			http.Error(w, "Falha ao salvar badge: "+err.Error(), http.StatusInternalServerError)
+			http.Error(w, "Failed to save badge: "+err.Error(), http.StatusInternalServerError)
 			return
 		}
 		defer dst.Close()
 		if _, err := io.Copy(dst, file); err != nil {
-			http.Error(w, "Falha ao gravar badge: "+err.Error(), http.StatusInternalServerError)
+			http.Error(w, "Failed to write badge: "+err.Error(), http.StatusInternalServerError)
 			return
 		}
 		club.BadgeURL = "/static/clubs/" + filename
 	}
 
 	if err := h.store.UpdateClub(r.Context(), club); err != nil {
-		http.Error(w, "Falha ao atualizar turma: "+err.Error(), http.StatusInternalServerError)
+		http.Error(w, "Failed to update club: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	http.Redirect(w, r, "/clubs/"+clubID.String()+"?success=atualizada", http.StatusSeeOther)
+	http.Redirect(w, r, "/clubs/"+clubID.String()+"?success=updated", http.StatusSeeOther)
 }
 
 // JoinClub handles POST /clubs/{id}/join.
@@ -1371,12 +1371,12 @@ func (h *Handler) JoinClub(w http.ResponseWriter, r *http.Request) {
 
 	clubID, err := uuid.Parse(r.PathValue("id"))
 	if err != nil {
-		http.Error(w, "ID de turma invalido", http.StatusBadRequest)
+		http.Error(w, "Invalid club ID", http.StatusBadRequest)
 		return
 	}
 
 	if err := h.store.JoinClub(r.Context(), clubID, memberID); err != nil {
-		http.Error(w, "Falha ao entrar na turma: "+err.Error(), http.StatusInternalServerError)
+		http.Error(w, "Failed to join club: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
@@ -1387,7 +1387,7 @@ func (h *Handler) JoinClub(w http.ResponseWriter, r *http.Request) {
 		_ = h.store.InsertActivity(r.Context(), "club_joined", member.ProfileName, club.Name)
 	}
 
-	http.Redirect(w, r, "/clubs/"+clubID.String()+"?success=entrou", http.StatusSeeOther)
+	http.Redirect(w, r, "/clubs/"+clubID.String()+"?success=joined", http.StatusSeeOther)
 }
 
 // LeaveClub handles POST /clubs/{id}/leave.
@@ -1405,7 +1405,7 @@ func (h *Handler) LeaveClub(w http.ResponseWriter, r *http.Request) {
 
 	clubID, err := uuid.Parse(r.PathValue("id"))
 	if err != nil {
-		http.Error(w, "ID de turma invalido", http.StatusBadRequest)
+		http.Error(w, "Invalid club ID", http.StatusBadRequest)
 		return
 	}
 
@@ -1421,18 +1421,18 @@ func (h *Handler) LeaveClub(w http.ResponseWriter, r *http.Request) {
 				}
 			}
 			if adminCount <= 1 {
-				http.Error(w, "Voce e o unico admin. Promova outro membro antes de sair.", http.StatusForbidden)
+				http.Error(w, "You are the only admin. Promote another member before leaving.", http.StatusForbidden)
 				return
 			}
 		}
 	}
 
 	if err := h.store.LeaveClub(r.Context(), clubID, memberID); err != nil {
-		http.Error(w, "Falha ao sair da turma: "+err.Error(), http.StatusInternalServerError)
+		http.Error(w, "Failed to leave club: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	http.Redirect(w, r, "/clubs?success=saiu", http.StatusSeeOther)
+	http.Redirect(w, r, "/clubs?success=left", http.StatusSeeOther)
 }
 
 // PromoteClubMember handles POST /clubs/{id}/promote.
@@ -1449,16 +1449,16 @@ func (h *Handler) PromoteClubMember(w http.ResponseWriter, r *http.Request) {
 
 	targetID, err := uuid.Parse(r.FormValue("member_id"))
 	if err != nil {
-		http.Error(w, "ID de membro invalido", http.StatusBadRequest)
+		http.Error(w, "Invalid member ID", http.StatusBadRequest)
 		return
 	}
 
 	if err := h.store.PromoteClubMember(r.Context(), clubID, targetID); err != nil {
-		http.Error(w, "Falha ao promover membro: "+err.Error(), http.StatusInternalServerError)
+		http.Error(w, "Failed to promote member: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	http.Redirect(w, r, "/clubs/"+clubID.String()+"?success=promovido", http.StatusSeeOther)
+	http.Redirect(w, r, "/clubs/"+clubID.String()+"?success=promoted", http.StatusSeeOther)
 }
 
 // RemoveClubMember handles POST /clubs/{id}/remove.
@@ -1475,21 +1475,21 @@ func (h *Handler) RemoveClubMember(w http.ResponseWriter, r *http.Request) {
 
 	targetID, err := uuid.Parse(r.FormValue("member_id"))
 	if err != nil {
-		http.Error(w, "ID de membro invalido", http.StatusBadRequest)
+		http.Error(w, "Invalid member ID", http.StatusBadRequest)
 		return
 	}
 
 	if targetID == memberID {
-		http.Error(w, "Use 'Sair da turma' para se remover.", http.StatusBadRequest)
+		http.Error(w, "Use 'Leave club' to remove yourself.", http.StatusBadRequest)
 		return
 	}
 
 	if err := h.store.RemoveClubMember(r.Context(), clubID, targetID); err != nil {
-		http.Error(w, "Falha ao remover membro: "+err.Error(), http.StatusInternalServerError)
+		http.Error(w, "Failed to remove member: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	http.Redirect(w, r, "/clubs/"+clubID.String()+"?success=removido", http.StatusSeeOther)
+	http.Redirect(w, r, "/clubs/"+clubID.String()+"?success=removed", http.StatusSeeOther)
 }
 
 // DeleteClub handles POST /clubs/{id}/delete.
@@ -1507,16 +1507,16 @@ func (h *Handler) DeleteClub(w http.ResponseWriter, r *http.Request) {
 
 	clubID, err := uuid.Parse(r.PathValue("id"))
 	if err != nil {
-		http.Error(w, "ID de turma invalido", http.StatusBadRequest)
+		http.Error(w, "Invalid club ID", http.StatusBadRequest)
 		return
 	}
 
 	if err := h.store.DeleteClub(r.Context(), clubID, memberID); err != nil {
-		http.Error(w, "Falha ao excluir turma: "+err.Error(), http.StatusForbidden)
+		http.Error(w, "Failed to delete club: "+err.Error(), http.StatusForbidden)
 		return
 	}
 
-	http.Redirect(w, r, "/clubs?success=excluida", http.StatusSeeOther)
+	http.Redirect(w, r, "/clubs?success=deleted", http.StatusSeeOther)
 }
 
 // GetGame handles GET /games/{id}.

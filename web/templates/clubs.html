@@ -78,21 +78,21 @@
 {{end}}
 
 {{define "content"}}
-        {{if eq .Success "criada"}}
+        {{if eq .Success "created"}}
         <div class="success-balloon">
             <div class="nes-balloon from-left is-dark">
                 <p class="balloon-text">Turma criada com sucesso! Chame a galera!</p>
             </div>
             <i class="nes-bcrikko"></i>
         </div>
-        {{else if eq .Success "saiu"}}
+        {{else if eq .Success "left"}}
         <div class="success-balloon">
             <div class="nes-balloon from-left is-dark">
                 <p class="balloon-text">Voc&ecirc; saiu da turma.</p>
             </div>
             <i class="nes-bcrikko"></i>
         </div>
-        {{else if eq .Success "excluida"}}
+        {{else if eq .Success "deleted"}}
         <div class="success-balloon">
             <div class="nes-balloon from-left is-dark">
                 <p class="balloon-text">Turma exclu&iacute;da.</p>

@@ -79,7 +79,7 @@ func main() {
 			}
 			log.Printf("Applied: %s", f)
 		}
-		log.Println("Migrations + seed concluidos com sucesso!")
+		log.Println("Migrations + seed completed successfully!")
 		return
 	}
 

@@ -187,14 +187,14 @@
             <p class="pixel-aligned-subtitle">[MODO LOCADORA &mdash; DESDE 1991]</p>
         </header>
 
-        {{if eq .Success "redencao"}}
+        {{if eq .Success "redeemed"}}
         <div class="success-balloon">
             <div class="nes-balloon from-left is-dark">
                 <p class="balloon-text">Cartucho soprado! Voc&ecirc; est&aacute; redimido(a). N&atilde;o atrase de novo!</p>
             </div>
             <i class="nes-bcrikko"></i>
         </div>
-        {{else if eq .Success "devolucao"}}
+        {{else if eq .Success "returned"}}
         <div class="success-balloon">
             <div class="nes-balloon from-left is-dark">
                 <p class="balloon-text">Fita devolvida com sucesso! O Tio agradece pela pontualidade.</p>

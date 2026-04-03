@@ -96,35 +96,35 @@
 {{end}}
 
 {{define "content"}}
-        {{if eq .Success "criada"}}
+        {{if eq .Success "created"}}
         <div class="success-balloon">
             <div class="nes-balloon from-left is-dark">
                 <p class="balloon-text">Turma criada com sucesso! Chame a galera!</p>
             </div>
             <i class="nes-bcrikko"></i>
         </div>
-        {{else if eq .Success "atualizada"}}
+        {{else if eq .Success "updated"}}
         <div class="success-balloon">
             <div class="nes-balloon from-left is-dark">
                 <p class="balloon-text">Turma atualizada!</p>
             </div>
             <i class="nes-bcrikko"></i>
         </div>
-        {{else if eq .Success "entrou"}}
+        {{else if eq .Success "joined"}}
         <div class="success-balloon">
             <div class="nes-balloon from-left is-dark">
                 <p class="balloon-text">Bem-vindo(a) &agrave; turma!</p>
             </div>
             <i class="nes-bcrikko"></i>
         </div>
-        {{else if eq .Success "promovido"}}
+        {{else if eq .Success "promoted"}}
         <div class="success-balloon">
             <div class="nes-balloon from-left is-dark">
                 <p class="balloon-text">Membro promovido a admin!</p>
             </div>
             <i class="nes-bcrikko"></i>
         </div>
-        {{else if eq .Success "removido"}}
+        {{else if eq .Success "removed"}}
         <div class="success-balloon">
             <div class="nes-balloon from-left is-dark">
                 <p class="balloon-text">Membro removido da turma.</p>
