@@ -248,28 +248,14 @@ img, .nes-icon {
 }
 
 .banner-logo {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
+    display: block;
+    line-height: 0;
 }
 
-.banner-title {
-    font-size: 18px;
-    color: #f7d51d !important;
-    text-decoration: none !important;
-    letter-spacing: 2px;
-    text-shadow: 2px 2px 0 #000, 4px 4px 0 rgba(0,0,0,0.3);
-}
-
-.banner-title:hover {
-    color: #fff !important;
-    text-decoration: none !important;
-}
-
-.banner-subtitle {
-    font-size: 9px;
-    color: #3498DB;
-    letter-spacing: 3px;
+.banner-img {
+    max-width: 100%;
+    height: auto;
+    image-rendering: pixelated;
 }
 
 .banner-auth {
