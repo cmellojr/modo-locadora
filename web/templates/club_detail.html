@@ -1,0 +1,227 @@
+{{define "page-styles"}}
+    <style>
+        .turma-header {
+            display: flex;
+            gap: 20px;
+            align-items: flex-start;
+            margin-bottom: 15px;
+        }
+
+        .turma-badge-lg {
+            width: 120px;
+            height: 120px;
+            object-fit: cover;
+            border: 2px solid #444;
+            image-rendering: pixelated;
+            flex-shrink: 0;
+        }
+
+        .turma-badge-lg-placeholder {
+            width: 120px;
+            height: 120px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #222;
+            border: 2px solid #444;
+            color: #666;
+            font-size: 9px;
+            flex-shrink: 0;
+        }
+
+        .turma-info {
+            flex: 1;
+        }
+
+        .turma-info h3 {
+            margin: 0 0 8px 0;
+            font-size: 14px;
+            color: #92cc41;
+        }
+
+        .turma-desc {
+            font-size: 10px;
+            color: #ccc;
+            margin-bottom: 8px;
+            line-height: 1.6;
+        }
+
+        .turma-url {
+            font-size: 9px;
+            color: #209cee;
+            text-decoration: none;
+            word-break: break-all;
+        }
+
+        .turma-url:hover {
+            text-decoration: underline;
+        }
+
+        .turma-stats {
+            font-size: 9px;
+            color: #92cc41;
+            margin-top: 8px;
+        }
+
+        .members-table {
+            width: 100%;
+            font-size: 9px;
+            margin-top: 10px;
+        }
+
+        .members-table th {
+            text-align: left;
+            color: #92cc41;
+        }
+
+        .role-admin {
+            color: #f7d51d;
+        }
+
+        .action-forms {
+            display: flex;
+            gap: 8px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+
+        @media (max-width: 600px) {
+            .turma-header {
+                flex-direction: column;
+                align-items: center;
+                text-align: center;
+            }
+        }
+    </style>
+{{end}}
+
+{{define "content"}}
+        {{if eq .Success "created"}}
+        <div class="success-balloon">
+            <div class="nes-balloon from-left is-dark">
+                <p class="balloon-text">Turma criada com sucesso! Chame a galera!</p>
+            </div>
+            <i class="nes-bcrikko"></i>
+        </div>
+        {{else if eq .Success "updated"}}
+        <div class="success-balloon">
+            <div class="nes-balloon from-left is-dark">
+                <p class="balloon-text">Turma atualizada!</p>
+            </div>
+            <i class="nes-bcrikko"></i>
+        </div>
+        {{else if eq .Success "joined"}}
+        <div class="success-balloon">
+            <div class="nes-balloon from-left is-dark">
+                <p class="balloon-text">Bem-vindo(a) &agrave; turma!</p>
+            </div>
+            <i class="nes-bcrikko"></i>
+        </div>
+        {{else if eq .Success "promoted"}}
+        <div class="success-balloon">
+            <div class="nes-balloon from-left is-dark">
+                <p class="balloon-text">Membro promovido a admin!</p>
+            </div>
+            <i class="nes-bcrikko"></i>
+        </div>
+        {{else if eq .Success "removed"}}
+        <div class="success-balloon">
+            <div class="nes-balloon from-left is-dark">
+                <p class="balloon-text">Membro removido da turma.</p>
+            </div>
+            <i class="nes-bcrikko"></i>
+        </div>
+        {{end}}
+
+        <div class="nes-container with-title is-dark">
+            <p class="title">
+                <span class="title-main">TURMA</span>
+            </p>
+
+            <div class="turma-header">
+                {{if .Detail.Club.BadgeURL}}
+                <img src="{{.Detail.Club.BadgeURL}}" alt="{{.Detail.Club.Name}}" class="turma-badge-lg">
+                {{else}}
+                <div class="turma-badge-lg-placeholder">SEM BADGE</div>
+                {{end}}
+                <div class="turma-info">
+                    <h3>{{.Detail.Club.Name}}</h3>
+                    {{if .Detail.Club.Description}}
+                    <p class="turma-desc">{{.Detail.Club.Description}}</p>
+                    {{end}}
+                    {{if .Detail.Club.WebsiteURL}}
+                    <a href="{{.Detail.Club.WebsiteURL}}" class="turma-url" target="_blank" rel="noopener">{{.Detail.Club.WebsiteURL}}</a>
+                    {{end}}
+                    <p class="turma-stats">{{.Detail.MemberCount}} membro(s)</p>
+                </div>
+            </div>
+
+            {{if .IsLoggedIn}}
+            <div class="action-forms">
+                {{if not .IsMember}}
+                <form action="/clubs/{{.Detail.Club.ID}}/join" method="POST">
+                    <button type="submit" class="nes-btn is-success btn-sm">ENTRAR NA TURMA</button>
+                </form>
+                {{else}}
+                <form action="/clubs/{{.Detail.Club.ID}}/leave" method="POST">
+                    <button type="submit" class="nes-btn is-error btn-sm">SAIR DA TURMA</button>
+                </form>
+                {{end}}
+                {{if .IsClubAdmin}}
+                <a href="/clubs/{{.Detail.Club.ID}}/edit" class="nes-btn is-warning btn-sm">EDITAR</a>
+                {{end}}
+                {{if .IsCreator}}
+                <form action="/clubs/{{.Detail.Club.ID}}/delete" method="POST"
+                      onsubmit="return confirm('Tem certeza que deseja excluir esta turma?');">
+                    <button type="submit" class="nes-btn is-error btn-sm">EXCLUIR</button>
+                </form>
+                {{end}}
+            </div>
+            {{end}}
+        </div>
+
+        {{if .Detail.Members}}
+        <div class="nes-container with-title is-dark" style="margin-top: 1.5rem;">
+            <p class="title">
+                <span class="title-main">MEMBROS</span>
+                <span class="title-sub">{{.Detail.MemberCount}} membro(s)</span>
+            </p>
+
+            <table class="nes-table is-bordered is-dark members-table">
+                <thead>
+                    <tr>
+                        <th>Membro</th>
+                        <th>Cargo</th>
+                        <th>Desde</th>
+                        {{if $.IsClubAdmin}}<th>A&ccedil;&otilde;es</th>{{end}}
+                    </tr>
+                </thead>
+                <tbody>
+                    {{range .Detail.Members}}
+                    <tr>
+                        <td>{{.ProfileName}}</td>
+                        <td>{{if eq .Role "admin"}}<span class="role-admin">Admin</span>{{else}}Membro{{end}}</td>
+                        <td>{{.JoinedAt.Format "02/01/2006"}}</td>
+                        {{if $.IsClubAdmin}}
+                        <td>
+                            {{if eq .Role "member"}}
+                            <form action="/clubs/{{$.Detail.Club.ID}}/promote" method="POST" style="display:inline;">
+                                <input type="hidden" name="member_id" value="{{.MemberID}}">
+                                <button type="submit" class="nes-btn is-warning btn-sm">PROMOVER</button>
+                            </form>
+                            <form action="/clubs/{{$.Detail.Club.ID}}/remove" method="POST" style="display:inline;">
+                                <input type="hidden" name="member_id" value="{{.MemberID}}">
+                                <button type="submit" class="nes-btn is-error btn-sm">REMOVER</button>
+                            </form>
+                            {{else}}
+                            <span class="role-admin">Admin</span>
+                            {{end}}
+                        </td>
+                        {{end}}
+                    </tr>
+                    {{end}}
+                </tbody>
+            </table>
+        </div>
+        {{end}}
+{{end}}

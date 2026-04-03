@@ -66,6 +66,8 @@ func main() {
 			migrationsDir + "006_activities_feed.sql",
 			migrationsDir + "007_seed_initial_data.sql",
 			migrationsDir + "008_cover_display.sql",
+			migrationsDir + "009_clubs.sql",
+			migrationsDir + "010_rename_status_english.sql",
 		}
 		for _, f := range sqlFiles {
 			data, err := os.ReadFile(f)
@@ -77,7 +79,7 @@ func main() {
 			}
 			log.Printf("Applied: %s", f)
 		}
-		log.Println("Migrations + seed concluidos com sucesso!")
+		log.Println("Migrations + seed completed successfully!")
 		return
 	}
 
@@ -99,49 +101,66 @@ func main() {
 		jobs.StartOverdueChecker(ctx, store, 5*time.Minute)
 	}
 
-	indexTmpl, err := template.ParseFiles("web/templates/index.html")
+	layout := "web/templates/layout.html"
+
+	indexTmpl, err := template.ParseFiles(layout, "web/templates/index.html")
 	if err != nil {
 		log.Fatalf("failed to parse index template: %v", err)
 	}
 
-	platformsTmpl, err := template.ParseFiles("web/templates/platforms.html")
+	platformsTmpl, err := template.ParseFiles(layout, "web/templates/platforms.html")
 	if err != nil {
 		log.Fatalf("failed to parse platforms template: %v", err)
 	}
 
-	gamesTmpl, err := template.ParseFiles("web/templates/games.html")
+	gamesTmpl, err := template.ParseFiles(layout, "web/templates/games.html")
 	if err != nil {
 		log.Fatalf("failed to parse games template: %v", err)
 	}
 
-	gameDetailTmpl, err := template.ParseFiles("web/templates/game_detail.html")
+	gameDetailTmpl, err := template.ParseFiles(layout, "web/templates/game_detail.html")
 	if err != nil {
 		log.Fatalf("failed to parse game detail template: %v", err)
 	}
 
-	adminStockTmpl, err := template.ParseFiles("web/templates/admin_stock.html")
+	adminStockTmpl, err := template.ParseFiles(layout, "web/templates/admin_stock.html")
 	if err != nil {
 		log.Fatalf("failed to parse admin stock template: %v", err)
 	}
 
-	adminInventoryTmpl, err := template.ParseFiles("web/templates/admin_inventory.html")
+	adminInventoryTmpl, err := template.ParseFiles(layout, "web/templates/admin_inventory.html")
 	if err != nil {
 		log.Fatalf("failed to parse admin inventory template: %v", err)
 	}
 
-	adminEditTmpl, err := template.ParseFiles("web/templates/admin_edit.html")
+	adminEditTmpl, err := template.ParseFiles(layout, "web/templates/admin_edit.html")
 	if err != nil {
 		log.Fatalf("failed to parse admin edit template: %v", err)
 	}
 
-	carteirinhaTmpl, err := template.ParseFiles("web/templates/carteirinha.html")
+	membershipTmpl, err := template.ParseFiles(layout, "web/templates/membership.html")
 	if err != nil {
-		log.Fatalf("failed to parse carteirinha template: %v", err)
+		log.Fatalf("failed to parse membership template: %v", err)
 	}
 
-	adminReturnsTmpl, err := template.ParseFiles("web/templates/admin_returns.html")
+	adminReturnsTmpl, err := template.ParseFiles(layout, "web/templates/admin_returns.html")
 	if err != nil {
 		log.Fatalf("failed to parse admin returns template: %v", err)
+	}
+
+	clubsTmpl, err := template.ParseFiles(layout, "web/templates/clubs.html")
+	if err != nil {
+		log.Fatalf("failed to parse clubs template: %v", err)
+	}
+
+	clubDetailTmpl, err := template.ParseFiles(layout, "web/templates/club_detail.html")
+	if err != nil {
+		log.Fatalf("failed to parse club detail template: %v", err)
+	}
+
+	clubFormTmpl, err := template.ParseFiles(layout, "web/templates/club_form.html")
+	if err != nil {
+		log.Fatalf("failed to parse club form template: %v", err)
 	}
 
 	mux := http.NewServeMux()
@@ -173,17 +192,38 @@ func main() {
 	mux.HandleFunc("POST /admin/return-game", middleware.RequireAdmin(cookieSecret, adminEmail, store, h.ReturnGame))
 
 	// Member routes — protected by RequireAuth middleware.
-	mux.HandleFunc("GET /carteirinha", middleware.RequireAuth(cookieSecret, func(w http.ResponseWriter, r *http.Request) {
-		h.Carteirinha(w, r, carteirinhaTmpl)
+	mux.HandleFunc("GET /membership", middleware.RequireAuth(cookieSecret, func(w http.ResponseWriter, r *http.Request) {
+		h.Membership(w, r, membershipTmpl)
 	}))
 	mux.HandleFunc("POST /rent", middleware.RequireAuth(cookieSecret, h.RentGame))
-	mux.HandleFunc("POST /carteirinha/notes", middleware.RequireAuth(cookieSecret, h.SavePasswordNotes))
-	mux.HandleFunc("POST /carteirinha/redeem", middleware.RequireAuth(cookieSecret, h.HandleRedeem))
-	mux.HandleFunc("POST /carteirinha/return", middleware.RequireAuth(cookieSecret, h.HandleMemberReturn))
+	mux.HandleFunc("POST /membership/notes", middleware.RequireAuth(cookieSecret, h.SavePasswordNotes))
+	mux.HandleFunc("POST /membership/redeem", middleware.RequireAuth(cookieSecret, h.HandleRedeem))
+	mux.HandleFunc("POST /membership/return", middleware.RequireAuth(cookieSecret, h.HandleMemberReturn))
 
 	// Serve static files from web/static
 	fileServer := http.FileServer(http.Dir("web/static"))
 	mux.Handle("GET /static/", http.StripPrefix("/static", fileServer))
+
+	// Club routes — public listing and detail, auth-protected actions.
+	mux.HandleFunc("GET /clubs", func(w http.ResponseWriter, r *http.Request) {
+		h.ListClubs(w, r, clubsTmpl)
+	})
+	mux.HandleFunc("GET /clubs/new", middleware.RequireAuth(cookieSecret, func(w http.ResponseWriter, r *http.Request) {
+		h.ClubFormPage(w, r, clubFormTmpl, false)
+	}))
+	mux.HandleFunc("POST /clubs", middleware.RequireAuth(cookieSecret, h.CreateClub))
+	mux.HandleFunc("GET /clubs/{id}", func(w http.ResponseWriter, r *http.Request) {
+		h.ClubDetail(w, r, clubDetailTmpl)
+	})
+	mux.HandleFunc("GET /clubs/{id}/edit", middleware.RequireAuth(cookieSecret, func(w http.ResponseWriter, r *http.Request) {
+		h.ClubFormPage(w, r, clubFormTmpl, true)
+	}))
+	mux.HandleFunc("POST /clubs/{id}/edit", middleware.RequireAuth(cookieSecret, h.UpdateClub))
+	mux.HandleFunc("POST /clubs/{id}/join", middleware.RequireAuth(cookieSecret, h.JoinClub))
+	mux.HandleFunc("POST /clubs/{id}/leave", middleware.RequireAuth(cookieSecret, h.LeaveClub))
+	mux.HandleFunc("POST /clubs/{id}/promote", middleware.RequireAuth(cookieSecret, h.PromoteClubMember))
+	mux.HandleFunc("POST /clubs/{id}/remove", middleware.RequireAuth(cookieSecret, h.RemoveClubMember))
+	mux.HandleFunc("POST /clubs/{id}/delete", middleware.RequireAuth(cookieSecret, h.DeleteClub))
 
 	mux.HandleFunc("POST /members", h.CreateMember)
 	mux.HandleFunc("GET /games/{id}", func(w http.ResponseWriter, r *http.Request) {

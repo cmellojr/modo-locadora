@@ -27,9 +27,11 @@ psql $DATABASE_URL -f internal/database/migrations/005_auto_return_reputation.sq
 psql $DATABASE_URL -f internal/database/migrations/006_activities_feed.sql
 # 007 is seed data — applied via --seed flag, not manually
 psql $DATABASE_URL -f internal/database/migrations/008_cover_display.sql
+psql $DATABASE_URL -f internal/database/migrations/009_clubs.sql
+psql $DATABASE_URL -f internal/database/migrations/010_rename_status_english.sql
 ```
 
-Shortcut: `go run ./cmd/server --seed` applies all migrations (001-008) + seed data in one step.
+Shortcut: `go run ./cmd/server --seed` applies all migrations (001-010) + seed data in one step.
 Inside Docker the `--seed` flag auto-detects the migration directory (`migrations/` in container, `internal/database/migrations/` locally).
 
 Default DB credentials: `tio_da_locadora` / `sopre_a_fita` / `modo_locadora`.
@@ -52,7 +54,7 @@ Go 1.24, standard library `net/http.ServeMux` with method-pattern routing. Serve
 
 - **`cmd/server/main.go`** — Entrypoint: config, templates, pgx pool, routes, middleware
 - **`internal/handlers/handler.go`** — All HTTP handlers in a `Handler` struct (Store + cookieSecret)
-- **`internal/database/store.go`** — `Store` interface + view structs (GameAvailability, PlatformSummary, GameDetail, ActiveRental, ShameEntry, ActivityEntry, MemberRental, GameHealth, GameInventoryItem, GameRentalHistoryEntry)
+- **`internal/database/store.go`** — `Store` interface + view structs (GameAvailability, PlatformSummary, GameDetail, ActiveRental, ShameEntry, ActivityEntry, MemberRental, GameHealth, GameInventoryItem, GameRentalHistoryEntry, ClubListItem, ClubDetail, ClubMemberView, MemberClubView)
 - **`internal/database/postgres.go`** — PostgreSQL implementation (pgx/v5 pool, transactions)
 - **`internal/middleware/middleware.go`** — `RequireAuth` and `RequireAdmin` middleware
 - **`internal/auth/auth.go`** — HMAC-SHA256 cookie signing/verification
@@ -60,20 +62,23 @@ Go 1.24, standard library `net/http.ServeMux` with method-pattern routing. Serve
 - **`internal/almanac/almanac.go`** — Static gaming ephemerides by day-of-year
 - **`internal/jobs/overdue.go`** — Background goroutine: auto-returns overdue rentals every 5 min
 - **`internal/config/config.go`** — `.env` loader via godotenv
-- **`internal/models/`** — Domain structs: Member (with status/late_count), Game (with cover_display), GameCopy, Rental, MemberTitle
-- **`web/templates/`** — 9 standalone HTML templates (Portuguese UI)
+- **`internal/models/`** — Domain structs: Member (with status/late_count), Game (with cover_display), GameCopy, Rental, MemberTitle, Club
+- **`web/templates/`** — 12 standalone HTML templates (Portuguese UI)
 - **`web/static/css/retro.css`** — NES.css dark theme overrides and utility classes
 - **`web/static/covers/`** — Uploaded Brazilian game covers (Docker volume)
+- **`web/static/clubs/`** — Uploaded club/turma badge images (Docker volume)
 
 ### Database Schema
 
-6 tables + 1 sequence. Key relationship: `Game -> GameCopy -> Rental <- Member`.
+8 tables + 1 sequence. Key relationships: `Game -> GameCopy -> Rental <- Member`, `Club <-> ClubMembers <-> Member` (M2M).
 
-- `members` — profile_name, email, password_hash, membership_number (`1991-XXX`), status (`active`|`em_debito`), late_count
+- `members` — profile_name, email, password_hash, membership_number (`1991-XXX`), status (`active`|`in_debt`), late_count
 - `games` — title, igdb_id, platform, summary, cover_url, cover_display, source_magazine, acquired_at
 - `game_copies` — game_id, status (`available`|`rented`)
 - `rentals` — member_id, copy_id, rented_at, due_at (3 days), returned_at, public_legacy (verdict)
 - `activities` — event_type, member_name, game_title, created_at (denormalized feed)
+- `clubs` — name, description, badge_url, website_url, created_by (FK members)
+- `club_members` — club_id, member_id, role (`admin`|`member`), joined_at (composite PK)
 
 ### Auth Flow
 

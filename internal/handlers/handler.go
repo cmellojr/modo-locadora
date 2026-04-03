@@ -32,22 +32,6 @@ func NewHandler(store database.Store, cookieSecret, adminEmail string) *Handler 
 	return &Handler{store: store, cookieSecret: cookieSecret, adminEmail: adminEmail}
 }
 
-// getSessionMember returns the authenticated member's name, email and login status.
-func (h *Handler) getSessionMember(r *http.Request) (name, email string, loggedIn bool) {
-	rawID := auth.GetSessionMemberID(r, h.cookieSecret)
-	if rawID == "" || h.store == nil {
-		return "", "", false
-	}
-	id, err := uuid.Parse(rawID)
-	if err != nil {
-		return "", "", false
-	}
-	member, err := h.store.GetMemberByID(r.Context(), id)
-	if err != nil || member == nil {
-		return "", "", false
-	}
-	return member.ProfileName, member.Email, true
-}
 
 // Logout handles POST /logout by clearing the session cookie.
 func (h *Handler) Logout(w http.ResponseWriter, r *http.Request) {
@@ -122,9 +106,84 @@ func formatActivityMessage(a database.ActivityEntry) string {
 		return fmt.Sprintf("%s jogou %s mas nao terminou.", a.MemberName, a.GameTitle)
 	case "verdict_quit":
 		return fmt.Sprintf("%s desistiu de %s. O Tio esta decepcionado!", a.MemberName, a.GameTitle)
+	case "club_created":
+		return fmt.Sprintf("%s formou a turma %s! Quem vai entrar?", a.MemberName, a.GameTitle)
+	case "club_joined":
+		return fmt.Sprintf("%s entrou na turma %s!", a.MemberName, a.GameTitle)
 	default:
 		return ""
 	}
+}
+
+// LayoutData holds shared data for the layout template (top nav + sidebars).
+// Page-specific handler structs embed this to make all fields available at the top level.
+type LayoutData struct {
+	PageTitle    string
+	IsLoggedIn   bool
+	IsAdmin      bool
+	MemberName   string
+	MemberMini   *MemberMiniView
+	ShameEntries []database.ShameEntry
+	Activities   []ActivityView
+	AlmanacEntry string
+}
+
+// buildLayoutData loads shared layout data (auth state, sidebar content) for every page.
+func (h *Handler) buildLayoutData(r *http.Request, pageTitle string) LayoutData {
+	ld := LayoutData{PageTitle: pageTitle}
+
+	if h.store == nil {
+		return ld
+	}
+
+	// Authenticate
+	rawID := auth.GetSessionMemberID(r, h.cookieSecret)
+	if rawID != "" {
+		id, err := uuid.Parse(rawID)
+		if err == nil {
+			member, err := h.store.GetMemberByID(r.Context(), id)
+			if err == nil && member != nil {
+				ld.IsLoggedIn = true
+				ld.MemberName = member.ProfileName
+				ld.IsAdmin = h.adminEmail != "" && member.Email == h.adminEmail
+
+				// Left sidebar: member mini-card
+				activeCount, overdueCount, _ := h.store.GetMemberRentalStats(r.Context(), id)
+				statusLabel := "Ativo"
+				statusBadge := "is-success"
+				if member.Status == models.MemberStatusInDebt || overdueCount > 0 {
+					statusLabel = "Em Debito"
+					statusBadge = "is-error"
+				} else if activeCount > 0 {
+					statusLabel = "Jogando"
+					statusBadge = "is-primary"
+				}
+				ld.MemberMini = &MemberMiniView{
+					ProfileName:      member.ProfileName,
+					MembershipNumber: member.MembershipNumber,
+					StatusLabel:      statusLabel,
+					StatusBadge:      statusBadge,
+					ActiveRentals:    activeCount,
+				}
+			}
+		}
+	}
+
+	// Right sidebar: activities, shame, almanac
+	activities, _ := h.store.ListRecentActivities(r.Context(), 5)
+	for _, a := range activities {
+		ld.Activities = append(ld.Activities, ActivityView{
+			EventType:  a.EventType,
+			MemberName: a.MemberName,
+			GameTitle:  a.GameTitle,
+			Message:    formatActivityMessage(a),
+			TimeAgo:    formatTimeAgo(a.CreatedAt),
+		})
+	}
+	ld.ShameEntries, _ = h.store.GetTopShameEntries(r.Context(), 5)
+	ld.AlmanacEntry = almanac.TodaysEphemeride()
+
+	return ld
 }
 
 // CreateMemberRequest defines the input for member registration.
@@ -204,7 +263,7 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 	password := r.FormValue("password")
 
 	if profileName == "" || password == "" {
-		http.Error(w, "Nome e senha são obrigatórios", http.StatusBadRequest)
+		http.Error(w, "Name and password are required", http.StatusBadRequest)
 		return
 	}
 
@@ -220,12 +279,12 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if member == nil {
-		http.Error(w, "Nome ou senha inválidos", http.StatusUnauthorized)
+		http.Error(w, "Invalid name or password", http.StatusUnauthorized)
 		return
 	}
 
 	if err := bcrypt.CompareHashAndPassword([]byte(member.PasswordHash), []byte(password)); err != nil {
-		http.Error(w, "Nome ou senha inválidos", http.StatusUnauthorized)
+		http.Error(w, "Invalid name or password", http.StatusUnauthorized)
 		return
 	}
 
@@ -269,28 +328,12 @@ type GameView struct {
 // ListGames handles GET /games. Without ?platform= it shows the platform selection page.
 // With ?platform=X it shows the filtered games shelf for that platform.
 func (h *Handler) ListGames(w http.ResponseWriter, r *http.Request, platformsTmpl, gamesTmpl *template.Template) {
-	memberName := "Visitante"
-	var memberID string
-	var isLoggedIn bool
-
-	rawMemberID := auth.GetSessionMemberID(r, h.cookieSecret)
-	if rawMemberID != "" && h.store != nil {
-		id, err := uuid.Parse(rawMemberID)
-		if err == nil {
-			member, err := h.store.GetMemberByID(r.Context(), id)
-			if err == nil && member != nil {
-				memberName = member.ProfileName
-				memberID = rawMemberID
-				isLoggedIn = true
-			}
-		}
-	}
-
 	platform := r.URL.Query().Get("platform")
 
 	// No platform filter → show platform selection page.
 	if platform == "" {
-		// Fixed platform list — always shown, even without games.
+		ld := h.buildLayoutData(r, "Acervo de Cartuchos")
+
 		fixedPlatforms := []string{"Mega Drive", "Super Nintendo", "NES", "Master System", "Atari 2600"}
 		platformCounts := make(map[string]int)
 		if h.store != nil {
@@ -308,71 +351,12 @@ func (h *Handler) ListGames(w http.ResponseWriter, r *http.Request, platformsTmp
 			})
 		}
 
-		var activityViews []ActivityView
-		if h.store != nil {
-			activities, _ := h.store.ListRecentActivities(r.Context(), 5)
-			for _, a := range activities {
-				av := ActivityView{
-					EventType:  a.EventType,
-					MemberName: a.MemberName,
-					GameTitle:  a.GameTitle,
-					Message:    formatActivityMessage(a),
-					TimeAgo:    formatTimeAgo(a.CreatedAt),
-				}
-				activityViews = append(activityViews, av)
-			}
-		}
-
-		// Build member mini-card for left sidebar.
-		var memberMini *MemberMiniView
-		if isLoggedIn && h.store != nil {
-			id, err := uuid.Parse(rawMemberID)
-			if err == nil {
-				member, err := h.store.GetMemberByID(r.Context(), id)
-				if err == nil && member != nil {
-					activeCount, overdueCount, _ := h.store.GetMemberRentalStats(r.Context(), id)
-					statusLabel := "Ativo"
-					statusBadge := "is-success"
-					if member.Status == models.MemberStatusEmDebito || overdueCount > 0 {
-						statusLabel = "Em Debito"
-						statusBadge = "is-error"
-					} else if activeCount > 0 {
-						statusLabel = "Jogando"
-						statusBadge = "is-primary"
-					}
-					memberMini = &MemberMiniView{
-						ProfileName:      member.ProfileName,
-						MembershipNumber: member.MembershipNumber,
-						StatusLabel:      statusLabel,
-						StatusBadge:      statusBadge,
-						ActiveRentals:    activeCount,
-					}
-				}
-			}
-		}
-
-		// Fetch Wall of Shame for left sidebar.
-		var shameEntries []database.ShameEntry
-		if h.store != nil {
-			shameEntries, _ = h.store.GetTopShameEntries(r.Context(), 5)
-		}
-
 		data := struct {
-			MemberName   string
-			IsLoggedIn   bool
-			Platforms    []PlatformView
-			Activities   []ActivityView
-			Ephemeride   string
-			MemberMini   *MemberMiniView
-			ShameEntries []database.ShameEntry
+			LayoutData
+			Platforms []PlatformView
 		}{
-			MemberName:   memberName,
-			IsLoggedIn:   isLoggedIn,
-			Platforms:    platformViews,
-			Activities:   activityViews,
-			Ephemeride:   almanac.TodaysEphemeride(),
-			MemberMini:   memberMini,
-			ShameEntries: shameEntries,
+			LayoutData: ld,
+			Platforms:  platformViews,
 		}
 
 		if err := platformsTmpl.Execute(w, data); err != nil {
@@ -382,8 +366,9 @@ func (h *Handler) ListGames(w http.ResponseWriter, r *http.Request, platformsTmp
 	}
 
 	// Platform filter present → show games for that platform.
-	var games []GameView
+	ld := h.buildLayoutData(r, platform)
 
+	var games []GameView
 	if h.store != nil {
 		gamesAvail, err := h.store.ListGamesWithAvailability(r.Context(), platform)
 		if err == nil {
@@ -402,12 +387,12 @@ func (h *Handler) ListGames(w http.ResponseWriter, r *http.Request, platformsTmp
 		}
 	}
 
-	debtError := r.URL.Query().Get("error") == "em_debito"
+	debtError := r.URL.Query().Get("error") == "in_debt"
 
-	// Build completed games map for golden star display.
 	completedGames := make(map[string]bool)
-	if isLoggedIn && h.store != nil {
-		memberUUID, err := uuid.Parse(memberID)
+	if ld.IsLoggedIn && h.store != nil {
+		rawID := auth.GetSessionMemberID(r, h.cookieSecret)
+		memberUUID, err := uuid.Parse(rawID)
 		if err == nil {
 			completedIDs, _ := h.store.ListCompletedGameIDs(r.Context(), memberUUID)
 			for _, cid := range completedIDs {
@@ -417,17 +402,13 @@ func (h *Handler) ListGames(w http.ResponseWriter, r *http.Request, platformsTmp
 	}
 
 	data := struct {
-		MemberName     string
-		MemberID       string
-		IsLoggedIn     bool
+		LayoutData
 		Games          []GameView
 		Platform       string
 		DebtError      bool
 		CompletedGames map[string]bool
 	}{
-		MemberName:     memberName,
-		MemberID:       memberID,
-		IsLoggedIn:     isLoggedIn,
+		LayoutData:     ld,
 		Games:          games,
 		Platform:       platform,
 		DebtError:      debtError,
@@ -449,34 +430,30 @@ func (h *Handler) GameDetailPage(w http.ResponseWriter, r *http.Request, tmpl *t
 	idStr := r.PathValue("id")
 	id, err := uuid.Parse(idStr)
 	if err != nil {
-		http.Error(w, "ID de jogo inválido", http.StatusBadRequest)
+		http.Error(w, "Invalid game ID", http.StatusBadRequest)
 		return
 	}
 
 	detail, err := h.store.GetGameDetail(r.Context(), id)
 	if err != nil {
-		http.Error(w, "Falha ao carregar jogo: "+err.Error(), http.StatusInternalServerError)
+		http.Error(w, "Failed to load game: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 	if detail == nil {
-		http.Error(w, "Jogo não encontrado", http.StatusNotFound)
+		http.Error(w, "Game not found", http.StatusNotFound)
 		return
 	}
 
-	memberName, _, isLoggedIn := h.getSessionMember(r)
-
-	debtError := r.URL.Query().Get("error") == "em_debito"
+	ld := h.buildLayoutData(r, detail.Game.Title)
 
 	data := struct {
-		Detail     *database.GameDetail
-		MemberName string
-		IsLoggedIn bool
-		DebtError  bool
+		LayoutData
+		Detail    *database.GameDetail
+		DebtError bool
 	}{
+		LayoutData: ld,
 		Detail:     detail,
-		MemberName: memberName,
-		IsLoggedIn: isLoggedIn,
-		DebtError:  debtError,
+		DebtError:  r.URL.Query().Get("error") == "in_debt",
 	}
 
 	if err := tmpl.Execute(w, data); err != nil {
@@ -484,8 +461,8 @@ func (h *Handler) GameDetailPage(w http.ResponseWriter, r *http.Request, tmpl *t
 	}
 }
 
-// Carteirinha handles GET /carteirinha and renders the member's profile card.
-func (h *Handler) Carteirinha(w http.ResponseWriter, r *http.Request, tmpl *template.Template) {
+// Membership handles GET /membership and renders the member's profile card.
+func (h *Handler) Membership(w http.ResponseWriter, r *http.Request, tmpl *template.Template) {
 	if h.store == nil {
 		http.Error(w, "Database not configured", http.StatusServiceUnavailable)
 		return
@@ -509,13 +486,14 @@ func (h *Handler) Carteirinha(w http.ResponseWriter, r *http.Request, tmpl *temp
 		return
 	}
 
-	activeCount, overdueCount, _ := h.store.GetMemberRentalStats(r.Context(), id)
+	ld := h.buildLayoutData(r, "Membership Card")
 
-	isEmDebito := member.Status == models.MemberStatusEmDebito
+	activeCount, overdueCount, _ := h.store.GetMemberRentalStats(r.Context(), id)
+	isInDebt := member.Status == models.MemberStatusInDebt
 
 	statusLabel := "Jogador Honesto"
 	statusBadge := "is-success"
-	if isEmDebito || overdueCount > 0 {
+	if isInDebt || overdueCount > 0 {
 		statusLabel = "Socio em Debito com o Tio"
 		statusBadge = "is-error"
 	} else if activeCount > 0 {
@@ -523,38 +501,38 @@ func (h *Handler) Carteirinha(w http.ResponseWriter, r *http.Request, tmpl *temp
 		statusBadge = "is-primary"
 	}
 
-	successMsg := r.URL.Query().Get("success")
-
-	var memberRentals []database.MemberRental
-	memberRentals, _ = h.store.ListMemberActiveRentals(r.Context(), id)
-
-	// Compute member progression title.
+	memberRentals, _ := h.store.ListMemberActiveRentals(r.Context(), id)
 	onTimeCount, _ := h.store.CountOnTimeReturns(r.Context(), id)
 	completedGameIDs, _ := h.store.ListCompletedGameIDs(r.Context(), id)
 	memberTitle := models.ComputeMemberTitle(len(completedGameIDs), onTimeCount)
+	memberClubs, _ := h.store.ListMemberClubs(r.Context(), id)
 
 	data := struct {
+		LayoutData
 		Member        *models.Member
 		ActiveRentals int
 		OverdueCount  int
 		StatusLabel   string
 		StatusBadge   string
 		Success       string
-		IsEmDebito    bool
+		IsInDebt    bool
 		LateCount     int
 		Rentals       []database.MemberRental
 		Title         models.MemberTitle
+		Clubs         []database.MemberClubView
 	}{
+		LayoutData:    ld,
 		Member:        member,
 		ActiveRentals: activeCount,
 		OverdueCount:  overdueCount,
 		StatusLabel:   statusLabel,
 		StatusBadge:   statusBadge,
-		Success:       successMsg,
-		IsEmDebito:    isEmDebito,
+		Success:       r.URL.Query().Get("success"),
+		IsInDebt:    isInDebt,
 		LateCount:     member.LateCount,
 		Rentals:       memberRentals,
 		Title:         memberTitle,
+		Clubs:         memberClubs,
 	}
 
 	if err := tmpl.Execute(w, data); err != nil {
@@ -562,7 +540,7 @@ func (h *Handler) Carteirinha(w http.ResponseWriter, r *http.Request, tmpl *temp
 	}
 }
 
-// SavePasswordNotes handles POST /carteirinha/notes.
+// SavePasswordNotes handles POST /membership/notes.
 func (h *Handler) SavePasswordNotes(w http.ResponseWriter, r *http.Request) {
 	if h.store == nil {
 		http.Error(w, "Database not configured", http.StatusServiceUnavailable)
@@ -583,11 +561,11 @@ func (h *Handler) SavePasswordNotes(w http.ResponseWriter, r *http.Request) {
 
 	notes := r.FormValue("notes")
 	if err := h.store.UpdateMemberNotes(r.Context(), memberID, notes); err != nil {
-		http.Error(w, "Falha ao salvar notas: "+err.Error(), http.StatusInternalServerError)
+		http.Error(w, "Failed to save notes: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	http.Redirect(w, r, "/carteirinha?success=1", http.StatusSeeOther)
+	http.Redirect(w, r, "/membership?success=1", http.StatusSeeOther)
 }
 
 // RentGame handles POST /rent.
@@ -605,31 +583,31 @@ func (h *Handler) RentGame(w http.ResponseWriter, r *http.Request) {
 
 	memberID, err := uuid.Parse(rawMemberID)
 	if err != nil {
-		http.Error(w, "Sessão inválida", http.StatusBadRequest)
+		http.Error(w, "Invalid session", http.StatusBadRequest)
 		return
 	}
 
 	// Block rental if member is in debt.
 	status, err := h.store.GetMemberStatus(r.Context(), memberID)
 	if err != nil {
-		http.Error(w, "Falha ao verificar status: "+err.Error(), http.StatusInternalServerError)
+		http.Error(w, "Failed to check status: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 	gameIDStr := r.FormValue("game_id")
 
-	if status == models.MemberStatusEmDebito {
-		http.Redirect(w, r, "/games/"+gameIDStr+"?error=em_debito", http.StatusSeeOther)
+	if status == models.MemberStatusInDebt {
+		http.Redirect(w, r, "/games/"+gameIDStr+"?error=in_debt", http.StatusSeeOther)
 		return
 	}
 
 	gameID, err := uuid.Parse(gameIDStr)
 	if err != nil {
-		http.Error(w, "ID de jogo inválido", http.StatusBadRequest)
+		http.Error(w, "Invalid game ID", http.StatusBadRequest)
 		return
 	}
 
 	if err := h.store.RentGame(r.Context(), gameID, memberID); err != nil {
-		http.Error(w, "Falha ao alugar: "+err.Error(), http.StatusInternalServerError)
+		http.Error(w, "Failed to rent: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
@@ -643,8 +621,7 @@ func (h *Handler) AdminReturns(w http.ResponseWriter, r *http.Request, tmpl *tem
 		return
 	}
 
-	memberName, _, _ := h.getSessionMember(r)
-	successMsg := r.URL.Query().Get("success")
+	ld := h.buildLayoutData(r, "Returns")
 
 	rentals, err := h.store.ListActiveRentals(r.Context())
 	if err != nil {
@@ -653,13 +630,13 @@ func (h *Handler) AdminReturns(w http.ResponseWriter, r *http.Request, tmpl *tem
 	}
 
 	data := struct {
-		MemberName string
-		Rentals    []database.ActiveRental
-		Success    string
+		LayoutData
+		Rentals []database.ActiveRental
+		Success string
 	}{
-		MemberName: memberName,
+		LayoutData: ld,
 		Rentals:    rentals,
-		Success:    successMsg,
+		Success:    r.URL.Query().Get("success"),
 	}
 
 	if err := tmpl.Execute(w, data); err != nil {
@@ -676,24 +653,25 @@ func (h *Handler) ReturnGame(w http.ResponseWriter, r *http.Request) {
 
 	rentalID, err := uuid.Parse(r.FormValue("rental_id"))
 	if err != nil {
-		http.Error(w, "ID de aluguel inválido", http.StatusBadRequest)
+		http.Error(w, "Invalid rental ID", http.StatusBadRequest)
 		return
 	}
 
 	if err := h.store.ReturnGame(r.Context(), rentalID); err != nil {
-		http.Error(w, "Falha ao devolver: "+err.Error(), http.StatusInternalServerError)
+		http.Error(w, "Failed to return: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	http.Redirect(w, r, "/admin/returns?success=Fita+devolvida", http.StatusSeeOther)
+	http.Redirect(w, r, "/admin/returns?success=Game+returned", http.StatusSeeOther)
 }
 
 // AdminStock handles GET /admin/stock and renders the IGDB search page.
 func (h *Handler) AdminStock(w http.ResponseWriter, r *http.Request, tmpl *template.Template) {
+	ld := h.buildLayoutData(r, "Abastecer Prateleiras")
+
 	query := r.URL.Query().Get("q")
 	magazine := r.URL.Query().Get("magazine")
 	selectedIDStr := r.URL.Query().Get("selected")
-	successMsg := r.URL.Query().Get("success")
 
 	var results []igdb.GameData
 	var selected *igdb.GameData
@@ -721,22 +699,20 @@ func (h *Handler) AdminStock(w http.ResponseWriter, r *http.Request, tmpl *templ
 		}
 	}
 
-	memberName, _, _ := h.getSessionMember(r)
-
 	data := struct {
-		MemberName string
-		Query      string
-		Magazine   string
-		Results    []igdb.GameData
-		Selected   *igdb.GameData
-		Success    string
+		LayoutData
+		Query    string
+		Magazine string
+		Results  []igdb.GameData
+		Selected *igdb.GameData
+		Success  string
 	}{
-		MemberName: memberName,
+		LayoutData: ld,
 		Query:      query,
 		Magazine:   magazine,
 		Results:    results,
 		Selected:   selected,
-		Success:    successMsg,
+		Success:    r.URL.Query().Get("success"),
 	}
 
 	if err := tmpl.Execute(w, data); err != nil {
@@ -789,8 +765,7 @@ func (h *Handler) AdminInventory(w http.ResponseWriter, r *http.Request, tmpl *t
 		return
 	}
 
-	memberName, _, _ := h.getSessionMember(r)
-	successMsg := r.URL.Query().Get("success")
+	ld := h.buildLayoutData(r, "Acervo")
 
 	items, err := h.store.ListGamesWithHealth(r.Context())
 	if err != nil {
@@ -799,13 +774,13 @@ func (h *Handler) AdminInventory(w http.ResponseWriter, r *http.Request, tmpl *t
 	}
 
 	data := struct {
-		MemberName string
-		Items      []database.GameInventoryItem
-		Success    string
+		LayoutData
+		Items   []database.GameInventoryItem
+		Success string
 	}{
-		MemberName: memberName,
+		LayoutData: ld,
 		Items:      items,
-		Success:    successMsg,
+		Success:    r.URL.Query().Get("success"),
 	}
 
 	if err := tmpl.Execute(w, data); err != nil {
@@ -823,7 +798,7 @@ func (h *Handler) EditGame(w http.ResponseWriter, r *http.Request, tmpl *templat
 	idStr := r.PathValue("id")
 	id, err := uuid.Parse(idStr)
 	if err != nil {
-		http.Error(w, "ID de jogo inválido", http.StatusBadRequest)
+		http.Error(w, "Invalid game ID", http.StatusBadRequest)
 		return
 	}
 
@@ -833,20 +808,20 @@ func (h *Handler) EditGame(w http.ResponseWriter, r *http.Request, tmpl *templat
 		return
 	}
 	if game == nil {
-		http.Error(w, "Jogo não encontrado", http.StatusNotFound)
+		http.Error(w, "Game not found", http.StatusNotFound)
 		return
 	}
 
-	memberName, _, _ := h.getSessionMember(r)
+	ld := h.buildLayoutData(r, "Edit "+game.Title)
 
 	rentalHistory, _ := h.store.ListGameRentalHistory(r.Context(), id, 5)
 
 	data := struct {
-		MemberName    string
+		LayoutData
 		Game          *models.Game
 		RentalHistory []database.GameRentalHistoryEntry
 	}{
-		MemberName:    memberName,
+		LayoutData:    ld,
 		Game:          game,
 		RentalHistory: rentalHistory,
 	}
@@ -864,20 +839,20 @@ func (h *Handler) UpdateGame(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := r.ParseMultipartForm(10 << 20); err != nil {
-		http.Error(w, "Falha ao processar formulário", http.StatusBadRequest)
+		http.Error(w, "Failed to process form", http.StatusBadRequest)
 		return
 	}
 
 	idStr := r.FormValue("id")
 	id, err := uuid.Parse(idStr)
 	if err != nil {
-		http.Error(w, "ID de jogo inválido", http.StatusBadRequest)
+		http.Error(w, "Invalid game ID", http.StatusBadRequest)
 		return
 	}
 
 	game, err := h.store.GetGameByID(r.Context(), id)
 	if err != nil || game == nil {
-		http.Error(w, "Jogo não encontrado", http.StatusNotFound)
+		http.Error(w, "Game not found", http.StatusNotFound)
 		return
 	}
 
@@ -904,13 +879,13 @@ func (h *Handler) UpdateGame(w http.ResponseWriter, r *http.Request) {
 
 		dst, err := os.Create(savePath)
 		if err != nil {
-			http.Error(w, "Falha ao salvar capa: "+err.Error(), http.StatusInternalServerError)
+			http.Error(w, "Failed to save cover: "+err.Error(), http.StatusInternalServerError)
 			return
 		}
 		defer dst.Close()
 
 		if _, err := io.Copy(dst, file); err != nil {
-			http.Error(w, "Falha ao gravar capa: "+err.Error(), http.StatusInternalServerError)
+			http.Error(w, "Failed to write cover: "+err.Error(), http.StatusInternalServerError)
 			return
 		}
 
@@ -968,31 +943,14 @@ func (h *Handler) SearchGame(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(games)
 }
 
-// HandleIndex handles GET / and renders the landing page with the Wall of Shame.
-// Authenticated members are redirected straight to the shelf.
+// HandleIndex handles GET / and renders the landing page.
 func (h *Handler) HandleIndex(w http.ResponseWriter, r *http.Request, tmpl *template.Template) {
-	memberName, memberEmail, isLoggedIn := h.getSessionMember(r)
-
-	isAdmin := isLoggedIn && h.adminEmail != "" && memberEmail == h.adminEmail
-
-	var shameEntries []database.ShameEntry
-	if h.store != nil {
-		entries, err := h.store.GetTopShameEntries(r.Context(), 5)
-		if err == nil {
-			shameEntries = entries
-		}
-	}
+	ld := h.buildLayoutData(r, "Welcome")
 
 	data := struct {
-		MemberName   string
-		IsLoggedIn   bool
-		IsAdmin      bool
-		ShameEntries []database.ShameEntry
+		LayoutData
 	}{
-		MemberName:   memberName,
-		IsLoggedIn:   isLoggedIn,
-		IsAdmin:      isAdmin,
-		ShameEntries: shameEntries,
+		LayoutData: ld,
 	}
 
 	if err := tmpl.Execute(w, data); err != nil {
@@ -1000,7 +958,7 @@ func (h *Handler) HandleIndex(w http.ResponseWriter, r *http.Request, tmpl *temp
 	}
 }
 
-// HandleRedeem handles POST /carteirinha/redeem, clearing the member's debt status.
+// HandleRedeem handles POST /membership/redeem, clearing the member's debt status.
 func (h *Handler) HandleRedeem(w http.ResponseWriter, r *http.Request) {
 	if h.store == nil {
 		http.Error(w, "Database not configured", http.StatusServiceUnavailable)
@@ -1020,7 +978,7 @@ func (h *Handler) HandleRedeem(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := h.store.RedeemMember(r.Context(), memberID); err != nil {
-		http.Error(w, "Falha na redenção: "+err.Error(), http.StatusInternalServerError)
+		http.Error(w, "Failed to redeem member: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
@@ -1029,10 +987,10 @@ func (h *Handler) HandleRedeem(w http.ResponseWriter, r *http.Request) {
 		_ = h.store.InsertActivity(r.Context(), "redemption", member.ProfileName, "")
 	}
 
-	http.Redirect(w, r, "/carteirinha?success=redencao", http.StatusSeeOther)
+	http.Redirect(w, r, "/membership?success=redeemed", http.StatusSeeOther)
 }
 
-// HandleMemberReturn handles POST /carteirinha/return, allowing a member to self-return a game.
+// HandleMemberReturn handles POST /membership/return, allowing a member to self-return a game.
 func (h *Handler) HandleMemberReturn(w http.ResponseWriter, r *http.Request) {
 	if h.store == nil {
 		http.Error(w, "Database not configured", http.StatusServiceUnavailable)
@@ -1053,7 +1011,7 @@ func (h *Handler) HandleMemberReturn(w http.ResponseWriter, r *http.Request) {
 
 	rentalID, err := uuid.Parse(r.FormValue("rental_id"))
 	if err != nil {
-		http.Error(w, "ID de aluguel invalido", http.StatusBadRequest)
+		http.Error(w, "Invalid rental ID", http.StatusBadRequest)
 		return
 	}
 
@@ -1066,7 +1024,7 @@ func (h *Handler) HandleMemberReturn(w http.ResponseWriter, r *http.Request) {
 	gameTitle, _ := h.store.GetRentalGameTitle(r.Context(), rentalID)
 
 	if err := h.store.ReturnGameByMember(r.Context(), rentalID, memberID, verdict); err != nil {
-		http.Error(w, "Falha ao devolver: "+err.Error(), http.StatusInternalServerError)
+		http.Error(w, "Failed to return: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
@@ -1096,7 +1054,469 @@ func (h *Handler) HandleMemberReturn(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	http.Redirect(w, r, "/carteirinha?success=devolucao", http.StatusSeeOther)
+	http.Redirect(w, r, "/membership?success=returned", http.StatusSeeOther)
+}
+
+// ── Club handlers ───────────────────────────────────────────────────────────
+
+// getSessionMemberID extracts and parses the member UUID from the session cookie.
+func (h *Handler) getSessionMemberID(r *http.Request) (uuid.UUID, bool) {
+	raw := auth.GetSessionMemberID(r, h.cookieSecret)
+	if raw == "" {
+		return uuid.UUID{}, false
+	}
+	id, err := uuid.Parse(raw)
+	if err != nil {
+		return uuid.UUID{}, false
+	}
+	return id, true
+}
+
+// requireClubAdmin verifies the session user is an admin of the club identified by {id} in the path.
+// Returns the member ID, club ID, and true if authorized. Writes an error response and returns false otherwise.
+func (h *Handler) requireClubAdmin(w http.ResponseWriter, r *http.Request) (uuid.UUID, uuid.UUID, bool) {
+	memberID, ok := h.getSessionMemberID(r)
+	if !ok {
+		http.Redirect(w, r, "/", http.StatusSeeOther)
+		return uuid.UUID{}, uuid.UUID{}, false
+	}
+
+	clubID, err := uuid.Parse(r.PathValue("id"))
+	if err != nil {
+		http.Error(w, "Invalid club ID", http.StatusBadRequest)
+		return uuid.UUID{}, uuid.UUID{}, false
+	}
+
+	role, err := h.store.GetClubMemberRole(r.Context(), clubID, memberID)
+	if err != nil || role != models.ClubRoleAdmin {
+		http.Error(w, "Restricted to club admins", http.StatusForbidden)
+		return uuid.UUID{}, uuid.UUID{}, false
+	}
+
+	return memberID, clubID, true
+}
+
+// ListClubs handles GET /clubs.
+func (h *Handler) ListClubs(w http.ResponseWriter, r *http.Request, tmpl *template.Template) {
+	ld := h.buildLayoutData(r, "Clubs")
+
+	var viewerID *uuid.UUID
+	if id, ok := h.getSessionMemberID(r); ok {
+		viewerID = &id
+	}
+
+	var clubs []database.ClubListItem
+	if h.store != nil {
+		clubs, _ = h.store.ListClubs(r.Context(), viewerID)
+	}
+
+	data := struct {
+		LayoutData
+		Clubs   []database.ClubListItem
+		Success string
+	}{
+		LayoutData: ld,
+		Clubs:      clubs,
+		Success:    r.URL.Query().Get("success"),
+	}
+
+	if err := tmpl.Execute(w, data); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+}
+
+// ClubDetail handles GET /clubs/{id}.
+func (h *Handler) ClubDetail(w http.ResponseWriter, r *http.Request, tmpl *template.Template) {
+	if h.store == nil {
+		http.Error(w, "Database not configured", http.StatusServiceUnavailable)
+		return
+	}
+
+	clubID, err := uuid.Parse(r.PathValue("id"))
+	if err != nil {
+		http.Error(w, "Invalid club ID", http.StatusBadRequest)
+		return
+	}
+
+	detail, err := h.store.GetClubDetail(r.Context(), clubID)
+	if err != nil {
+		http.Error(w, "Failed to load club: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+	if detail == nil {
+		http.Error(w, "Club not found", http.StatusNotFound)
+		return
+	}
+
+	ld := h.buildLayoutData(r, detail.Club.Name)
+
+	var viewerRole string
+	var viewerID uuid.UUID
+	if id, ok := h.getSessionMemberID(r); ok {
+		viewerID = id
+		viewerRole, _ = h.store.GetClubMemberRole(r.Context(), clubID, id)
+	}
+
+	data := struct {
+		LayoutData
+		Detail      *database.ClubDetail
+		ViewerRole  string
+		IsMember    bool
+		IsClubAdmin bool
+		IsCreator   bool
+		Success     string
+	}{
+		LayoutData:  ld,
+		Detail:      detail,
+		ViewerRole:  viewerRole,
+		IsMember:    viewerRole != "",
+		IsClubAdmin: viewerRole == models.ClubRoleAdmin,
+		IsCreator:   viewerID == detail.Club.CreatedBy,
+		Success:     r.URL.Query().Get("success"),
+	}
+
+	if err := tmpl.Execute(w, data); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+}
+
+// ClubFormPage handles GET /clubs/new and GET /clubs/{id}/edit.
+func (h *Handler) ClubFormPage(w http.ResponseWriter, r *http.Request, tmpl *template.Template, isEdit bool) {
+	var club *models.Club
+	if isEdit {
+		_, clubID, ok := h.requireClubAdmin(w, r)
+		if !ok {
+			return
+		}
+		var err error
+		club, err = h.store.GetClubByID(r.Context(), clubID)
+		if err != nil || club == nil {
+			http.Error(w, "Club not found", http.StatusNotFound)
+			return
+		}
+	}
+
+	title := "Create Club"
+	if isEdit && club != nil {
+		title = "Edit " + club.Name
+	}
+	ld := h.buildLayoutData(r, title)
+
+	data := struct {
+		LayoutData
+		Club   *models.Club
+		IsEdit bool
+	}{
+		LayoutData: ld,
+		Club:       club,
+		IsEdit:     isEdit,
+	}
+
+	if err := tmpl.Execute(w, data); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+}
+
+// CreateClub handles POST /clubs.
+func (h *Handler) CreateClub(w http.ResponseWriter, r *http.Request) {
+	if h.store == nil {
+		http.Error(w, "Database not configured", http.StatusServiceUnavailable)
+		return
+	}
+
+	memberID, ok := h.getSessionMemberID(r)
+	if !ok {
+		http.Redirect(w, r, "/", http.StatusSeeOther)
+		return
+	}
+
+	if err := r.ParseMultipartForm(10 << 20); err != nil {
+		http.Error(w, "Failed to process form", http.StatusBadRequest)
+		return
+	}
+
+	name := strings.TrimSpace(r.FormValue("name"))
+	if name == "" {
+		http.Error(w, "Club name is required", http.StatusBadRequest)
+		return
+	}
+
+	now := time.Now()
+	club := &models.Club{
+		ID:          uuid.New(),
+		Name:        name,
+		Description: r.FormValue("description"),
+		WebsiteURL:  r.FormValue("website_url"),
+		CreatedBy:   memberID,
+		CreatedAt:   now,
+		UpdatedAt:   now,
+	}
+
+	// Handle badge file upload.
+	file, header, err := r.FormFile("badge_file")
+	if err == nil {
+		defer file.Close()
+		ext := filepath.Ext(header.Filename)
+		if ext == "" {
+			ext = ".png"
+		}
+		filename := club.ID.String() + ext
+		savePath := filepath.Join("web", "static", "clubs", filename)
+		dst, err := os.Create(savePath)
+		if err != nil {
+			http.Error(w, "Failed to save badge: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+		defer dst.Close()
+		if _, err := io.Copy(dst, file); err != nil {
+			http.Error(w, "Failed to write badge: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+		club.BadgeURL = "/static/clubs/" + filename
+	}
+
+	if err := h.store.CreateClub(r.Context(), club); err != nil {
+		if strings.Contains(err.Error(), "unique") || strings.Contains(err.Error(), "duplicate") {
+			http.Error(w, "A club with this name already exists", http.StatusConflict)
+			return
+		}
+		http.Error(w, "Failed to create club: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	member, _ := h.store.GetMemberByID(r.Context(), memberID)
+	if member != nil {
+		_ = h.store.InsertActivity(r.Context(), "club_created", member.ProfileName, club.Name)
+	}
+
+	http.Redirect(w, r, "/clubs/"+club.ID.String()+"?success=created", http.StatusSeeOther)
+}
+
+// UpdateClub handles POST /clubs/{id}/edit.
+func (h *Handler) UpdateClub(w http.ResponseWriter, r *http.Request) {
+	if h.store == nil {
+		http.Error(w, "Database not configured", http.StatusServiceUnavailable)
+		return
+	}
+
+	_, clubID, ok := h.requireClubAdmin(w, r)
+	if !ok {
+		return
+	}
+
+	if err := r.ParseMultipartForm(10 << 20); err != nil {
+		http.Error(w, "Failed to process form", http.StatusBadRequest)
+		return
+	}
+
+	club, err := h.store.GetClubByID(r.Context(), clubID)
+	if err != nil || club == nil {
+		http.Error(w, "Club not found", http.StatusNotFound)
+		return
+	}
+
+	name := strings.TrimSpace(r.FormValue("name"))
+	if name == "" {
+		http.Error(w, "Club name is required", http.StatusBadRequest)
+		return
+	}
+
+	club.Name = name
+	club.Description = r.FormValue("description")
+	club.WebsiteURL = r.FormValue("website_url")
+
+	// Handle badge file upload.
+	file, header, err := r.FormFile("badge_file")
+	if err == nil {
+		defer file.Close()
+		ext := filepath.Ext(header.Filename)
+		if ext == "" {
+			ext = ".png"
+		}
+		filename := club.ID.String() + ext
+		savePath := filepath.Join("web", "static", "clubs", filename)
+		dst, err := os.Create(savePath)
+		if err != nil {
+			http.Error(w, "Failed to save badge: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+		defer dst.Close()
+		if _, err := io.Copy(dst, file); err != nil {
+			http.Error(w, "Failed to write badge: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+		club.BadgeURL = "/static/clubs/" + filename
+	}
+
+	if err := h.store.UpdateClub(r.Context(), club); err != nil {
+		http.Error(w, "Failed to update club: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	http.Redirect(w, r, "/clubs/"+clubID.String()+"?success=updated", http.StatusSeeOther)
+}
+
+// JoinClub handles POST /clubs/{id}/join.
+func (h *Handler) JoinClub(w http.ResponseWriter, r *http.Request) {
+	if h.store == nil {
+		http.Error(w, "Database not configured", http.StatusServiceUnavailable)
+		return
+	}
+
+	memberID, ok := h.getSessionMemberID(r)
+	if !ok {
+		http.Redirect(w, r, "/", http.StatusSeeOther)
+		return
+	}
+
+	clubID, err := uuid.Parse(r.PathValue("id"))
+	if err != nil {
+		http.Error(w, "Invalid club ID", http.StatusBadRequest)
+		return
+	}
+
+	if err := h.store.JoinClub(r.Context(), clubID, memberID); err != nil {
+		http.Error(w, "Failed to join club: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Log activity.
+	member, _ := h.store.GetMemberByID(r.Context(), memberID)
+	club, _ := h.store.GetClubByID(r.Context(), clubID)
+	if member != nil && club != nil {
+		_ = h.store.InsertActivity(r.Context(), "club_joined", member.ProfileName, club.Name)
+	}
+
+	http.Redirect(w, r, "/clubs/"+clubID.String()+"?success=joined", http.StatusSeeOther)
+}
+
+// LeaveClub handles POST /clubs/{id}/leave.
+func (h *Handler) LeaveClub(w http.ResponseWriter, r *http.Request) {
+	if h.store == nil {
+		http.Error(w, "Database not configured", http.StatusServiceUnavailable)
+		return
+	}
+
+	memberID, ok := h.getSessionMemberID(r)
+	if !ok {
+		http.Redirect(w, r, "/", http.StatusSeeOther)
+		return
+	}
+
+	clubID, err := uuid.Parse(r.PathValue("id"))
+	if err != nil {
+		http.Error(w, "Invalid club ID", http.StatusBadRequest)
+		return
+	}
+
+	// Prevent last admin from leaving.
+	role, _ := h.store.GetClubMemberRole(r.Context(), clubID, memberID)
+	if role == models.ClubRoleAdmin {
+		detail, _ := h.store.GetClubDetail(r.Context(), clubID)
+		if detail != nil {
+			adminCount := 0
+			for _, m := range detail.Members {
+				if m.Role == models.ClubRoleAdmin {
+					adminCount++
+				}
+			}
+			if adminCount <= 1 {
+				http.Error(w, "You are the only admin. Promote another member before leaving.", http.StatusForbidden)
+				return
+			}
+		}
+	}
+
+	if err := h.store.LeaveClub(r.Context(), clubID, memberID); err != nil {
+		http.Error(w, "Failed to leave club: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	http.Redirect(w, r, "/clubs?success=left", http.StatusSeeOther)
+}
+
+// PromoteClubMember handles POST /clubs/{id}/promote.
+func (h *Handler) PromoteClubMember(w http.ResponseWriter, r *http.Request) {
+	if h.store == nil {
+		http.Error(w, "Database not configured", http.StatusServiceUnavailable)
+		return
+	}
+
+	_, clubID, ok := h.requireClubAdmin(w, r)
+	if !ok {
+		return
+	}
+
+	targetID, err := uuid.Parse(r.FormValue("member_id"))
+	if err != nil {
+		http.Error(w, "Invalid member ID", http.StatusBadRequest)
+		return
+	}
+
+	if err := h.store.PromoteClubMember(r.Context(), clubID, targetID); err != nil {
+		http.Error(w, "Failed to promote member: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	http.Redirect(w, r, "/clubs/"+clubID.String()+"?success=promoted", http.StatusSeeOther)
+}
+
+// RemoveClubMember handles POST /clubs/{id}/remove.
+func (h *Handler) RemoveClubMember(w http.ResponseWriter, r *http.Request) {
+	if h.store == nil {
+		http.Error(w, "Database not configured", http.StatusServiceUnavailable)
+		return
+	}
+
+	memberID, clubID, ok := h.requireClubAdmin(w, r)
+	if !ok {
+		return
+	}
+
+	targetID, err := uuid.Parse(r.FormValue("member_id"))
+	if err != nil {
+		http.Error(w, "Invalid member ID", http.StatusBadRequest)
+		return
+	}
+
+	if targetID == memberID {
+		http.Error(w, "Use 'Leave club' to remove yourself.", http.StatusBadRequest)
+		return
+	}
+
+	if err := h.store.RemoveClubMember(r.Context(), clubID, targetID); err != nil {
+		http.Error(w, "Failed to remove member: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	http.Redirect(w, r, "/clubs/"+clubID.String()+"?success=removed", http.StatusSeeOther)
+}
+
+// DeleteClub handles POST /clubs/{id}/delete.
+func (h *Handler) DeleteClub(w http.ResponseWriter, r *http.Request) {
+	if h.store == nil {
+		http.Error(w, "Database not configured", http.StatusServiceUnavailable)
+		return
+	}
+
+	memberID, ok := h.getSessionMemberID(r)
+	if !ok {
+		http.Redirect(w, r, "/", http.StatusSeeOther)
+		return
+	}
+
+	clubID, err := uuid.Parse(r.PathValue("id"))
+	if err != nil {
+		http.Error(w, "Invalid club ID", http.StatusBadRequest)
+		return
+	}
+
+	if err := h.store.DeleteClub(r.Context(), clubID, memberID); err != nil {
+		http.Error(w, "Failed to delete club: "+err.Error(), http.StatusForbidden)
+		return
+	}
+
+	http.Redirect(w, r, "/clubs?success=deleted", http.StatusSeeOther)
 }
 
 // GetGame handles GET /games/{id}.

@@ -100,7 +100,7 @@ BEGIN
             'Devedor', 'devedor@locadora.com',
             '$2a$10$cYaEEdblvHr84QKT2c0toeZMIOUpgt4omo84FGaZAnJymY2s/inI.',
             'NES', '1991-003',
-            'em_debito', 3,
+            'in_debt', 3,
             '1991-08-01 14:00:00-03');
 
     -- 3. Novato — Sócio novo, sem histórico

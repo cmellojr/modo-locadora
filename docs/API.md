@@ -18,9 +18,9 @@ Com `?platform=X`: cards simplificados de cartucho para o console — capa, tít
 
 Página de detalhe do jogo. Mostra capa, título, plataforma, resumo, revista de origem, disponibilidade de cópias, total de aluguéis, fã número 1, sócio atual e data de aquisição. Sócios logados veem o botão [ALUGAR] se houver cópias disponíveis.
 
-Parâmetro: `error=em_debito` exibe aviso de débito.
+Parâmetro: `error=in_debt` exibe aviso de débito.
 
-### `GET /carteirinha`
+### `GET /membership`
 
 Carteirinha digital de sócio. Requer autenticação. Mostra número de matrícula, título de progressão (Sócio Novato / Prata / Ouro / Dono da Calçada), perfil, stats de aluguel, status, caderno de passwords e aluguéis ativos com auto-devolução (seleção de veredito).
 
@@ -41,6 +41,26 @@ Formulário de edição do jogo com upload de capa (multipart) e seletor de modo
 ### `GET /admin/returns`
 
 Dashboard de aluguéis ativos com botões de devolução. Requer acesso de administrador. Parâmetro: `success`.
+
+### `GET /clubs`
+
+Listagem pública de turmas (comunidades gamers). Não requer autenticação. Exibe grid de cards com badge, nome e contagem de membros. Sócios logados veem tag "MEMBRO" nas turmas que pertencem e botão "CRIAR TURMA".
+
+Parâmetro: `success` (criada, saiu, excluida) exibe notificação.
+
+### `GET /clubs/new`
+
+Formulário de criação de turma. Requer autenticação. Campos: nome, descrição, URL, upload de badge.
+
+### `GET /clubs/{id}`
+
+Detalhe da turma. Público. Exibe badge, nome, descrição, URL, contagem de membros e tabela de membros (nome, cargo, data de entrada). Sócios logados veem botões de ação (Entrar/Sair). Admins veem Editar e botões de Promover/Remover membros. Criador vê botão Excluir.
+
+Parâmetro: `success` (criada, atualizada, entrou, promovido, removido) exibe notificação.
+
+### `GET /clubs/{id}/edit`
+
+Formulário de edição de turma. Requer autenticação + ser admin da turma. Campos preenchidos com dados atuais.
 
 ---
 
@@ -65,9 +85,9 @@ Alugar um jogo. Requer autenticação.
 |-------|-----------|
 | `game_id` | UUID do jogo |
 
-**Sucesso:** redireciona (303) para `/games/{id}`. Sócios em débito são redirecionados com `?error=em_debito`.
+**Sucesso:** redireciona (303) para `/games/{id}`. Sócios em débito são redirecionados com `?error=in_debt`.
 
-### `POST /carteirinha/notes`
+### `POST /membership/notes`
 
 Salvar caderno de passwords. Requer autenticação.
 
@@ -75,9 +95,9 @@ Salvar caderno de passwords. Requer autenticação.
 |-------|-----------|
 | `notes` | Texto do caderno de passwords |
 
-**Sucesso:** redireciona (303) para `/carteirinha?success=1`.
+**Sucesso:** redireciona (303) para `/membership?success=1`.
 
-### `POST /carteirinha/return`
+### `POST /membership/return`
 
 Auto-devolução de aluguel com veredito. Requer autenticação.
 
@@ -86,13 +106,13 @@ Auto-devolução de aluguel com veredito. Requer autenticação.
 | `rental_id` | UUID do aluguel |
 | `verdict` | Status de jogo: `zerei`, `joguei_um_pouco` ou `desisti` |
 
-**Sucesso:** redireciona (303) para `/carteirinha?success=devolucao`. Dispara evento de atividade baseado no veredito.
+**Sucesso:** redireciona (303) para `/membership?success=devolucao`. Dispara evento de atividade baseado no veredito.
 
-### `POST /carteirinha/redeem`
+### `POST /membership/redeem`
 
 Limpar status de débito do sócio. Requer autenticação. Sem campos.
 
-**Sucesso:** redireciona (303) para `/carteirinha?success=redencao`.
+**Sucesso:** redireciona (303) para `/membership?success=redencao`.
 
 ### `POST /admin/purchase`
 
@@ -135,6 +155,63 @@ Processar devolução de jogo. Requer acesso de administrador.
 | `rental_id` | UUID do aluguel |
 
 **Sucesso:** redireciona (303) para `/admin/returns?success=Fita+devolvida`.
+
+### `POST /clubs`
+
+Criar uma turma. Requer autenticação. Content-Type: `multipart/form-data`.
+
+| Campo | Descrição |
+|-------|-----------|
+| `name` | Nome da turma (único) |
+| `description` | Descrição da turma |
+| `website_url` | URL do site/canal/podcast |
+| `badge_file` | Arquivo de imagem do badge (opcional) |
+
+**Sucesso:** redireciona (303) para `/clubs/{id}?success=criada`. O criador é automaticamente admin da turma.
+
+### `POST /clubs/{id}/edit`
+
+Atualizar dados da turma. Requer autenticação + ser admin da turma. Content-Type: `multipart/form-data`. Mesmos campos de `POST /clubs`.
+
+**Sucesso:** redireciona (303) para `/clubs/{id}?success=atualizada`.
+
+### `POST /clubs/{id}/join`
+
+Entrar numa turma. Requer autenticação. Sem campos.
+
+**Sucesso:** redireciona (303) para `/clubs/{id}?success=entrou`.
+
+### `POST /clubs/{id}/leave`
+
+Sair de uma turma. Requer autenticação. Sem campos. Último admin não pode sair sem promover outro membro primeiro.
+
+**Sucesso:** redireciona (303) para `/clubs?success=saiu`.
+
+### `POST /clubs/{id}/promote`
+
+Promover membro a admin da turma. Requer autenticação + ser admin da turma.
+
+| Campo | Descrição |
+|-------|-----------|
+| `member_id` | UUID do sócio a promover |
+
+**Sucesso:** redireciona (303) para `/clubs/{id}?success=promovido`.
+
+### `POST /clubs/{id}/remove`
+
+Remover membro da turma. Requer autenticação + ser admin da turma.
+
+| Campo | Descrição |
+|-------|-----------|
+| `member_id` | UUID do sócio a remover |
+
+**Sucesso:** redireciona (303) para `/clubs/{id}?success=removido`.
+
+### `POST /clubs/{id}/delete`
+
+Excluir turma. Requer autenticação + ser o criador da turma. Sem campos.
+
+**Sucesso:** redireciona (303) para `/clubs?success=excluida`.
 
 ---
 

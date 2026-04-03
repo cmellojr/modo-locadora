@@ -29,14 +29,17 @@ Inclua: descrição, passos para reproduzir, impacto potencial e sugestão de co
 |--------|-----------|-------------|
 | Rotas de sócio | `RequireAuth` | Cookie assinado válido |
 | Rotas admin (`/admin/*`) | `RequireAdmin` | Cookie válido + e-mail bate com `ADMIN_EMAIL` |
+| Rotas de turma (ações) | `RequireAuth` | Cookie assinado válido |
+| Ações admin de turma | `RequireAuth` + verificação de cargo | Membro com role `admin` na turma |
+| Exclusão de turma | `RequireAuth` + verificação de criador | `created_by` = sócio logado |
 
 Requisições não autenticadas redirecionam para `/`. Usuários não-admin recebem `403 Forbidden`.
 
 ## Reputação do Sócio
 
 - Aluguéis atrasados são auto-devolvidos por um job de background (intervalo de 5 minutos).
-- Sócios infratores são marcados como "em débito" com incremento permanente do `late_count`.
-- Sócios em débito não podem alugar até se redimirem via `/carteirinha/redeem`.
+- Sócios infratores são marcados como `in_debt` com incremento permanente do `late_count`.
+- Sócios em débito não podem alugar até se redimirem via `/membership/redeem`.
 - O Painel da Vergonha na página de entrada exibe os maiores infratores.
 
 ## Integridade de Dados
@@ -46,9 +49,10 @@ Requisições não autenticadas redirecionam para `/`. Usuários não-admin rece
 
 ## Upload de Arquivos
 
-- Uploads de capa restritos a arquivos de imagem (`accept="image/*"`).
+- Uploads de capa e badges de turma restritos a arquivos de imagem (`accept="image/*"`).
 - Tamanho máximo do formulário: 10 MB.
-- Arquivos salvos com UUID do jogo como nome (previne path traversal).
+- Arquivos salvos com UUID como nome (previne path traversal).
+- Capas de jogos: `web/static/covers/`. Badges de turmas: `web/static/clubs/`.
 
 ## Análise Estática
 

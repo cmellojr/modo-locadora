@@ -1,241 +1,200 @@
-<!DOCTYPE html>
-<html lang="pt-br">
+{{define "page-styles"}}
+<style>
+    .detail-layout {
+        display: flex;
+        gap: 20px;
+        align-items: flex-start;
+    }
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{.Detail.Game.Title}} - Modo Locadora</title>
-    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
-    <link href="https://unpkg.com/nes.css@2.3.0/css/nes.min.css" rel="stylesheet" />
-    <link rel="stylesheet" href="/static/css/retro.css">
-    <style>
-        body {
-            margin: 0;
-            padding: 20px;
-            height: auto;
-            overflow-y: auto;
-            display: flex;
-            justify-content: center;
-        }
+    .detail-cover {
+        flex-shrink: 0;
+    }
 
+    .detail-cover img {
+        width: 200px;
+        image-rendering: pixelated;
+        border: 3px solid #444;
+    }
+
+    .detail-cover .no-cover {
+        width: 200px;
+        height: 260px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #222;
+        border: 3px solid #444;
+        color: #666;
+        font-size: 10px;
+    }
+
+    .detail-info {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .detail-info .game-title {
+        font-size: 14px;
+        color: #FFFFFF;
+        margin-bottom: 8px;
+    }
+
+    .detail-info .platform-tag {
+        font-size: 9px;
+        margin-bottom: 16px;
+        display: inline-block;
+    }
+
+    .detail-info .summary-text {
+        font-size: 10px;
+        color: #ccc;
+        line-height: 2;
+        margin-bottom: 16px;
+    }
+
+    .detail-info .magazine-ref {
+        font-size: 9px;
+        color: #92cc41;
+        font-style: italic;
+        margin-bottom: 16px;
+    }
+
+    .stats-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+        margin-bottom: 16px;
+    }
+
+    .stat-box {
+        background: #1A1A1A;
+        border: 1px solid #333;
+        padding: 10px;
+        text-align: center;
+    }
+
+    .stat-box .stat-value {
+        font-size: 16px;
+        color: #f7d51d;
+        display: block;
+        margin-bottom: 4px;
+    }
+
+    .stat-box .stat-label {
+        font-size: 8px;
+        color: #888;
+    }
+
+    .rental-status {
+        margin-bottom: 16px;
+        font-size: 10px;
+    }
+
+    .renter-info {
+        font-size: 9px;
+        color: #e74c3c;
+        margin-top: 6px;
+    }
+
+    @media (max-width: 600px) {
         .detail-layout {
-            display: flex;
-            gap: 20px;
-            align-items: flex-start;
-        }
-
-        .detail-cover {
-            flex-shrink: 0;
-        }
-
-        .detail-cover img {
-            width: 200px;
-            image-rendering: pixelated;
-            border: 3px solid #444;
-        }
-
-        .detail-cover .no-cover {
-            width: 200px;
-            height: 260px;
-            display: flex;
+            flex-direction: column;
             align-items: center;
-            justify-content: center;
-            background: #222;
-            border: 3px solid #444;
-            color: #666;
-            font-size: 10px;
         }
-
         .detail-info {
-            flex: 1;
-            min-width: 0;
-        }
-
-        .detail-info .game-title {
-            font-size: 14px;
-            color: #FFFFFF;
-            margin-bottom: 8px;
-        }
-
-        .detail-info .platform-tag {
-            font-size: 9px;
-            margin-bottom: 16px;
-            display: inline-block;
-        }
-
-        .detail-info .summary-text {
-            font-size: 10px;
-            color: #ccc;
-            line-height: 2;
-            margin-bottom: 16px;
-        }
-
-        .detail-info .magazine-ref {
-            font-size: 9px;
-            color: #92cc41;
-            font-style: italic;
-            margin-bottom: 16px;
-        }
-
-        .stats-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 12px;
-            margin-bottom: 16px;
-        }
-
-        .stat-box {
-            background: #1A1A1A;
-            border: 1px solid #333;
-            padding: 10px;
             text-align: center;
         }
-
-        .stat-box .stat-value {
-            font-size: 16px;
-            color: #f7d51d;
-            display: block;
-            margin-bottom: 4px;
+        .stats-grid {
+            grid-template-columns: 1fr;
         }
+    }
+</style>
+{{end}}
 
-        .stat-box .stat-label {
-            font-size: 8px;
-            color: #888;
-        }
+{{define "content"}}
+{{if .DebtError}}
+<div style="margin-bottom: 20px;">
+    <div class="nes-container is-dark is-rounded" style="border-color: #e74c3c;">
+        <p class="nes-text is-error" style="font-size: 10px;">
+            &#9760; Voc&ecirc; est&aacute; em d&eacute;bito com o Tio! V&aacute; at&eacute; sua <a href="/membership" style="color: #f7d51d;">carteirinha</a> e sopre o cartucho antes de alugar.
+        </p>
+    </div>
+</div>
+{{end}}
 
-        .rental-status {
-            margin-bottom: 16px;
-            font-size: 10px;
-        }
-
-        .renter-info {
-            font-size: 9px;
-            color: #e74c3c;
-            margin-top: 6px;
-        }
-
-        @media (max-width: 600px) {
-            .detail-layout {
-                flex-direction: column;
-                align-items: center;
-            }
-            .detail-info {
-                text-align: center;
-            }
-            .stats-grid {
-                grid-template-columns: 1fr;
-            }
-        }
-    </style>
-</head>
-
-<body>
-    <div class="container-wrapper">
-        {{if .IsLoggedIn}}
-        <div class="auth-bar">
-            <span class="auth-member">S&oacute;cio: {{.MemberName}}</span>
-            <form action="/logout" method="POST" style="margin:0;">
-                <button type="submit" class="auth-logout">[DESCONECTAR]</button>
-            </form>
-        </div>
-        {{end}}
-
-        {{if .DebtError}}
-        <div style="margin-bottom: 20px;">
-            <div class="nes-container is-dark is-rounded" style="border-color: #e74c3c;">
-                <p class="nes-text is-error" style="font-size: 10px;">
-                    &#9760; Voc&ecirc; est&aacute; em d&eacute;bito com o Tio! V&aacute; at&eacute; sua <a href="/carteirinha" style="color: #f7d51d;">carteirinha</a> e sopre o cartucho antes de alugar.
-                </p>
+<div class="nes-container with-title is-dark">
+    <p class="title">
+        <span class="title-main">FICHA DO CARTUCHO</span>
+        <span class="title-sub">IGDB #{{.Detail.Game.IgdbID}}</span>
+    </p>
+    <div class="forum-body">
+        <div class="detail-layout">
+            <div class="detail-cover">
+                {{if .Detail.Game.CoverURL}}
+                <img src="{{.Detail.Game.CoverURL}}" alt="{{.Detail.Game.Title}}" style="object-fit: {{.Detail.Game.CoverDisplay}}">
+                {{else}}
+                <div class="no-cover">SEM CAPA</div>
+                {{end}}
             </div>
-        </div>
-        {{end}}
 
-        <div class="nes-container with-title is-dark">
-            <p class="title">
-                <span class="title-main">FICHA DO CARTUCHO</span>
-                <span class="title-sub">IGDB #{{.Detail.Game.IgdbID}}</span>
-            </p>
-            <div class="forum-body">
-                <div class="detail-layout">
-                    <div class="detail-cover">
-                        {{if .Detail.Game.CoverURL}}
-                        <img src="{{.Detail.Game.CoverURL}}" alt="{{.Detail.Game.Title}}" style="object-fit: {{.Detail.Game.CoverDisplay}}">
+            <div class="detail-info">
+                <p class="game-title">{{.Detail.Game.Title}}</p>
+                <span class="nes-badge platform-tag">
+                    <span class="is-primary">{{.Detail.Game.Platform}}</span>
+                </span>
+
+                {{if .Detail.Game.Summary}}
+                <p class="summary-text">{{.Detail.Game.Summary}}</p>
+                {{end}}
+
+                {{if .Detail.Game.SourceMagazine}}
+                <p class="magazine-ref"><i class="nes-icon star is-small"></i> Fonte: {{.Detail.Game.SourceMagazine}}</p>
+                {{end}}
+
+                <div class="stats-grid">
+                    <div class="stat-box">
+                        <span class="stat-value">{{.Detail.AvailableCopies}}/{{.Detail.TotalCopies}}</span>
+                        <span class="stat-label">C&oacute;pias dispon&iacute;veis</span>
+                    </div>
+                    <div class="stat-box">
+                        <span class="stat-value">{{.Detail.TotalRentals}}</span>
+                        <span class="stat-label">Vezes alugado</span>
+                    </div>
+                    {{if .Detail.TopRenterName}}
+                    <div class="stat-box">
+                        <span class="stat-value">{{.Detail.TopRenterName}}</span>
+                        <span class="stat-label">F&atilde; n&ordm;1 ({{.Detail.TopRenterCount}}x)</span>
+                    </div>
+                    {{end}}
+                    <div class="stat-box">
+                        <span class="stat-value">{{.Detail.Game.AcquiredAt.Format "02/01/2006"}}</span>
+                        <span class="stat-label">Adquirido em</span>
+                    </div>
+                </div>
+
+                <div class="rental-status">
+                    {{if gt .Detail.AvailableCopies 0}}
+                        {{if .IsLoggedIn}}
+                        <form action="/rent" method="POST" style="margin: 0;">
+                            <input type="hidden" name="game_id" value="{{.Detail.Game.ID}}">
+                            <button type="submit" class="nes-btn is-success btn-nav">ALUGAR ESTA FITA</button>
+                        </form>
                         {{else}}
-                        <div class="no-cover">SEM CAPA</div>
-                        {{end}}
-                    </div>
-
-                    <div class="detail-info">
-                        <p class="game-title">{{.Detail.Game.Title}}</p>
-                        <span class="nes-badge platform-tag">
-                            <span class="is-primary">{{.Detail.Game.Platform}}</span>
+                        <span class="nes-badge">
+                            <span class="is-primary">DISPON&Iacute;VEL</span>
                         </span>
-
-                        {{if .Detail.Game.Summary}}
-                        <p class="summary-text">{{.Detail.Game.Summary}}</p>
                         {{end}}
-
-                        {{if .Detail.Game.SourceMagazine}}
-                        <p class="magazine-ref"><i class="nes-icon star is-small"></i> Fonte: {{.Detail.Game.SourceMagazine}}</p>
+                    {{else}}
+                        <span class="nes-badge">
+                            <span class="is-error">TODAS AS C&Oacute;PIAS ALUGADAS</span>
+                        </span>
+                        {{if .Detail.CurrentRenter}}
+                        <p class="renter-info">Com o S&oacute;cio: {{.Detail.CurrentRenter}}</p>
                         {{end}}
-
-                        <div class="stats-grid">
-                            <div class="stat-box">
-                                <span class="stat-value">{{.Detail.AvailableCopies}}/{{.Detail.TotalCopies}}</span>
-                                <span class="stat-label">C&oacute;pias dispon&iacute;veis</span>
-                            </div>
-                            <div class="stat-box">
-                                <span class="stat-value">{{.Detail.TotalRentals}}</span>
-                                <span class="stat-label">Vezes alugado</span>
-                            </div>
-                            {{if .Detail.TopRenterName}}
-                            <div class="stat-box">
-                                <span class="stat-value">{{.Detail.TopRenterName}}</span>
-                                <span class="stat-label">F&atilde; n&ordm;1 ({{.Detail.TopRenterCount}}x)</span>
-                            </div>
-                            {{end}}
-                            <div class="stat-box">
-                                <span class="stat-value">{{.Detail.Game.AcquiredAt.Format "02/01/2006"}}</span>
-                                <span class="stat-label">Adquirido em</span>
-                            </div>
-                        </div>
-
-                        <div class="rental-status">
-                            {{if gt .Detail.AvailableCopies 0}}
-                                {{if .IsLoggedIn}}
-                                <form action="/rent" method="POST" style="margin: 0;">
-                                    <input type="hidden" name="game_id" value="{{.Detail.Game.ID}}">
-                                    <button type="submit" class="nes-btn is-success btn-nav">ALUGAR ESTA FITA</button>
-                                </form>
-                                {{else}}
-                                <span class="nes-badge">
-                                    <span class="is-primary">DISPON&Iacute;VEL</span>
-                                </span>
-                                {{end}}
-                            {{else}}
-                                <span class="nes-badge">
-                                    <span class="is-error">TODAS AS C&Oacute;PIAS ALUGADAS</span>
-                                </span>
-                                {{if .Detail.CurrentRenter}}
-                                <p class="renter-info">Com o S&oacute;cio: {{.Detail.CurrentRenter}}</p>
-                                {{end}}
-                            {{end}}
-                        </div>
-                    </div>
+                    {{end}}
                 </div>
             </div>
         </div>
-
-        <div class="nav-bar">
-            <a href="/games?platform={{.Detail.Game.Platform}}" class="nes-btn btn-nav">VOLTAR &Agrave; PRATELEIRA</a>
-            <a href="/games" class="nes-btn is-primary btn-nav">TODOS OS CONSOLES</a>
-            {{if .IsLoggedIn}}
-            <a href="/carteirinha" class="nes-btn is-warning btn-nav">CARTEIRINHA</a>
-            {{end}}
-        </div>
-
-        <p class="footer-copyright">&copy; 1991-2026 Modo Locadora - Sob licen&ccedil;a GPLv3. Criado pelo Tio da Locadora.</p>
     </div>
-</body>
-
-</html>
+</div>
+{{end}}

@@ -1,270 +1,90 @@
-<!DOCTYPE html>
-<html lang="pt-br">
+{{define "page-styles"}}
+<style>
+    .platform-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 18px;
+        padding: 15px;
+    }
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Acervo de Cartuchos - Modo Locadora</title>
-    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
-    <link href="https://unpkg.com/nes.css@2.3.0/css/nes.min.css" rel="stylesheet" />
-    <link rel="stylesheet" href="/static/css/retro.css">
-    <style>
-        body {
-            margin: 0;
-            padding: 20px;
-            height: auto;
-            overflow-y: auto;
-            display: flex;
-            justify-content: center;
-        }
+    .platform-card {
+        background-color: #1A1A1A;
+        border: 2px solid #333;
+        border-top: 6px solid #f7d51d;
+        padding: 14px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        transition: border-color 0.2s, background-color 0.2s;
+        text-decoration: none;
+        color: inherit;
+    }
 
-        .container-wrapper {
-            max-width: 1200px;
-        }
+    .platform-card:hover {
+        background-color: #222;
+        border-color: #f7d51d;
+    }
 
-        .platform-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-            gap: 18px;
-            padding: 15px;
-        }
+    .platform-card .console-logo {
+        margin-bottom: 12px;
+        width: 160px;
+        height: 100px;
+        object-fit: contain;
+    }
 
-        .platform-card {
-            background-color: #1A1A1A;
-            border: 2px solid #333;
-            border-top: 6px solid #f7d51d;
-            padding: 14px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            text-align: center;
-            transition: border-color 0.2s, background-color 0.2s;
-            text-decoration: none;
-            color: inherit;
-        }
+    .platform-card .no-logo {
+        width: 160px;
+        height: 100px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #222;
+        border: 2px dashed #444;
+        color: #888;
+        font-size: 10px;
+        margin-bottom: 12px;
+    }
 
-        .platform-card:hover {
-            background-color: #222;
-            border-color: #f7d51d;
-        }
+    .platform-card .platform-name {
+        font-size: 12px;
+        color: #FFFFFF;
+        margin-bottom: 8px;
+    }
 
-        .platform-card .console-logo {
-            margin-bottom: 12px;
-            width: 160px;
-            height: 100px;
-            object-fit: contain;
-        }
+    .platform-card .game-count {
+        font-size: 9px;
+        color: #92cc41;
+    }
+</style>
+{{end}}
 
-        .platform-card .no-logo {
-            width: 160px;
-            height: 100px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: #222;
-            border: 2px dashed #444;
-            color: #888;
-            font-size: 10px;
-            margin-bottom: 12px;
-        }
+{{define "content"}}
+<h2 class="pixel-aligned-title" style="margin-bottom: 20px;">ACERVO DE CARTUCHOS</h2>
 
-        .platform-card .platform-name {
-            font-size: 12px;
-            color: #FFFFFF;
-            margin-bottom: 8px;
-        }
-
-        .platform-card .game-count {
-            font-size: 9px;
-            color: #92cc41;
-        }
-
-        .status-badge-label {
-            display: inline-block;
-            font-size: 9px;
-            padding: 4px 12px;
-            color: #fff;
-            text-align: center;
-            margin-top: 6px;
-        }
-        .status-badge-label.is-success { background-color: #92cc41; color: #111; }
-        .status-badge-label.is-error   { background-color: #e74c3c; }
-        .status-badge-label.is-primary { background-color: #209cee; }
-
-        .activity-item {
-            margin-bottom: 16px;
-        }
-
-        .activity-item .nes-balloon {
-            font-size: 9px;
-            line-height: 1.8;
-            margin-bottom: 4px;
-        }
-
-        .activity-time {
-            font-size: 8px;
-            color: #777;
-            text-align: right;
-        }
-
-        .activity-mascot {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            margin-top: 4px;
-        }
-
-        .activity-mascot .nes-bcrikko {
-            transform: scale(0.6);
-            transform-origin: bottom left;
-        }
-
-        .almanac-section {
-            border-top: 2px dashed #444;
-            margin-top: 16px;
-            padding-top: 16px;
-        }
-
-        .almanac-section .almanac-label {
-            font-size: 10px;
-            color: #f7d51d;
-            margin-bottom: 10px;
-        }
-
-        .almanac-section .almanac-text {
-            font-size: 9px;
-            color: #ccc;
-            line-height: 1.8;
-        }
-    </style>
-</head>
-
-<body>
-    <div class="container-wrapper">
-        {{if .IsLoggedIn}}
-        <div class="auth-bar">
-            <span class="auth-member">S&oacute;cio: {{.MemberName}}</span>
-            <form action="/logout" method="POST" style="margin:0;">
-                <button type="submit" class="auth-logout">[DESCONECTAR]</button>
-            </form>
-        </div>
-        {{end}}
-
-        <h2 class="pixel-aligned-title" style="margin-bottom: 20px;">ACERVO DE CARTUCHOS</h2>
-
-        <div class="locadora-grid">
-            <!-- LEFT SIDEBAR -->
-            <div>
-                {{if .IsLoggedIn}}
-                {{if .MemberMini}}
-                <div class="nes-container with-title is-dark">
-                    <p class="title"><span class="title-main">CARTEIRINHA</span></p>
-                    <div class="member-mini-card">
-                        <i class="nes-avatar is-rounded"></i>
-                        <p class="mini-name">{{.MemberMini.ProfileName}}</p>
-                        <p class="mini-number">{{.MemberMini.MembershipNumber}}</p>
-                        <span class="status-badge-label {{.MemberMini.StatusBadge}}">{{.MemberMini.StatusLabel}}</span>
-                        {{if gt .MemberMini.ActiveRentals 0}}
-                        <p style="font-size:8px;color:#999;margin-top:8px;">{{.MemberMini.ActiveRentals}} fita(s) alugada(s)</p>
-                        {{end}}
-                    </div>
-                    <ul class="quick-links">
-                        <li><a href="/carteirinha" class="nes-text is-warning">MINHA CARTEIRINHA</a></li>
-                    </ul>
-                </div>
-                {{end}}
+<div class="nes-container with-title is-dark">
+    <p class="title">
+        <span class="title-main">[ESCOLHA O CONSOLE]</span>
+        <span class="title-sub">{{len .Platforms}} plataformas</span>
+    </p>
+    <div class="forum-body">
+        {{if .Platforms}}
+        <div class="platform-grid">
+            {{range .Platforms}}
+            <a href="/games?platform={{.Platform}}" class="platform-card">
+                {{if .LogoURL}}
+                <img src="{{.LogoURL}}" alt="{{.Platform}}" class="console-logo">
                 {{else}}
-                <div class="nes-container with-title is-dark">
-                    <p class="title"><span class="title-main">BEM-VINDO</span></p>
-                    <p style="font-size:9px;color:#999;">Fa&ccedil;a login para acessar sua carteirinha e alugar fitas.</p>
-                    <ul class="quick-links">
-                        <li><a href="/" class="nes-text is-primary">IR AO BALC&Atilde;O</a></li>
-                    </ul>
-                </div>
+                <div class="no-logo">{{.Platform}}</div>
                 {{end}}
-
-                {{if .ShameEntries}}
-                <div class="nes-container with-title is-dark" style="margin-top:16px;">
-                    <p class="title"><span class="title-main">VERGONHA</span></p>
-                    {{range .ShameEntries}}
-                    <div class="shame-compact">
-                        <span class="shame-name">&#9760; {{.ProfileName}}</span>
-                        <span class="shame-count">{{.LateCount}}x</span>
-                    </div>
-                    {{end}}
-                </div>
-                {{end}}
-            </div>
-
-            <!-- MAIN CONTENT -->
-            <div>
-                <div class="nes-container with-title is-dark">
-                    <p class="title">
-                        <span class="title-main">[ESCOLHA O CONSOLE]</span>
-                        <span class="title-sub">{{len .Platforms}} plataformas</span>
-                    </p>
-                    <div class="forum-body">
-                        {{if .Platforms}}
-                        <div class="platform-grid">
-                            {{range .Platforms}}
-                            <a href="/games?platform={{.Platform}}" class="platform-card">
-                                {{if .LogoURL}}
-                                <img src="{{.LogoURL}}" alt="{{.Platform}}" class="console-logo">
-                                {{else}}
-                                <div class="no-logo">{{.Platform}}</div>
-                                {{end}}
-                                <p class="platform-name">{{.Platform}}</p>
-                                <p class="game-count">{{.GameCount}} {{if eq .GameCount 1}}fita{{else}}fitas{{end}}</p>
-                            </a>
-                            {{end}}
-                        </div>
-                        {{else}}
-                        <p class="empty-state">Nenhum console no acervo ainda. O Tio est&aacute; comprando fitas!</p>
-                        {{end}}
-                    </div>
-                </div>
-            </div>
-
-            <!-- RIGHT SIDEBAR -->
-            <div>
-                <div class="nes-container with-title is-dark">
-                    <p class="title">
-                        <span class="title-main">ACONTECEU NA LOCADORA</span>
-                    </p>
-
-                    {{if .Activities}}
-                    {{range .Activities}}
-                    <div class="activity-item">
-                        <div class="nes-balloon from-left is-dark">
-                            <p>{{.Message}}</p>
-                        </div>
-                        <div class="activity-mascot">
-                            <i class="nes-bcrikko is-small"></i>
-                            <span class="activity-time">{{.TimeAgo}}</span>
-                        </div>
-                    </div>
-                    {{end}}
-                    {{else}}
-                    <p class="nes-text is-disabled" style="font-size: 9px;">Nenhuma novidade por enquanto. O Tio est&aacute; de olho!</p>
-                    {{end}}
-
-                    <div class="almanac-section">
-                        <p class="almanac-label">ALMANAQUE DO TIO</p>
-                        <p class="almanac-text">{{.Ephemeride}}</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="nav-bar">
-            {{if .IsLoggedIn}}
-            <a href="/carteirinha" class="nes-btn is-warning btn-nav">CARTEIRINHA</a>
+                <p class="platform-name">{{.Platform}}</p>
+                <p class="game-count">{{.GameCount}} {{if eq .GameCount 1}}fita{{else}}fitas{{end}}</p>
+            </a>
             {{end}}
-            <a href="/" class="nes-btn is-primary btn-nav">VOLTAR AO BALC&Atilde;O</a>
         </div>
-
-        <p class="footer-copyright">&copy; 1991-2026 Modo Locadora - Sob licen&ccedil;a GPLv3. Criado pelo Tio da Locadora.</p>
+        {{else}}
+        <p class="empty-state">Nenhum console no acervo ainda. O Tio est&aacute; comprando fitas!</p>
+        {{end}}
     </div>
-</body>
-
-</html>
+</div>
+{{end}}

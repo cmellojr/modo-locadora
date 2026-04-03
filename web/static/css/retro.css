@@ -183,14 +183,6 @@ img, .nes-icon {
     margin-top: 1rem;
 }
 
-/* Navigation bar - shared across pages */
-.nav-bar {
-    margin-top: 2rem;
-    display: flex;
-    gap: 10px;
-    flex-wrap: wrap;
-}
-
 /* Empty state - shared across admin pages */
 .empty-state {
     text-align: center;
@@ -207,11 +199,11 @@ img, .nes-icon {
     font-size: 12px;
 }
 
-/* Footer copyright - consistent across all templates */
+/* Footer copyright */
 .footer-copyright {
     font-size: 9px;
     text-align: center;
-    margin-top: 40px;
+    margin-top: 0;
     color: #555;
 }
 
@@ -226,31 +218,73 @@ img, .nes-icon {
     height: 12px;
 }
 
-/* Shared container wrapper - consistent max-width */
-.container-wrapper {
-    max-width: 960px;
-    width: 100%;
+
+/* ═══════════════════════════════════════════════════════════════
+   Site Layout — 3-Column (Left Sidebar | Content | Right Sidebar)
+   Inspired by 2000s gaming sites (GameFAQs, Backloggery)
+   ═══════════════════════════════════════════════════════════════ */
+
+.site-layout {
+    display: grid;
+    grid-template-columns: 200px 1fr 260px;
+    grid-template-rows: auto auto 1fr auto;
+    grid-template-areas:
+        "banner  banner  banner"
+        "navbar  navbar  navbar"
+        "left    content right"
+        "footer  footer  footer";
+    min-height: 100vh;
 }
 
-/* Auth bar - shown at top right on all pages */
-.auth-bar {
+/* ── Site Banner ── */
+.site-banner {
+    grid-area: banner;
     display: flex;
-    justify-content: flex-end;
     align-items: center;
-    gap: 12px;
-    margin-bottom: 12px;
+    justify-content: space-between;
+    padding: 20px 24px;
+    background: linear-gradient(180deg, #0D1117 0%, #1F3A5F 100%);
+    border-bottom: 4px solid #3498DB;
+}
+
+.banner-logo {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.banner-title {
+    font-size: 18px;
+    color: #f7d51d !important;
+    text-decoration: none !important;
+    letter-spacing: 2px;
+    text-shadow: 2px 2px 0 #000, 4px 4px 0 rgba(0,0,0,0.3);
+}
+
+.banner-title:hover {
+    color: #fff !important;
+    text-decoration: none !important;
+}
+
+.banner-subtitle {
     font-size: 9px;
-    flex-wrap: nowrap;
+    color: #3498DB;
+    letter-spacing: 3px;
 }
-.auth-bar form {
-    display: inline;
-    margin: 0;
-    padding: 0;
+
+.banner-auth {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 9px;
+    white-space: nowrap;
 }
-.auth-bar .auth-member {
+
+.banner-auth .auth-member {
     color: #92cc41;
 }
-.auth-bar .auth-logout {
+
+.banner-auth .auth-logout {
     background: none;
     border: none;
     color: #e74c3c;
@@ -260,21 +294,200 @@ img, .nes-icon {
     padding: 0;
     text-decoration: underline;
 }
-.auth-bar .auth-logout:hover {
+
+.banner-auth .auth-logout:hover {
     color: #ff6b6b;
 }
 
-/* 3-Column Layout — Platforms Page */
-.locadora-grid {
-    display: grid;
-    grid-template-columns: 260px 1fr 320px;
-    gap: 24px;
-    align-items: start;
+/* ── Navigation Bar ── */
+.top-nav-bar {
+    grid-area: navbar;
+    display: flex;
+    align-items: center;
+    padding: 0 8px;
+    background: #1F3A5F;
+    border-bottom: 2px solid #3498DB;
+    gap: 0;
+    flex-wrap: wrap;
 }
 
-@media (max-width: 1100px) {
-    .locadora-grid {
+.top-nav-bar a {
+    font-size: 10px;
+    color: #ccc;
+    padding: 10px 14px;
+    text-decoration: none;
+    white-space: nowrap;
+    border-right: 1px solid #2a5080;
+}
+
+.top-nav-bar a:first-child {
+    border-left: 1px solid #2a5080;
+}
+
+.top-nav-bar a:hover {
+    color: #fff;
+    background: #3498DB;
+    text-decoration: none;
+}
+
+.nav-separator {
+    color: #2a5080;
+    padding: 0 4px;
+    font-size: 10px;
+}
+
+/* Left sidebar */
+.left-sidebar {
+    grid-area: left;
+    background: #0D1117;
+    border-right: 2px solid #1F3A5F;
+    padding: 16px 12px;
+    overflow-y: auto;
+}
+
+/* Right sidebar */
+.right-sidebar {
+    grid-area: right;
+    background: #0D1117;
+    border-left: 2px solid #1F3A5F;
+    padding: 16px 12px;
+    overflow-y: auto;
+}
+
+/* Sidebar section blocks */
+.sidebar-section {
+    margin-bottom: 20px;
+}
+
+.sidebar-section:last-child {
+    margin-bottom: 0;
+}
+
+/* Compact NES.css container for sidebars */
+.sidebar-container {
+    padding: 12px !important;
+}
+
+.sidebar-container > .title {
+    font-size: 10px !important;
+    padding: 6px 10px !important;
+}
+
+/* Sidebar navigation links */
+.sidebar-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+}
+
+.sidebar-nav a {
+    display: block;
+    font-size: 10px;
+    color: #3498DB;
+    padding: 8px 10px;
+    text-decoration: none;
+    border-left: 3px solid transparent;
+}
+
+.sidebar-nav a:hover {
+    color: #fff;
+    background: #1A1A2E;
+    border-left-color: #3498DB;
+    text-decoration: none;
+}
+
+/* Compact activity for right sidebar */
+.activity-item-compact {
+    padding: 8px 0;
+    border-bottom: 1px dashed #333;
+}
+
+.activity-item-compact:last-child {
+    border-bottom: none;
+}
+
+.activity-item-compact .activity-msg {
+    font-size: 9px;
+    color: #ccc;
+    line-height: 1.8;
+    margin: 0 0 4px 0;
+}
+
+.activity-item-compact .activity-time {
+    font-size: 8px;
+    color: #555;
+}
+
+/* Almanac text in sidebar */
+.sidebar-almanac {
+    font-size: 9px;
+    color: #ccc;
+    line-height: 1.8;
+}
+
+/* Main content area */
+.main-content {
+    grid-area: content;
+    padding: 20px;
+    overflow-y: auto;
+    min-width: 0;
+}
+
+/* Site footer — spans all columns */
+.site-footer {
+    grid-area: footer;
+    text-align: center;
+    padding: 16px;
+    border-top: 2px solid #1F3A5F;
+}
+
+.site-footer .footer-copyright {
+    margin-top: 0;
+}
+
+/* Status badge used in sidebar mini-card */
+.status-badge-label {
+    display: inline-block;
+    font-size: 9px;
+    padding: 4px 12px;
+    color: #fff;
+    text-align: center;
+    margin-top: 6px;
+}
+.status-badge-label.is-success { background-color: #92cc41; color: #111; }
+.status-badge-label.is-error   { background-color: #e74c3c; }
+.status-badge-label.is-primary { background-color: #209cee; }
+
+/* Responsive: collapse to single column on tablets/mobile */
+@media (max-width: 768px) {
+    .site-layout {
         grid-template-columns: 1fr;
+        grid-template-areas:
+            "banner"
+            "navbar"
+            "left"
+            "content"
+            "right"
+            "footer";
+    }
+
+    .left-sidebar,
+    .right-sidebar {
+        border-left: none;
+        border-right: none;
+        border-top: 2px solid #1F3A5F;
+    }
+
+    .site-banner {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        gap: 10px;
+        padding: 16px;
+    }
+
+    .banner-auth {
+        margin-left: 0;
     }
 }
 

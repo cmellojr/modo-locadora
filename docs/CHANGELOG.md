@@ -7,6 +7,7 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) e o p
 ## [Não Lançado]
 
 ### Adicionado
+- **Turmas (Clubs)**: Sistema de comunidades gamers — sócios podem criar turmas (representando podcasts, canais YouTube, grupos WhatsApp etc.), personalizar com badge e URL, e convidar outros sócios. Múltiplos admins por turma; listagem pública. Relação M2M (`clubs` ↔ `club_members` ↔ `members`). Carteirinha exibe "MINHAS TURMAS" com badge, nome e cargo. Feed de atividades registra criação e entrada em turmas. Upload de badges salvos em `web/static/clubs/` (volume Docker). Migration `009_clubs.sql`. 11 rotas novas, 3 templates (`clubs.html`, `club_detail.html`, `club_form.html`). Botão TURMAS adicionado a todas as páginas.
 - **Títulos de progressão** (`Status de Veterano`): Carteirinha exibe badge de progressão — Sócio Novato (padrão), Sócio Prata (10+ devoluções no prazo), Sócio Ouro (25+ devoluções no prazo), Dono da Calçada (5+ jogos zerados). Devedores veem título esmaecido com "(EM DÉBITO)". Computação pura via `ComputeMemberTitle()` em `internal/models/member.go`.
 - **Indicadores de saúde do acervo** (`Saúde do Acervo`): Inventário admin mostra coluna de saúde por jogo — Cartucho Novo (0-1 aluguéis), Clássico Eterno (<25% vereditos ruins), Precisa Soprar (25-49%), Fita Gasta (50%+). Calculado a partir de vereditos e atrasos via `ListGamesWithHealth()`.
 - **Histórico de aluguéis na ficha do jogo**: Página de edição admin mostra os últimos 5 registros de aluguel (sócio, datas, veredito, indicador de atraso) via `ListGameRentalHistory()`.
@@ -18,7 +19,7 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) e o p
 - **Almanaque do Tio** (`internal/almanac/`): Efemérides estáticas de gaming por dia do ano, exibidas ao lado do feed.
 - **Sistema de vereditos**: Na devolução, sócios escolhem um veredito (Zerei / Joguei um pouco / Desisti). Vereditos armazenados em `public_legacy` e geram eventos de atividade.
 - **Estrela Dourada**: Jogos completados ("Zerei") pelo sócio logado mostram estrela dourada na prateleira.
-- **Auto-devolução na carteirinha**: Sócios podem devolver aluguéis diretamente da carteirinha via `POST /carteirinha/return`.
+- **Auto-devolução na carteirinha**: Sócios podem devolver aluguéis diretamente da carteirinha via `POST /membership/return`.
 - **Layout 3 colunas**: Página de plataformas usa CSS Grid (`.locadora-grid`): sidebar esquerda (mini-card + Painel da Vergonha), centro (grade de plataformas), sidebar direita (feed + almanaque).
 - **Sistema de seed SQL**: Flag `--seed` aplica todas as migrations + `007_seed_initial_data.sql` com 5 jogos da Ação Games #1, 3 sócios de teste, histórico de aluguéis e feed. Execução via `go run ./cmd/server --seed`.
 - **Fluxo de login/logout**: Balcão é sempre a página de entrada; sócios logados veem mensagem de boas-vindas + navegação. `POST /logout` limpa o cookie de sessão.
@@ -26,9 +27,9 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) e o p
 - **Logos de console na grade**: Página de seleção de plataforma mostra logos SVG (`web/static/img/logos/`) ao invés de capas de jogos. Mapeamento automático via helper `platformLogoFile()`.
 - **Navegação em 3 níveis**: `/games` mostra grade de plataformas, `?platform=X` filtra por console, `/games/{id}` mostra detalhe completo com stats.
 - **Upload de capas brasileiras**: Admin pode enviar imagens locais (TecToy, Playtronic) via formulário multipart na página de edição. Capas salvas em `web/static/covers/` (volume Docker).
-- **Sistema de auto-devolução**: Job de background verifica aluguéis atrasados a cada 5 minutos, auto-devolve e penaliza sócios (status "em débito" + incremento de `late_count`). Migration `005_auto_return_reputation.sql`.
+- **Sistema de auto-devolução**: Job de background verifica aluguéis atrasados a cada 5 minutos, auto-devolve e penaliza sócios (status `in_debt` + incremento de `late_count`). Migration `005_auto_return_reputation.sql`.
 - **Painel da Vergonha**: Página de entrada mostra maiores devedores.
-- **Redenção de sócio**: `POST /carteirinha/redeem` limpa status de débito.
+- **Redenção de sócio**: `POST /membership/redeem` limpa status de débito.
 - **Aplicação Dockerizada**: Dockerfile multi-stage, Docker Compose roda app + PostgreSQL, volume `covers_data` para uploads.
 - **Caderno de Passwords**: Sócios podem salvar códigos de jogos na carteirinha. Migration `004_password_notes.sql`.
 - **Pacote `internal/jobs/`**: Goroutine de background para processamento de aluguéis atrasados.

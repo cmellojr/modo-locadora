@@ -1,0 +1,64 @@
+{{define "page-styles"}}
+    <style>
+        .field-row {
+            margin-bottom: 1.5rem;
+        }
+
+        .field-row label {
+            display: block;
+            font-size: 10px;
+            color: #92cc41;
+            margin-bottom: 6px;
+        }
+
+        .nes-input,
+        .nes-textarea {
+            font-size: 10px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+    </style>
+{{end}}
+
+{{define "content"}}
+        <div class="nes-container with-title is-dark">
+            <p class="title">
+                <span class="title-main">{{if .IsEdit}}EDITAR TURMA{{else}}CRIAR TURMA{{end}}</span>
+            </p>
+
+            <form action="{{if .IsEdit}}/clubs/{{.Club.ID}}/edit{{else}}/clubs{{end}}" method="POST" enctype="multipart/form-data">
+
+                <div class="field-row nes-field">
+                    <label for="badge_file">Badge da Turma (upload)</label>
+                    <input type="file" id="badge_file" name="badge_file" accept="image/*" class="nes-input" style="font-size:9px;padding:8px;">
+                </div>
+
+                <div class="field-row nes-field">
+                    <label for="name">Nome da Turma</label>
+                    <input type="text" id="name" name="name" class="nes-input" required
+                           value="{{if .IsEdit}}{{.Club.Name}}{{end}}"
+                           placeholder="Ex: Retrogaming BR">
+                </div>
+
+                <div class="field-row nes-field">
+                    <label for="description">Descri&ccedil;&atilde;o</label>
+                    <textarea id="description" name="description" class="nes-textarea" rows="4"
+                              placeholder="Conte sobre a turma...">{{if .IsEdit}}{{.Club.Description}}{{end}}</textarea>
+                </div>
+
+                <div class="field-row nes-field">
+                    <label for="website_url">URL (site, canal, podcast...)</label>
+                    <input type="url" id="website_url" name="website_url" class="nes-input"
+                           value="{{if .IsEdit}}{{.Club.WebsiteURL}}{{end}}"
+                           placeholder="https://...">
+                </div>
+
+                <div class="form-actions">
+                    <a href="/clubs" class="nes-btn btn-nav">CANCELAR</a>
+                    <button type="submit" class="nes-btn is-success btn-nav">
+                        {{if .IsEdit}}SALVAR{{else}}CRIAR TURMA{{end}}
+                    </button>
+                </div>
+            </form>
+        </div>
+{{end}}

@@ -1,183 +1,142 @@
-<!DOCTYPE html>
-<html lang="pt-br">
+{{define "page-styles"}}
+<style>
+    .shelf-container {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+        gap: 18px;
+        padding: 15px;
+    }
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{.Platform}} - Modo Locadora</title>
-    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
-    <link href="https://unpkg.com/nes.css@2.3.0/css/nes.min.css" rel="stylesheet" />
-    <link rel="stylesheet" href="/static/css/retro.css">
-    <style>
-        body {
-            margin: 0;
-            padding: 20px;
-            height: auto;
-            overflow-y: auto;
-            display: flex;
-            justify-content: center;
-        }
+    .cartridge-card {
+        background-color: #1A1A1A;
+        border: 2px solid #333;
+        border-top: 6px solid #3498DB;
+        padding: 12px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        transition: border-color 0.2s, background-color 0.2s;
+        text-decoration: none;
+        color: inherit;
+    }
 
-        .shelf-container {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-            gap: 18px;
-            padding: 15px;
-        }
+    .cartridge-card:hover {
+        background-color: #222;
+        border-color: #3498DB;
+    }
 
-        .cartridge-card {
-            background-color: #1A1A1A;
-            border: 2px solid #333;
-            border-top: 6px solid #3498DB;
-            padding: 12px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            text-align: center;
-            transition: border-color 0.2s, background-color 0.2s;
-            text-decoration: none;
-            color: inherit;
-        }
+    .cartridge-card .game-cover-mini {
+        border: 2px solid #000;
+        image-rendering: pixelated;
+        margin-bottom: 10px;
+        width: 120px;
+        height: 155px;
+        object-fit: cover;
+    }
 
-        .cartridge-card:hover {
-            background-color: #222;
-            border-color: #3498DB;
-        }
+    .cartridge-card .no-cover {
+        width: 120px;
+        height: 155px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #222;
+        border: 2px solid #444;
+        color: #666;
+        font-size: 8px;
+        margin-bottom: 10px;
+    }
 
-        .cartridge-card .game-cover-mini {
-            border: 2px solid #000;
-            image-rendering: pixelated;
-            margin-bottom: 10px;
-            width: 120px;
-            height: 155px;
-            object-fit: cover;
-        }
+    .cartridge-card .game-title {
+        font-size: 10px;
+        color: #FFFFFF;
+        margin-bottom: 6px;
+        height: 34px;
+        overflow: hidden;
+        line-height: 1.8;
+    }
 
-        .cartridge-card .no-cover {
-            width: 120px;
-            height: 155px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: #222;
-            border: 2px solid #444;
-            color: #666;
-            font-size: 8px;
-            margin-bottom: 10px;
-        }
+    .cartridge-card .copy-count {
+        font-size: 8px;
+        color: #777;
+        margin-bottom: 8px;
+    }
 
-        .cartridge-card .game-title {
-            font-size: 10px;
-            color: #FFFFFF;
-            margin-bottom: 6px;
-            height: 34px;
-            overflow: hidden;
-            line-height: 1.8;
-        }
+    .game-status-label {
+        font-size: 8px;
+        margin-top: auto;
+        padding: 4px 0;
+        width: 100%;
+        text-align: center;
+        color: #fff;
+    }
+    .game-status-label.available {
+        background-color: #209cee;
+    }
+    .game-status-label.rented {
+        background-color: #e74c3c;
+    }
 
-        .cartridge-card .copy-count {
-            font-size: 8px;
-            color: #777;
-            margin-bottom: 8px;
-        }
+    .renter-tag {
+        font-size: 8px;
+        color: #e74c3c;
+        margin-top: 6px;
+        display: block;
+    }
 
-        .game-status-label {
-            font-size: 8px;
-            margin-top: auto;
-            padding: 4px 0;
-            width: 100%;
-            text-align: center;
-            color: #fff;
-        }
-        .game-status-label.available {
-            background-color: #209cee;
-        }
-        .game-status-label.rented {
-            background-color: #e74c3c;
-        }
+    .golden-star {
+        display: inline-block;
+        vertical-align: middle;
+        margin-left: 4px;
+        filter: drop-shadow(0 0 4px #f7d51d);
+    }
+</style>
+{{end}}
 
-        .renter-tag {
-            font-size: 8px;
-            color: #e74c3c;
-            margin-top: 6px;
-            display: block;
-        }
+{{define "content"}}
+<h2 class="pixel-aligned-title" style="margin-bottom: 20px;">PRATELEIRA: {{.Platform}}</h2>
 
-        .golden-star {
-            display: inline-block;
-            vertical-align: middle;
-            margin-left: 4px;
-            filter: drop-shadow(0 0 4px #f7d51d);
-        }
-    </style>
-</head>
-
-<body>
-    <div class="container-wrapper">
-        {{if .IsLoggedIn}}
-        <div class="auth-bar">
-            <span class="auth-member">S&oacute;cio: {{.MemberName}}</span>
-            <form action="/logout" method="POST" style="margin:0;">
-                <button type="submit" class="auth-logout">[DESCONECTAR]</button>
-            </form>
-        </div>
-        {{end}}
-
-        <h2 class="pixel-aligned-title" style="margin-bottom: 20px;">PRATELEIRA: {{.Platform}}</h2>
-
-        {{if .DebtError}}
-        <div style="margin-bottom: 20px;">
-            <div class="nes-container is-dark is-rounded" style="border-color: #e74c3c;">
-                <p class="nes-text is-error" style="font-size: 10px;">
-                    &#9760; Voc&ecirc; est&aacute; em d&eacute;bito com o Tio! V&aacute; at&eacute; sua <a href="/carteirinha" style="color: #f7d51d;">carteirinha</a> e sopre o cartucho antes de alugar.
-                </p>
-            </div>
-        </div>
-        {{end}}
-
-        <div class="nes-container with-title is-dark">
-            <p class="title">
-                <span class="title-main">[{{.Platform}}]</span>
-                <span class="title-sub">{{len .Games}} fitas</span>
-            </p>
-            <div class="forum-body">
-                {{if .Games}}
-                <div class="shelf-container">
-                    {{range .Games}}
-                    <a href="/games/{{.ID}}" class="cartridge-card">
-                        {{if .CoverURL}}
-                        <img src="{{.CoverURL}}" alt="{{.Title}}" class="game-cover-mini" style="object-fit: {{.CoverDisplay}}">
-                        {{else}}
-                        <div class="no-cover">SEM CAPA</div>
-                        {{end}}
-                        <p class="game-title">{{.Title}}{{if index $.CompletedGames .ID}} <i class="nes-icon star is-small golden-star"></i>{{end}}</p>
-                        <p class="copy-count">{{.AvailableCopies}} de {{.TotalCopies}} c&oacute;pias</p>
-
-                        {{if gt .AvailableCopies 0}}
-                            <span class="game-status-label available">DISPON&Iacute;VEL</span>
-                        {{else}}
-                            <span class="game-status-label rented">ALUGADO</span>
-                            {{if .RenterName}}<span class="renter-tag">Com: {{.RenterName}}</span>{{end}}
-                        {{end}}
-                    </a>
-                    {{end}}
-                </div>
-                {{else}}
-                <p class="empty-state">Nenhuma fita deste console no acervo ainda.</p>
-                {{end}}
-            </div>
-        </div>
-
-        <div class="nav-bar">
-            <a href="/games" class="nes-btn btn-nav">VOLTAR AOS CONSOLES</a>
-            {{if .IsLoggedIn}}
-            <a href="/carteirinha" class="nes-btn is-warning btn-nav">CARTEIRINHA</a>
-            {{end}}
-            <a href="/" class="nes-btn is-primary btn-nav">BALC&Atilde;O</a>
-        </div>
-
-        <p class="footer-copyright">&copy; 1991-2026 Modo Locadora - Sob licen&ccedil;a GPLv3. Criado pelo Tio da Locadora.</p>
+{{if .DebtError}}
+<div style="margin-bottom: 20px;">
+    <div class="nes-container is-dark is-rounded" style="border-color: #e74c3c;">
+        <p class="nes-text is-error" style="font-size: 10px;">
+            &#9760; Voc&ecirc; est&aacute; em d&eacute;bito com o Tio! V&aacute; at&eacute; sua <a href="/membership" style="color: #f7d51d;">carteirinha</a> e sopre o cartucho antes de alugar.
+        </p>
     </div>
-</body>
+</div>
+{{end}}
 
-</html>
+<div class="nes-container with-title is-dark">
+    <p class="title">
+        <span class="title-main">[{{.Platform}}]</span>
+        <span class="title-sub">{{len .Games}} fitas</span>
+    </p>
+    <div class="forum-body">
+        {{if .Games}}
+        <div class="shelf-container">
+            {{range .Games}}
+            <a href="/games/{{.ID}}" class="cartridge-card">
+                {{if .CoverURL}}
+                <img src="{{.CoverURL}}" alt="{{.Title}}" class="game-cover-mini" style="object-fit: {{.CoverDisplay}}">
+                {{else}}
+                <div class="no-cover">SEM CAPA</div>
+                {{end}}
+                <p class="game-title">{{.Title}}{{if index $.CompletedGames .ID}} <i class="nes-icon star is-small golden-star"></i>{{end}}</p>
+                <p class="copy-count">{{.AvailableCopies}} de {{.TotalCopies}} c&oacute;pias</p>
+
+                {{if gt .AvailableCopies 0}}
+                    <span class="game-status-label available">DISPON&Iacute;VEL</span>
+                {{else}}
+                    <span class="game-status-label rented">ALUGADO</span>
+                    {{if .RenterName}}<span class="renter-tag">Com: {{.RenterName}}</span>{{end}}
+                {{end}}
+            </a>
+            {{end}}
+        </div>
+        {{else}}
+        <p class="empty-state">Nenhuma fita deste console no acervo ainda.</p>
+        {{end}}
+    </div>
+</div>
+{{end}}

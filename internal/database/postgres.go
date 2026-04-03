@@ -506,7 +506,7 @@ func (s *PostgresStore) ProcessOverdueRentals(ctx context.Context) (int, error) 
 		}
 
 		_, err = tx.Exec(ctx,
-			`UPDATE members SET status = 'em_debito', late_count = late_count + 1 WHERE id = $1`,
+			`UPDATE members SET status = 'in_debt', late_count = late_count + 1 WHERE id = $1`,
 			o.memberID)
 		if err != nil {
 			return 0, fmt.Errorf("failed to penalize member %s: %w", o.memberID, err)
@@ -550,10 +550,10 @@ func (s *PostgresStore) GetTopShameEntries(ctx context.Context, limit int) ([]Sh
 	return entries, nil
 }
 
-// RedeemMember resets a member's status from 'em_debito' to 'active'.
+// RedeemMember resets a member's status from 'in_debt' to 'active'.
 func (s *PostgresStore) RedeemMember(ctx context.Context, memberID uuid.UUID) error {
 	tag, err := s.pool.Exec(ctx,
-		`UPDATE members SET status = 'active' WHERE id = $1 AND status = 'em_debito'`,
+		`UPDATE members SET status = 'active' WHERE id = $1 AND status = 'in_debt'`,
 		memberID)
 	if err != nil {
 		return fmt.Errorf("failed to redeem member: %w", err)
@@ -745,6 +745,249 @@ func (s *PostgresStore) ListCompletedGameIDs(ctx context.Context, memberID uuid.
 		ids = append(ids, id)
 	}
 	return ids, nil
+}
+
+// ── Club methods ────────────────────────────────────────────────────────────
+
+// CreateClub persists a new club and adds the creator as admin.
+func (s *PostgresStore) CreateClub(ctx context.Context, c *models.Club) error {
+	tx, err := s.pool.Begin(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to begin transaction: %w", err)
+	}
+	defer tx.Rollback(ctx)
+
+	_, err = tx.Exec(ctx,
+		`INSERT INTO clubs (id, name, description, badge_url, website_url, created_by, created_at, updated_at)
+		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+		c.ID, c.Name, c.Description, c.BadgeURL, c.WebsiteURL, c.CreatedBy, c.CreatedAt, c.UpdatedAt)
+	if err != nil {
+		return fmt.Errorf("failed to create club: %w", err)
+	}
+
+	_, err = tx.Exec(ctx,
+		`INSERT INTO club_members (club_id, member_id, role, joined_at) VALUES ($1, $2, 'admin', $3)`,
+		c.ID, c.CreatedBy, c.CreatedAt)
+	if err != nil {
+		return fmt.Errorf("failed to add creator as admin: %w", err)
+	}
+
+	return tx.Commit(ctx)
+}
+
+// GetClubByID retrieves a club by its UUID.
+func (s *PostgresStore) GetClubByID(ctx context.Context, id uuid.UUID) (*models.Club, error) {
+	var c models.Club
+	err := s.pool.QueryRow(ctx,
+		`SELECT id, name, COALESCE(description, ''), COALESCE(badge_url, ''),
+		        COALESCE(website_url, ''), created_by, created_at, updated_at
+		 FROM clubs WHERE id = $1`, id).Scan(
+		&c.ID, &c.Name, &c.Description, &c.BadgeURL,
+		&c.WebsiteURL, &c.CreatedBy, &c.CreatedAt, &c.UpdatedAt)
+	if err != nil {
+		if err == pgx.ErrNoRows {
+			return nil, nil
+		}
+		return nil, fmt.Errorf("failed to get club: %w", err)
+	}
+	return &c, nil
+}
+
+// UpdateClub updates the editable fields of an existing club.
+func (s *PostgresStore) UpdateClub(ctx context.Context, c *models.Club) error {
+	tag, err := s.pool.Exec(ctx,
+		`UPDATE clubs SET name = $2, description = $3, badge_url = $4,
+		        website_url = $5, updated_at = NOW() WHERE id = $1`,
+		c.ID, c.Name, c.Description, c.BadgeURL, c.WebsiteURL)
+	if err != nil {
+		return fmt.Errorf("failed to update club: %w", err)
+	}
+	if tag.RowsAffected() == 0 {
+		return fmt.Errorf("club not found: %s", c.ID)
+	}
+	return nil
+}
+
+// DeleteClub removes a club (only if requester is the creator).
+func (s *PostgresStore) DeleteClub(ctx context.Context, clubID, requesterID uuid.UUID) error {
+	tag, err := s.pool.Exec(ctx,
+		`DELETE FROM clubs WHERE id = $1 AND created_by = $2`,
+		clubID, requesterID)
+	if err != nil {
+		return fmt.Errorf("failed to delete club: %w", err)
+	}
+	if tag.RowsAffected() == 0 {
+		return fmt.Errorf("club not found or not the creator")
+	}
+	return nil
+}
+
+// ListClubs returns all clubs with member counts, optionally marking membership for a viewer.
+func (s *PostgresStore) ListClubs(ctx context.Context, viewerID *uuid.UUID) ([]ClubListItem, error) {
+	query := `
+		SELECT c.id, c.name, COALESCE(c.description, ''), COALESCE(c.badge_url, ''),
+		       COALESCE(c.website_url, ''), c.created_by, c.created_at, c.updated_at,
+		       COUNT(cm.member_id) AS member_count,
+		       CASE WHEN $1::UUID IS NOT NULL AND EXISTS (
+		           SELECT 1 FROM club_members cm2 WHERE cm2.club_id = c.id AND cm2.member_id = $1
+		       ) THEN true ELSE false END AS is_member
+		FROM clubs c
+		LEFT JOIN club_members cm ON cm.club_id = c.id
+		GROUP BY c.id
+		ORDER BY member_count DESC, c.created_at DESC`
+
+	var viewerParam interface{}
+	if viewerID != nil {
+		viewerParam = *viewerID
+	}
+
+	rows, err := s.pool.Query(ctx, query, viewerParam)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query clubs: %w", err)
+	}
+	defer rows.Close()
+
+	var result []ClubListItem
+	for rows.Next() {
+		var item ClubListItem
+		if err := rows.Scan(
+			&item.Club.ID, &item.Club.Name, &item.Club.Description, &item.Club.BadgeURL,
+			&item.Club.WebsiteURL, &item.Club.CreatedBy, &item.Club.CreatedAt, &item.Club.UpdatedAt,
+			&item.MemberCount, &item.IsMember,
+		); err != nil {
+			return nil, fmt.Errorf("failed to scan club: %w", err)
+		}
+		result = append(result, item)
+	}
+	return result, nil
+}
+
+// GetClubDetail returns full club info including the member list.
+func (s *PostgresStore) GetClubDetail(ctx context.Context, clubID uuid.UUID) (*ClubDetail, error) {
+	club, err := s.GetClubByID(ctx, clubID)
+	if err != nil {
+		return nil, err
+	}
+	if club == nil {
+		return nil, nil
+	}
+
+	rows, err := s.pool.Query(ctx,
+		`SELECT m.id, m.profile_name, cm.role, cm.joined_at
+		 FROM club_members cm
+		 JOIN members m ON m.id = cm.member_id
+		 WHERE cm.club_id = $1
+		 ORDER BY cm.role ASC, cm.joined_at ASC`, clubID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query club members: %w", err)
+	}
+	defer rows.Close()
+
+	var members []ClubMemberView
+	for rows.Next() {
+		var mv ClubMemberView
+		if err := rows.Scan(&mv.MemberID, &mv.ProfileName, &mv.Role, &mv.JoinedAt); err != nil {
+			return nil, fmt.Errorf("failed to scan club member: %w", err)
+		}
+		members = append(members, mv)
+	}
+
+	return &ClubDetail{
+		Club:        *club,
+		MemberCount: len(members),
+		Members:     members,
+	}, nil
+}
+
+// JoinClub adds a member to a club with the 'member' role.
+func (s *PostgresStore) JoinClub(ctx context.Context, clubID, memberID uuid.UUID) error {
+	_, err := s.pool.Exec(ctx,
+		`INSERT INTO club_members (club_id, member_id, role, joined_at)
+		 VALUES ($1, $2, 'member', NOW())
+		 ON CONFLICT (club_id, member_id) DO NOTHING`,
+		clubID, memberID)
+	if err != nil {
+		return fmt.Errorf("failed to join club: %w", err)
+	}
+	return nil
+}
+
+// LeaveClub removes a member from a club.
+func (s *PostgresStore) LeaveClub(ctx context.Context, clubID, memberID uuid.UUID) error {
+	_, err := s.pool.Exec(ctx,
+		`DELETE FROM club_members WHERE club_id = $1 AND member_id = $2`,
+		clubID, memberID)
+	if err != nil {
+		return fmt.Errorf("failed to leave club: %w", err)
+	}
+	return nil
+}
+
+// GetClubMemberRole returns the role of a member in a club, or "" if not a member.
+func (s *PostgresStore) GetClubMemberRole(ctx context.Context, clubID, memberID uuid.UUID) (string, error) {
+	var role string
+	err := s.pool.QueryRow(ctx,
+		`SELECT role FROM club_members WHERE club_id = $1 AND member_id = $2`,
+		clubID, memberID).Scan(&role)
+	if err != nil {
+		if err == pgx.ErrNoRows {
+			return "", nil
+		}
+		return "", fmt.Errorf("failed to get club member role: %w", err)
+	}
+	return role, nil
+}
+
+// PromoteClubMember sets a member's role to 'admin' in a club.
+func (s *PostgresStore) PromoteClubMember(ctx context.Context, clubID, memberID uuid.UUID) error {
+	tag, err := s.pool.Exec(ctx,
+		`UPDATE club_members SET role = 'admin' WHERE club_id = $1 AND member_id = $2`,
+		clubID, memberID)
+	if err != nil {
+		return fmt.Errorf("failed to promote member: %w", err)
+	}
+	if tag.RowsAffected() == 0 {
+		return fmt.Errorf("member not found in club")
+	}
+	return nil
+}
+
+// RemoveClubMember removes a member from a club (admin action).
+func (s *PostgresStore) RemoveClubMember(ctx context.Context, clubID, memberID uuid.UUID) error {
+	tag, err := s.pool.Exec(ctx,
+		`DELETE FROM club_members WHERE club_id = $1 AND member_id = $2`,
+		clubID, memberID)
+	if err != nil {
+		return fmt.Errorf("failed to remove member from club: %w", err)
+	}
+	if tag.RowsAffected() == 0 {
+		return fmt.Errorf("member not found in club")
+	}
+	return nil
+}
+
+// ListMemberClubs returns the clubs a member belongs to.
+func (s *PostgresStore) ListMemberClubs(ctx context.Context, memberID uuid.UUID) ([]MemberClubView, error) {
+	rows, err := s.pool.Query(ctx,
+		`SELECT c.id, c.name, COALESCE(c.badge_url, ''), cm.role
+		 FROM club_members cm
+		 JOIN clubs c ON c.id = cm.club_id
+		 WHERE cm.member_id = $1
+		 ORDER BY c.name ASC`, memberID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query member clubs: %w", err)
+	}
+	defer rows.Close()
+
+	var result []MemberClubView
+	for rows.Next() {
+		var mv MemberClubView
+		if err := rows.Scan(&mv.ClubID, &mv.Name, &mv.BadgeURL, &mv.Role); err != nil {
+			return nil, fmt.Errorf("failed to scan member club: %w", err)
+		}
+		result = append(result, mv)
+	}
+	return result, nil
 }
 
 // computeGameHealth classifies a game's health based on rental verdict stats.

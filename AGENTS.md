@@ -36,9 +36,11 @@ psql $DATABASE_URL -f internal/database/migrations/005_auto_return_reputation.sq
 psql $DATABASE_URL -f internal/database/migrations/006_activities_feed.sql
 # 007 is seed data — applied via --seed flag
 psql $DATABASE_URL -f internal/database/migrations/008_cover_display.sql
+psql $DATABASE_URL -f internal/database/migrations/009_clubs.sql
+psql $DATABASE_URL -f internal/database/migrations/010_rename_status_english.sql
 ```
 
-Shortcut: `go run ./cmd/server --seed` applies all migrations (001-008) + seed data in one step.
+Shortcut: `go run ./cmd/server --seed` applies all migrations (001-010) + seed data in one step.
 The `--seed` flag auto-detects the migration directory (`migrations/` in Docker, `internal/database/migrations/` locally).
 
 Default DB credentials: `tio_da_locadora` / `sopre_a_fita` / database `modo_locadora`.
@@ -62,7 +64,7 @@ Go 1.24, standard library `net/http.ServeMux` with method-pattern routing. Serve
 |---------|---------|
 | `cmd/server/main.go` | Entrypoint: config, template parsing, pgx pool, route wiring |
 | `internal/handlers/handler.go` | All HTTP handlers in a `Handler` struct (Store + cookieSecret) |
-| `internal/database/store.go` | `Store` interface + view structs (GameAvailability, PlatformSummary, GameDetail, ActiveRental, ShameEntry, ActivityEntry, MemberRental, GameHealth, GameInventoryItem, GameRentalHistoryEntry) |
+| `internal/database/store.go` | `Store` interface + view structs (GameAvailability, PlatformSummary, GameDetail, ActiveRental, ShameEntry, ActivityEntry, MemberRental, GameHealth, GameInventoryItem, GameRentalHistoryEntry, ClubListItem, ClubDetail, ClubMemberView, MemberClubView) |
 | `internal/database/postgres.go` | PostgreSQL implementation (pgx/v5 pool, transactions) |
 | `internal/middleware/middleware.go` | `RequireAuth` (cookie check) and `RequireAdmin` (auth + email) |
 | `internal/auth/auth.go` | HMAC-SHA256 cookie signing/verification |
@@ -70,10 +72,11 @@ Go 1.24, standard library `net/http.ServeMux` with method-pattern routing. Serve
 | `internal/almanac/almanac.go` | Static gaming ephemerides by day-of-year |
 | `internal/jobs/overdue.go` | Background goroutine: auto-returns overdue rentals every 5 min |
 | `internal/config/config.go` | `.env` loader via godotenv |
-| `internal/models/` | Domain structs: Member (with status/late_count), Game (with cover_display), GameCopy, Rental, MemberTitle |
-| `web/templates/` | 9 standalone HTML templates (Portuguese UI) |
+| `internal/models/` | Domain structs: Member (with status/late_count), Game (with cover_display), GameCopy, Rental, MemberTitle, Club |
+| `web/templates/` | 12 standalone HTML templates (Portuguese UI) |
 | `web/static/css/retro.css` | NES.css dark theme overrides and shared utility classes |
 | `web/static/covers/` | Uploaded Brazilian game covers (Docker volume) |
+| `web/static/clubs/` | Uploaded club/turma badge images (Docker volume) |
 
 ### Request Flow
 
@@ -84,13 +87,15 @@ Go 1.24, standard library `net/http.ServeMux` with method-pattern routing. Serve
 
 ### Database Schema
 
-6 tables + 1 sequence. Key relationship: `Game -> GameCopy -> Rental <- Member`.
+8 tables + 1 sequence. Key relationships: `Game -> GameCopy -> Rental <- Member`, `Club <-> ClubMembers <-> Member` (M2M).
 
-- `members` — profile_name, email, password_hash, membership_number (`1991-XXX`), status (`active`|`em_debito`), late_count
+- `members` — profile_name, email, password_hash, membership_number (`1991-XXX`), status (`active`|`in_debt`), late_count
 - `games` — title, igdb_id, platform, summary, cover_url, cover_display, source_magazine, acquired_at
 - `game_copies` — game_id, status (`available`|`rented`)
 - `rentals` — member_id, copy_id, rented_at, due_at (3 days), returned_at, public_legacy (verdict)
 - `activities` — event_type, member_name, game_title, created_at (denormalized feed)
+- `clubs` — name, description, badge_url, website_url, created_by (FK members)
+- `club_members` — club_id, member_id, role (`admin`|`member`), joined_at (composite PK)
 - `membership_seq` — generates sequential numbers (1991-001, 1991-002, ...)
 
 ### Authentication
@@ -117,10 +122,10 @@ Go 1.24, standard library `net/http.ServeMux` with method-pattern routing. Serve
 ### Authenticated (RequireAuth middleware)
 - `GET /games` — Platform selection or filtered game shelf (`?platform=X`)
 - `GET /games/{id}` — Game detail page with rental stats
-- `GET /carteirinha` — Digital membership card
-- `POST /carteirinha/notes` — Save password notebook
-- `POST /carteirinha/redeem` — Clear debt status
-- `POST /carteirinha/return` — Self-return a rental (with verdict)
+- `GET /membership` — Digital membership card
+- `POST /membership/notes` — Save password notebook
+- `POST /membership/redeem` — Clear debt status
+- `POST /membership/return` — Self-return a rental (with verdict)
 - `POST /rent` — Rent a game
 
 ### Admin (RequireAdmin middleware)
@@ -131,6 +136,19 @@ Go 1.24, standard library `net/http.ServeMux` with method-pattern routing. Serve
 - `POST /admin/update-game` — Save game edits (multipart/form-data)
 - `GET /admin/returns` — Active rentals dashboard
 - `POST /admin/return-game` — Process game return
+
+### Clubs (public listing, auth-protected actions)
+- `GET /clubs` — Public club listing
+- `GET /clubs/{id}` — Public club detail
+- `GET /clubs/new` — Create club form (RequireAuth)
+- `POST /clubs` — Create club (RequireAuth)
+- `GET /clubs/{id}/edit` — Edit club form (RequireAuth + club admin)
+- `POST /clubs/{id}/edit` — Update club (RequireAuth + club admin)
+- `POST /clubs/{id}/join` — Join club (RequireAuth)
+- `POST /clubs/{id}/leave` — Leave club (RequireAuth)
+- `POST /clubs/{id}/promote` — Promote member to admin (RequireAuth + club admin)
+- `POST /clubs/{id}/remove` — Remove member (RequireAuth + club admin)
+- `POST /clubs/{id}/delete` — Delete club (RequireAuth + creator only)
 
 ## Conventions & Rules
 
@@ -186,7 +204,7 @@ go-task          — Task runner (Taskfile.yml)
 5. Run `go build ./...` and `go vet ./...`
 
 ### Adding a new database migration
-1. Create numbered SQL file in `internal/database/migrations/` (e.g., `009_description.sql`)
+1. Create numbered SQL file in `internal/database/migrations/` (e.g., `010_description.sql`)
 2. Add the file to the `sqlFiles` list in `cmd/server/main.go` (for `--seed` flag)
 3. Update Store interface and postgres implementation if schema changes affect queries
 4. Document the migration in `docs/SETUP.md`

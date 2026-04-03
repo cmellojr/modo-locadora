@@ -46,7 +46,7 @@ type ActivityEntry struct {
 	CreatedAt  time.Time
 }
 
-// MemberRental holds a member's active rental for the carteirinha self-return.
+// MemberRental holds a member's active rental for the membership self-return.
 type MemberRental struct {
 	RentalID  uuid.UUID
 	GameTitle string
@@ -87,6 +87,36 @@ type GameRentalHistoryEntry struct {
 	ReturnedAt string // Formatted date or "Ativa"
 	Verdict    string // "zerei", "joguei_um_pouco", "desisti", or ""
 	IsLate     bool
+}
+
+// ClubListItem holds club data for the listing page.
+type ClubListItem struct {
+	Club        models.Club
+	MemberCount int
+	IsMember    bool
+}
+
+// ClubDetail holds full club info for the detail page.
+type ClubDetail struct {
+	Club        models.Club
+	MemberCount int
+	Members     []ClubMemberView
+}
+
+// ClubMemberView holds member info for display within a club.
+type ClubMemberView struct {
+	MemberID    uuid.UUID
+	ProfileName string
+	Role        string
+	JoinedAt    time.Time
+}
+
+// MemberClubView holds club info for display on a member's profile.
+type MemberClubView struct {
+	ClubID   uuid.UUID
+	Name     string
+	BadgeURL string
+	Role     string
 }
 
 // Store defines the set of operations for the database layer.
@@ -148,7 +178,7 @@ type Store interface {
 	// GetTopShameEntries returns the top N members with the most late returns.
 	GetTopShameEntries(ctx context.Context, limit int) ([]ShameEntry, error)
 
-	// RedeemMember resets a member's status from 'em_debito' to 'active'.
+	// RedeemMember resets a member's status from 'in_debt' to 'active'.
 	RedeemMember(ctx context.Context, memberID uuid.UUID) error
 
 	// GetMemberStatus returns the member's current status.
@@ -181,4 +211,40 @@ type Store interface {
 
 	// ListGameRentalHistory returns the last N rental entries for a specific game.
 	ListGameRentalHistory(ctx context.Context, gameID uuid.UUID, limit int) ([]GameRentalHistoryEntry, error)
+
+	// CreateClub persists a new club and adds the creator as admin.
+	CreateClub(ctx context.Context, club *models.Club) error
+
+	// GetClubByID retrieves a club by its UUID.
+	GetClubByID(ctx context.Context, id uuid.UUID) (*models.Club, error)
+
+	// UpdateClub updates the editable fields of an existing club.
+	UpdateClub(ctx context.Context, club *models.Club) error
+
+	// DeleteClub removes a club (only if requester is the creator).
+	DeleteClub(ctx context.Context, clubID, requesterID uuid.UUID) error
+
+	// ListClubs returns all clubs with member counts, optionally marking membership for a viewer.
+	ListClubs(ctx context.Context, viewerID *uuid.UUID) ([]ClubListItem, error)
+
+	// GetClubDetail returns full club info including the member list.
+	GetClubDetail(ctx context.Context, clubID uuid.UUID) (*ClubDetail, error)
+
+	// JoinClub adds a member to a club with the 'member' role.
+	JoinClub(ctx context.Context, clubID, memberID uuid.UUID) error
+
+	// LeaveClub removes a member from a club.
+	LeaveClub(ctx context.Context, clubID, memberID uuid.UUID) error
+
+	// GetClubMemberRole returns the role of a member in a club, or "" if not a member.
+	GetClubMemberRole(ctx context.Context, clubID, memberID uuid.UUID) (string, error)
+
+	// PromoteClubMember sets a member's role to 'admin' in a club.
+	PromoteClubMember(ctx context.Context, clubID, memberID uuid.UUID) error
+
+	// RemoveClubMember removes a member from a club (admin action).
+	RemoveClubMember(ctx context.Context, clubID, memberID uuid.UUID) error
+
+	// ListMemberClubs returns the clubs a member belongs to.
+	ListMemberClubs(ctx context.Context, memberID uuid.UUID) ([]MemberClubView, error)
 }

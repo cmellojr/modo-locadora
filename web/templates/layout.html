@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{.PageTitle}} - Modo Locadora</title>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <link href="https://unpkg.com/nes.css@2.3.0/css/nes.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="/static/css/retro.css">
+    {{block "page-styles" .}}{{end}}
+</head>
+<body>
+    <div class="site-layout">
+        <!-- SITE BANNER -->
+        <header class="site-banner">
+            <div class="banner-logo">
+                <a href="/" class="banner-title">M O D O &nbsp; L O C A D O R A</a>
+                <span class="banner-subtitle">[DESDE 1991]</span>
+            </div>
+            {{if .IsLoggedIn}}
+            <div class="banner-auth">
+                <span class="auth-member">S&oacute;cio: {{.MemberName}}</span>
+                <form action="/logout" method="POST" style="margin:0;display:inline;">
+                    <button type="submit" class="auth-logout">[SAIR]</button>
+                </form>
+            </div>
+            {{end}}
+        </header>
+
+        <!-- NAV BAR -->
+        <nav class="top-nav-bar">
+            <a href="/">BALC&Atilde;O</a>
+            <a href="/games">PRATELEIRA</a>
+            <a href="/clubs">TURMAS</a>
+            {{if .IsLoggedIn}}
+            <a href="/membership">CARTEIRINHA</a>
+            {{end}}
+            {{if .IsAdmin}}
+            <span class="nav-separator">|</span>
+            <a href="/admin/stock">ESTOQUE</a>
+            <a href="/admin/inventory">ACERVO</a>
+            <a href="/admin/returns">DEVOLU&Ccedil;&Otilde;ES</a>
+            {{end}}
+        </nav>
+
+        <!-- LEFT SIDEBAR -->
+        <aside class="left-sidebar">
+            <div class="sidebar-section">
+                <div class="nes-container with-title is-dark sidebar-container">
+                    <p class="title">NAVEGA&Ccedil;&Atilde;O</p>
+                    <nav class="sidebar-nav">
+                        <a href="/">Balc&atilde;o</a>
+                        <a href="/games">Prateleira</a>
+                        <a href="/clubs">Turmas</a>
+                        {{if .IsLoggedIn}}
+                        <a href="/membership">Carteirinha</a>
+                        {{end}}
+                        {{if .IsAdmin}}
+                        <a href="/admin/stock">Estoque</a>
+                        <a href="/admin/inventory">Acervo</a>
+                        <a href="/admin/returns">Devolu&ccedil;&otilde;es</a>
+                        {{end}}
+                    </nav>
+                </div>
+            </div>
+
+            {{if .IsLoggedIn}}
+            {{if .MemberMini}}
+            <div class="sidebar-section">
+                <div class="nes-container with-title is-dark sidebar-container">
+                    <p class="title">S&Oacute;CIO</p>
+                    <div class="member-mini-card">
+                        <i class="nes-avatar is-rounded"></i>
+                        <p class="mini-name">{{.MemberMini.ProfileName}}</p>
+                        <p class="mini-number">{{.MemberMini.MembershipNumber}}</p>
+                        <span class="status-badge-label {{.MemberMini.StatusBadge}}">{{.MemberMini.StatusLabel}}</span>
+                        {{if gt .MemberMini.ActiveRentals 0}}
+                        <p style="font-size:8px;color:#999;margin-top:8px;">{{.MemberMini.ActiveRentals}} fita(s) alugada(s)</p>
+                        {{end}}
+                    </div>
+                </div>
+            </div>
+            {{end}}
+            {{else}}
+            <div class="sidebar-section">
+                <div class="nes-container with-title is-dark sidebar-container">
+                    <p class="title">BEM-VINDO</p>
+                    <p style="font-size:9px;color:#999;line-height:1.8;">Fa&ccedil;a login no balc&atilde;o para alugar fitas e acessar sua carteirinha.</p>
+                </div>
+            </div>
+            {{end}}
+        </aside>
+
+        <!-- MAIN CONTENT -->
+        <main class="main-content">
+            {{template "content" .}}
+        </main>
+
+        <!-- RIGHT SIDEBAR -->
+        <aside class="right-sidebar">
+            {{if .Activities}}
+            <div class="sidebar-section">
+                <div class="nes-container with-title is-dark sidebar-container">
+                    <p class="title">ACONTECEU NA LOCADORA</p>
+                    {{range .Activities}}
+                    <div class="activity-item-compact">
+                        <p class="activity-msg">{{.Message}}</p>
+                        <span class="activity-time">{{.TimeAgo}}</span>
+                    </div>
+                    {{end}}
+                </div>
+            </div>
+            {{end}}
+
+            {{if .ShameEntries}}
+            <div class="sidebar-section">
+                <div class="nes-container with-title is-dark sidebar-container">
+                    <p class="title">PAINEL DA VERGONHA</p>
+                    {{range .ShameEntries}}
+                    <div class="shame-compact">
+                        <span class="shame-name">&#9760; {{.ProfileName}}</span>
+                        <span class="shame-count">{{.LateCount}}x</span>
+                    </div>
+                    {{end}}
+                </div>
+            </div>
+            {{end}}
+
+            <div class="sidebar-section">
+                <div class="nes-container with-title is-dark sidebar-container">
+                    <p class="title">ALMANAQUE DO TIO</p>
+                    <p class="sidebar-almanac">{{.AlmanacEntry}}</p>
+                </div>
+            </div>
+        </aside>
+
+        <!-- FOOTER -->
+        <footer class="site-footer">
+            <p class="footer-copyright">&copy; 1991-2026 Modo Locadora - Sob licen&ccedil;a GPLv3. Criado pelo Tio da Locadora.</p>
+        </footer>
+    </div>
+</body>
+</html>
