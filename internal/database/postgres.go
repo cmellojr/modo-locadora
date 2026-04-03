@@ -494,7 +494,7 @@ func (s *PostgresStore) ProcessOverdueRentals(ctx context.Context) (int, error) 
 
 	for _, o := range overdue {
 		_, err = tx.Exec(ctx,
-			`UPDATE rentals SET returned_at = NOW() WHERE id = $1`, o.rentalID)
+			`UPDATE rentals SET returned_at = NOW(), public_legacy = 'auto_return' WHERE id = $1`, o.rentalID)
 		if err != nil {
 			return 0, fmt.Errorf("failed to auto-return rental %s: %w", o.rentalID, err)
 		}
@@ -722,7 +722,7 @@ func (s *PostgresStore) GetRentalGameTitle(ctx context.Context, rentalID uuid.UU
 	return title, nil
 }
 
-// ListCompletedGameIDs returns game IDs that the member has completed ("zerei").
+// ListCompletedGameIDs returns game IDs that the member has completed ("completed" verdict).
 func (s *PostgresStore) ListCompletedGameIDs(ctx context.Context, memberID uuid.UUID) ([]uuid.UUID, error) {
 	rows, err := s.pool.Query(ctx,
 		`SELECT DISTINCT gc.game_id
@@ -730,7 +730,7 @@ func (s *PostgresStore) ListCompletedGameIDs(ctx context.Context, memberID uuid.
 		 JOIN game_copies gc ON gc.id = r.copy_id
 		 WHERE r.member_id = $1
 		   AND r.returned_at IS NOT NULL
-		   AND r.public_legacy = 'zerei'`, memberID)
+		   AND r.public_legacy = 'completed'`, memberID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to query completed games: %w", err)
 	}
@@ -990,33 +990,44 @@ func (s *PostgresStore) ListMemberClubs(ctx context.Context, memberID uuid.UUID)
 	return result, nil
 }
 
-// computeGameHealth classifies a game's health based on rental verdict stats.
-func computeGameHealth(totalRentals, desistiCount, lateCount, zereiCount, jogouCount int) GameHealth {
-	if totalRentals <= 1 {
-		return GameHealth{Label: "Cartucho Novo", BadgeCSS: "is-health-new"}
-	}
-	badCount := desistiCount + lateCount
-	badRatio := float64(badCount) / float64(totalRentals)
+// computeGamePopularity classifies a game's popularity based on rental history.
+func computeGamePopularity(totalRentals, completedCount, gaveUpCount, notForMeCount, totalReturned int,
+	rentedDaysLast30, totalCopyDaysLast30 int, hasRentalsLast30 bool) GamePopularity {
 	switch {
-	case badRatio >= 0.5:
-		return GameHealth{Label: "Fita Gasta", BadgeCSS: "is-health-bad"}
-	case badRatio >= 0.25:
-		return GameHealth{Label: "Precisa Soprar", BadgeCSS: "is-health-mixed"}
+	case totalRentals <= 2:
+		return GamePopularity{Label: "Lancamento", BadgeCSS: "is-pop-new"}
+	case totalCopyDaysLast30 > 0 && float64(rentedDaysLast30) > 0.7*float64(totalCopyDaysLast30):
+		return GamePopularity{Label: "Fita Disputada", BadgeCSS: "is-pop-hot"}
+	case completedCount >= 10:
+		return GamePopularity{Label: "Reliquia da Casa", BadgeCSS: "is-pop-relic"}
+	case !hasRentalsLast30:
+		return GamePopularity{Label: "Fundo do Bau", BadgeCSS: "is-pop-stale"}
+	case totalReturned > 0 && float64(gaveUpCount+notForMeCount) > 0.4*float64(totalReturned):
+		return GamePopularity{Label: "E Mico!", BadgeCSS: "is-pop-mico"}
 	default:
-		return GameHealth{Label: "Classico Eterno", BadgeCSS: "is-health-good"}
+		return GamePopularity{Label: "Na Prateleira", BadgeCSS: "is-pop-shelf"}
 	}
 }
 
-// ListGamesWithHealth returns all games with computed health for the admin inventory.
-func (s *PostgresStore) ListGamesWithHealth(ctx context.Context) ([]GameInventoryItem, error) {
+// ListGamesWithPopularity returns all games with computed popularity for the admin inventory.
+func (s *PostgresStore) ListGamesWithPopularity(ctx context.Context) ([]GameInventoryItem, error) {
 	query := `
 		SELECT g.id, g.title, g.igdb_id, g.platform, g.summary, g.cover_url,
 		       g.source_magazine, COALESCE(g.cover_display, 'cover'), g.acquired_at,
 		       COUNT(r.id) AS total_rentals,
-		       COUNT(r.id) FILTER (WHERE r.public_legacy = 'desisti') AS desisti_count,
-		       COUNT(r.id) FILTER (WHERE r.returned_at IS NOT NULL AND r.returned_at > r.due_at) AS late_count,
-		       COUNT(r.id) FILTER (WHERE r.public_legacy = 'zerei') AS zerei_count,
-		       COUNT(r.id) FILTER (WHERE r.public_legacy = 'joguei_um_pouco') AS jogou_count
+		       COUNT(r.id) FILTER (WHERE r.returned_at IS NOT NULL) AS total_returned,
+		       COUNT(r.id) FILTER (WHERE r.public_legacy = 'completed') AS completed_count,
+		       COUNT(r.id) FILTER (WHERE r.public_legacy = 'gave_up') AS gave_up_count,
+		       COUNT(r.id) FILTER (WHERE r.public_legacy = 'not_for_me') AS not_for_me_count,
+		       (SELECT COUNT(*) FROM game_copies WHERE game_id = g.id) AS copy_count,
+		       COALESCE(SUM(
+		           GREATEST(0, EXTRACT(EPOCH FROM (
+		               LEAST(COALESCE(r.returned_at, NOW()), NOW())
+		               - GREATEST(r.rented_at, NOW() - INTERVAL '30 days')
+		           )) / 86400)
+		       ) FILTER (WHERE r.rented_at < NOW()
+		                   AND COALESCE(r.returned_at, NOW()) > NOW() - INTERVAL '30 days'), 0) AS rented_days_30,
+		       COUNT(r.id) FILTER (WHERE r.rented_at > NOW() - INTERVAL '30 days') AS rentals_last_30
 		FROM games g
 		LEFT JOIN game_copies gc ON gc.game_id = g.id
 		LEFT JOIN rentals r ON r.copy_id = gc.id
@@ -1025,26 +1036,51 @@ func (s *PostgresStore) ListGamesWithHealth(ctx context.Context) ([]GameInventor
 
 	rows, err := s.pool.Query(ctx, query)
 	if err != nil {
-		return nil, fmt.Errorf("failed to query games with health: %w", err)
+		return nil, fmt.Errorf("failed to query games with popularity: %w", err)
 	}
 	defer rows.Close()
 
 	var result []GameInventoryItem
 	for rows.Next() {
 		var item GameInventoryItem
-		var totalRentals, desistiCount, lateCount, zereiCount, jogouCount int
+		var totalRentals, totalReturned, completedCount, gaveUpCount, notForMeCount int
+		var copyCount, rentalsLast30 int
+		var rentedDays30 float64
 		if err := rows.Scan(
 			&item.Game.ID, &item.Game.Title, &item.Game.IgdbID, &item.Game.Platform,
 			&item.Game.Summary, &item.Game.CoverURL, &item.Game.SourceMagazine,
 			&item.Game.CoverDisplay, &item.Game.AcquiredAt,
-			&totalRentals, &desistiCount, &lateCount, &zereiCount, &jogouCount,
+			&totalRentals, &totalReturned, &completedCount, &gaveUpCount, &notForMeCount,
+			&copyCount, &rentedDays30, &rentalsLast30,
 		); err != nil {
-			return nil, fmt.Errorf("failed to scan game with health: %w", err)
+			return nil, fmt.Errorf("failed to scan game with popularity: %w", err)
 		}
-		item.Health = computeGameHealth(totalRentals, desistiCount, lateCount, zereiCount, jogouCount)
+		totalCopyDays30 := copyCount * 30
+		item.Popularity = computeGamePopularity(
+			totalRentals, completedCount, gaveUpCount, notForMeCount, totalReturned,
+			int(rentedDays30), totalCopyDays30, rentalsLast30 > 0,
+		)
 		result = append(result, item)
 	}
 	return result, nil
+}
+
+// CountGameCompletions returns the number of "completed" verdicts for the game associated with a rental.
+func (s *PostgresStore) CountGameCompletions(ctx context.Context, rentalID uuid.UUID) (int, error) {
+	var count int
+	err := s.pool.QueryRow(ctx,
+		`SELECT COUNT(*) FROM rentals r
+		 JOIN game_copies gc ON gc.id = r.copy_id
+		 WHERE gc.game_id = (
+		     SELECT gc2.game_id FROM rentals r2
+		     JOIN game_copies gc2 ON gc2.id = r2.copy_id
+		     WHERE r2.id = $1
+		 )
+		 AND r.public_legacy = 'completed'`, rentalID).Scan(&count)
+	if err != nil {
+		return 0, fmt.Errorf("failed to count game completions: %w", err)
+	}
+	return count, nil
 }
 
 // ListGameRentalHistory returns the most recent rental entries for a game.

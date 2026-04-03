@@ -300,16 +300,24 @@
                         <input type="hidden" name="rental_id" value="{{.RentalID}}">
                         <div class="verdict-options">
                             <label class="verdict-label">
-                                <input type="radio" class="nes-radio is-success" name="verdict" value="zerei" required>
-                                <span>Zerei!</span>
+                                <input type="radio" class="nes-radio is-success" name="verdict" value="completed" required>
+                                <span>Detonei!</span>
                             </label>
                             <label class="verdict-label">
-                                <input type="radio" class="nes-radio is-primary" name="verdict" value="joguei_um_pouco">
-                                <span>Joguei um pouco</span>
+                                <input type="radio" class="nes-radio is-success" name="verdict" value="enjoyed">
+                                <span>Rendeu bastante!</span>
                             </label>
                             <label class="verdict-label">
-                                <input type="radio" class="nes-radio is-error" name="verdict" value="desisti">
-                                <span>Desisti</span>
+                                <input type="radio" class="nes-radio is-primary" name="verdict" value="quick_play">
+                                <span>S&oacute; uma partidinha</span>
+                            </label>
+                            <label class="verdict-label">
+                                <input type="radio" class="nes-radio is-warning" name="verdict" value="not_for_me">
+                                <span>N&atilde;o deu pra mim</span>
+                            </label>
+                            <label class="verdict-label">
+                                <input type="radio" class="nes-radio is-error" name="verdict" value="gave_up">
+                                <span>Passei raiva / Desisti</span>
                             </label>
                         </div>
                         <button type="submit" class="nes-btn is-success btn-sm">DEVOLVER</button>

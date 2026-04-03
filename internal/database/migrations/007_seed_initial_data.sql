@@ -115,30 +115,46 @@ BEGIN
     -- HISTÓRICO DE ALUGUÉIS
     -- ════════════════════════════════════════════════════════════════════════
 
-    -- MegaDriveKid: 3 devoluções no prazo (exemplar!)
-    -- Aluguel 1: Golden Axe — zerou
+    -- MegaDriveKid: 5 devoluções no prazo (exemplar!)
+    -- Aluguel 1: Golden Axe — completed
     INSERT INTO rentals (id, member_id, copy_id, rented_at, due_at, returned_at, public_legacy)
     VALUES ('ee000001-0001-4000-8000-000000000001',
             'aabb0001-0001-4000-8000-000000000001',
             'c0010001-0001-4000-8000-000000000001',
             NOW() - INTERVAL '30 days', NOW() - INTERVAL '27 days',
-            NOW() - INTERVAL '28 days', 'zerei');
+            NOW() - INTERVAL '28 days', 'completed');
 
-    -- Aluguel 2: Castle of Illusion — zerou
+    -- Aluguel 2: Castle of Illusion — completed
     INSERT INTO rentals (id, member_id, copy_id, rented_at, due_at, returned_at, public_legacy)
     VALUES ('ee000001-0002-4000-8000-000000000002',
             'aabb0001-0001-4000-8000-000000000001',
             'c0010001-0004-4000-8000-000000000004',
             NOW() - INTERVAL '20 days', NOW() - INTERVAL '17 days',
-            NOW() - INTERVAL '18 days', 'zerei');
+            NOW() - INTERVAL '18 days', 'completed');
 
-    -- Aluguel 3: Double Dragon II — jogou um pouco
+    -- Aluguel 3: Double Dragon II — enjoyed
     INSERT INTO rentals (id, member_id, copy_id, rented_at, due_at, returned_at, public_legacy)
     VALUES ('ee000001-0003-4000-8000-000000000003',
             'aabb0001-0001-4000-8000-000000000001',
             'c0010001-0005-4000-8000-000000000005',
             NOW() - INTERVAL '10 days', NOW() - INTERVAL '7 days',
-            NOW() - INTERVAL '8 days', 'joguei_um_pouco');
+            NOW() - INTERVAL '8 days', 'enjoyed');
+
+    -- Aluguel 4: Altered Beast — quick_play (MegaDriveKid)
+    INSERT INTO rentals (id, member_id, copy_id, rented_at, due_at, returned_at, public_legacy)
+    VALUES ('ee000001-0005-4000-8000-000000000005',
+            'aabb0001-0001-4000-8000-000000000001',
+            'c0010001-0002-4000-8000-000000000002',
+            NOW() - INTERVAL '25 days', NOW() - INTERVAL '22 days',
+            NOW() - INTERVAL '23 days', 'quick_play');
+
+    -- Aluguel 5: Super Mario Bros. 3 — not_for_me (Novato)
+    INSERT INTO rentals (id, member_id, copy_id, rented_at, due_at, returned_at, public_legacy)
+    VALUES ('ee000001-0006-4000-8000-000000000006',
+            'aabb0001-0003-4000-8000-000000000003',
+            'c0010001-0003-4000-8000-000000000003',
+            NOW() - INTERVAL '5 days', NOW() - INTERVAL '2 days',
+            NOW() - INTERVAL '3 days', 'not_for_me');
 
     -- Devedor: 1 aluguel ativo e vencido (Altered Beast — há 10 dias, prazo há 7)
     INSERT INTO rentals (id, member_id, copy_id, rented_at, due_at)
@@ -161,10 +177,12 @@ BEGIN
         (gen_random_uuid(), 'new_game',          '', 'Super Mario Bros. 3',             NOW() - INTERVAL '5 days'),
         (gen_random_uuid(), 'new_game',          '', 'Castle of Illusion',              NOW() - INTERVAL '5 days'),
         (gen_random_uuid(), 'new_game',          '', 'Double Dragon II: The Revenge',   NOW() - INTERVAL '5 days'),
-        (gen_random_uuid(), 'verdict_complete',  'MegaDriveKid', 'Golden Axe',          NOW() - INTERVAL '3 days'),
-        (gen_random_uuid(), 'verdict_complete',  'MegaDriveKid', 'Castle of Illusion',  NOW() - INTERVAL '2 days'),
-        (gen_random_uuid(), 'verdict_partial',   'MegaDriveKid', 'Double Dragon II: The Revenge', NOW() - INTERVAL '1 day'),
-        (gen_random_uuid(), 'penalty',           'Devedor',      'Altered Beast',       NOW() - INTERVAL '6 hours');
+        (gen_random_uuid(), 'verdict_completed',  'MegaDriveKid', 'Golden Axe',          NOW() - INTERVAL '3 days'),
+        (gen_random_uuid(), 'verdict_completed',  'MegaDriveKid', 'Castle of Illusion',  NOW() - INTERVAL '2 days'),
+        (gen_random_uuid(), 'verdict_enjoyed',    'MegaDriveKid', 'Double Dragon II: The Revenge', NOW() - INTERVAL '1 day'),
+        (gen_random_uuid(), 'verdict_quick_play', 'MegaDriveKid', 'Altered Beast',       NOW() - INTERVAL '20 hours'),
+        (gen_random_uuid(), 'verdict_not_for_me', 'Novato',       'Super Mario Bros. 3', NOW() - INTERVAL '3 hours'),
+        (gen_random_uuid(), 'penalty',            'Devedor',      'Altered Beast',       NOW() - INTERVAL '6 hours');
 
     RAISE NOTICE 'Seed: concluido com sucesso!';
     RAISE NOTICE 'Socios: tio_da_locadora/sopre_a_fita (admin) | MegaDriveKid/sega1991 | Devedor/atrasado123 | Novato/novato2026';

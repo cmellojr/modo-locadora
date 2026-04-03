@@ -100,12 +100,18 @@ func formatActivityMessage(a database.ActivityEntry) string {
 		return fmt.Sprintf("Nova fita no acervo: %s!", a.GameTitle)
 	case "prestige":
 		return fmt.Sprintf("%s atingiu prestigio! Socio(a) exemplar!", a.MemberName)
-	case "verdict_complete":
-		return fmt.Sprintf("%s zerou %s! Respeito total!", a.MemberName, a.GameTitle)
-	case "verdict_partial":
-		return fmt.Sprintf("%s jogou %s mas nao terminou.", a.MemberName, a.GameTitle)
-	case "verdict_quit":
+	case "verdict_completed":
+		return fmt.Sprintf("%s detonou %s! Zerou com estilo!", a.MemberName, a.GameTitle)
+	case "verdict_enjoyed":
+		return fmt.Sprintf("%s aproveitou bastante %s!", a.MemberName, a.GameTitle)
+	case "verdict_quick_play":
+		return fmt.Sprintf("%s deu uma partidinha em %s.", a.MemberName, a.GameTitle)
+	case "verdict_not_for_me":
+		return fmt.Sprintf("%s tentou %s mas nao deu.", a.MemberName, a.GameTitle)
+	case "verdict_gave_up":
 		return fmt.Sprintf("%s desistiu de %s. O Tio esta decepcionado!", a.MemberName, a.GameTitle)
+	case "relic":
+		return fmt.Sprintf("%s virou Reliquia da Casa! 10 socios ja detonaram!", a.GameTitle)
 	case "club_created":
 		return fmt.Sprintf("%s formou a turma %s! Quem vai entrar?", a.MemberName, a.GameTitle)
 	case "club_joined":
@@ -767,7 +773,7 @@ func (h *Handler) AdminInventory(w http.ResponseWriter, r *http.Request, tmpl *t
 
 	ld := h.buildLayoutData(r, "Acervo")
 
-	items, err := h.store.ListGamesWithHealth(r.Context())
+	items, err := h.store.ListGamesWithPopularity(r.Context())
 	if err != nil {
 		http.Error(w, "Failed to list games: "+err.Error(), http.StatusInternalServerError)
 		return
@@ -1016,7 +1022,11 @@ func (h *Handler) HandleMemberReturn(w http.ResponseWriter, r *http.Request) {
 	}
 
 	verdict := r.FormValue("verdict")
-	if verdict != "zerei" && verdict != "joguei_um_pouco" && verdict != "desisti" {
+	validVerdicts := map[string]bool{
+		"completed": true, "enjoyed": true, "quick_play": true,
+		"not_for_me": true, "gave_up": true,
+	}
+	if !validVerdicts[verdict] {
 		verdict = ""
 	}
 
@@ -1032,16 +1042,15 @@ func (h *Handler) HandleMemberReturn(w http.ResponseWriter, r *http.Request) {
 	if verdict != "" && gameTitle != "" {
 		member, _ := h.store.GetMemberByID(r.Context(), memberID)
 		if member != nil {
-			var eventType string
-			switch verdict {
-			case "zerei":
-				eventType = "verdict_complete"
-			case "joguei_um_pouco":
-				eventType = "verdict_partial"
-			case "desisti":
-				eventType = "verdict_quit"
+			_ = h.store.InsertActivity(r.Context(), "verdict_"+verdict, member.ProfileName, gameTitle)
+		}
+
+		// Check if game just became a "Reliquia da Casa" (10+ completions).
+		if verdict == "completed" {
+			completionCount, err := h.store.CountGameCompletions(r.Context(), rentalID)
+			if err == nil && completionCount == 10 {
+				_ = h.store.InsertActivity(r.Context(), "relic", "", gameTitle)
 			}
-			_ = h.store.InsertActivity(r.Context(), eventType, member.ProfileName, gameTitle)
 		}
 	}
 

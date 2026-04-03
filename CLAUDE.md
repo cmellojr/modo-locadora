@@ -29,6 +29,7 @@ psql $DATABASE_URL -f internal/database/migrations/006_activities_feed.sql
 psql $DATABASE_URL -f internal/database/migrations/008_cover_display.sql
 psql $DATABASE_URL -f internal/database/migrations/009_clubs.sql
 psql $DATABASE_URL -f internal/database/migrations/010_rename_status_english.sql
+psql $DATABASE_URL -f internal/database/migrations/011_verdict_popularity.sql
 ```
 
 Shortcut: `go run ./cmd/server --seed` applies all migrations (001-010) + seed data in one step.
@@ -92,7 +93,7 @@ POST `/login` -> bcrypt verify -> HMAC-signed cookie `{uuid}.{hmac_hex}` -> midd
 
 ## Conventions
 
-- **Language split**: Code, routes, DB columns in English. UI text in Portuguese (BR).
+- **Language rule**: Portuguese is used **exclusively** in web UI text (HTML templates, user-facing labels). All code — variable names, function names, DB column values, route slugs, query params, log messages, error messages, and comments — **must be in English**.
 - **Commit format**: Conventional Commits (`feat:`, `fix:`, `docs:`, `refactor:`)
 - **Branching**: `main` (stable) + `develop` (active). Feature branches: `feature/*`, `fix/*`, `hotfix/*`, `docs/*`
 - **Routing**: Standard library only — `mux.HandleFunc("METHOD /path", handler)`
