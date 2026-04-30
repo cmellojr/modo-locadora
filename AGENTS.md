@@ -207,7 +207,7 @@ go-task          — Task runner (Taskfile.yml)
 1. Create numbered SQL file in `internal/database/migrations/` (e.g., `010_description.sql`)
 2. Add the file to the `sqlFiles` list in `cmd/server/main.go` (for `--seed` flag)
 3. Update Store interface and postgres implementation if schema changes affect queries
-4. Document the migration in `docs/SETUP.md`
+4. Document the migration in `docs/setup.md`
 
 ### Modifying UI/templates
 1. Use NES.css classes — check existing templates for patterns

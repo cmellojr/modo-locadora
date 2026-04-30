@@ -1,6 +1,6 @@
 # Referência da API
 
-O Modo Locadora usa páginas renderizadas no servidor (HTML) e alguns endpoints JSON. Para detalhes de autenticação, veja [Política de Segurança](SECURITY.md).
+O Modo Locadora usa páginas renderizadas no servidor (HTML) e alguns endpoints JSON. Para detalhes de autenticação, veja [Política de Segurança](security.md).
 
 ## Páginas (SSR)
 
