@@ -12,7 +12,7 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) e o p
 - **Header com banner + barra de navegação**: Header dividido em duas linhas — banner com gradiente e logo no topo, barra de links tabulados abaixo (Balcão, Prateleira, Turmas, Carteirinha, Admin).
 - **Turmas (Clubs)**: Sistema de comunidades gamers — sócios podem criar turmas (representando podcasts, canais YouTube, grupos WhatsApp etc.), personalizar com badge e URL, e convidar outros sócios. Múltiplos admins por turma; listagem pública. Relação M2M (`clubs` ↔ `club_members` ↔ `members`). Carteirinha exibe "MINHAS TURMAS" com badge, nome e cargo. Feed de atividades registra criação e entrada em turmas. Upload de badges salvos em `web/static/clubs/` (volume Docker). Migration `009_clubs.sql`. 11 rotas novas, 3 templates (`clubs.html`, `club_detail.html`, `club_form.html`). Botão TURMAS adicionado a todas as páginas.
 - **Títulos de progressão** (`Status de Veterano`): Carteirinha exibe badge de progressão — Sócio Novato (padrão), Sócio Prata (10+ devoluções no prazo), Sócio Ouro (25+ devoluções no prazo), Dono da Calçada (5+ jogos zerados). Devedores veem título esmaecido com "(EM DÉBITO)". Computação pura via `ComputeMemberTitle()` em `internal/models/member.go`.
-- **Indicadores de saúde do acervo** (`Saúde do Acervo`): Inventário admin mostra coluna de saúde por jogo — Cartucho Novo (0-1 aluguéis), Clássico Eterno (<25% vereditos ruins), Precisa Soprar (25-49%), Fita Gasta (50%+). Calculado a partir de vereditos e atrasos via `ListGamesWithHealth()`.
+- **Classificação de popularidade do acervo**: Inventário admin substitui "Saúde do Acervo" por níveis de popularidade baseados em frequência de aluguel, jogos completados e taxa de rejeição. Migration `011_verdict_popularity.sql` converte vereditos antigos para slugs em inglês.
 - **Histórico de aluguéis na ficha do jogo**: Página de edição admin mostra os últimos 5 registros de aluguel (sócio, datas, veredito, indicador de atraso) via `ListGameRentalHistory()`.
 - **Modo de exibição de capa**: Jogos agora têm campo `cover_display` (cover/contain/fill) controlando CSS `object-fit` das imagens de capa. Editável na página admin. Migration `008_cover_display.sql`.
 - **Configuração golangci-lint** (`.golangci.yml`): Linters — errcheck, staticcheck, unused, gosec, govet, ineffassign, typecheck.
@@ -20,7 +20,7 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) e o p
 - **Auto-detecção de diretório de migrations**: Flag `--seed` agora detecta diretório automaticamente (`migrations/` no Docker, `internal/database/migrations/` localmente).
 - **Feed de atividades** (`Aconteceu na Locadora`): Feed de eventos em tempo real na página de plataformas mostrando novos jogos, vereditos, penalidades e redenções. Migration `006_activities_feed.sql`.
 - **Almanaque do Tio** (`internal/almanac/`): Efemérides estáticas de gaming por dia do ano, exibidas ao lado do feed.
-- **Sistema de vereditos**: Na devolução, sócios escolhem um veredito (Zerei / Joguei um pouco / Desisti). Vereditos armazenados em `public_legacy` e geram eventos de atividade.
+- **Sistema expandido de vereditos**: Na devolução, sócios escolhem entre cinco vereditos de interface (Zerei / Curti / Joguei rápido / Não é pra mim / Desisti), armazenados em `public_legacy` com slugs em inglês (`completed`, `enjoyed`, `quick_play`, `not_for_me`, `gave_up`). Auto-devoluções usam `auto_return`.
 - **Estrela Dourada**: Jogos completados ("Zerei") pelo sócio logado mostram estrela dourada na prateleira.
 - **Auto-devolução na carteirinha**: Sócios podem devolver aluguéis diretamente da carteirinha via `POST /membership/return`.
 - **Layout 3 colunas**: Página de plataformas usa CSS Grid (`.locadora-grid`): sidebar esquerda (mini-card + Painel da Vergonha), centro (grade de plataformas), sidebar direita (feed + almanaque).
@@ -40,6 +40,7 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) e o p
 
 ### Alterado
 - **Convenção de idioma reforçada**: Rotas `/carteirinha` renomeadas para `/membership`; status `em_debito` renomeado para `in_debt` (migration `010_rename_status_english.sql`). Todas as mensagens `http.Error`, logs e query params (`?success=`) traduzidos para inglês. Português restrito exclusivamente ao texto da interface web.
+- **Nomes dos documentos em `docs/` normalizados**: Arquivos de documentação internos renomeados para letras minúsculas (`api.md`, `changelog.md`, `contributing.md`, `prd.md`, `security.md`, `setup.md`) e links internos atualizados.
 - **Breakpoint responsivo**: Reduzido de 1100px para 768px — sidebars permanecem visíveis em telas médias.
 - **Página de entrada**: Removido redirecionamento automático; Balcão sempre exibido primeiro com conteúdo condicional login/boas-vindas.
 - **Prateleira simplificada**: Cards agora mostram apenas capa, título, número de cópias e disponibilidade (sem resumo/revista).
