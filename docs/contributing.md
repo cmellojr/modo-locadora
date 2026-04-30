@@ -60,7 +60,7 @@ Use [Conventional Commits](https://www.conventionalcommits.org/): `feat:`, `fix:
 
 ## Configuração do Ambiente
 
-Veja [Configuração do Ambiente](SETUP.md) para instruções de instalação.
+Veja [Configuração do Ambiente](setup.md) para instruções de instalação.
 
 ## Licença
 

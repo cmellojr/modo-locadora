@@ -87,4 +87,4 @@ GET /clubs/{id}/edit      → Formulário de edição (admin da turma)
 
 Build Docker multi-stage (`golang:1.24-alpine` → `alpine:3.21`). Docker Compose orquestra app + PostgreSQL com health checks. Três volumes: `postgres_data` (banco), `covers_data` (capas enviadas) e `clubs_data` (badges de turmas).
 
-Para configuração do ambiente, veja [SETUP.md](docs/SETUP.md). Para convenções de código, veja [CONTRIBUTING.md](docs/CONTRIBUTING.md).
+Para configuração do ambiente, veja [setup.md](docs/setup.md). Para convenções de código, veja [contributing.md](docs/contributing.md).
