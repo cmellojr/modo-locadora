@@ -14,6 +14,7 @@ import (
 
 	"github.com/cmellojr/modo-locadora/internal/config"
 	"github.com/cmellojr/modo-locadora/internal/database"
+	"github.com/cmellojr/modo-locadora/internal/storage"
 	"github.com/cmellojr/modo-locadora/internal/handlers"
 	"github.com/cmellojr/modo-locadora/internal/jobs"
 	"github.com/cmellojr/modo-locadora/internal/middleware"
@@ -95,7 +96,11 @@ func main() {
 		log.Println("Warning: ADMIN_EMAIL not set. Admin routes will be inaccessible.")
 	}
 
-	h := handlers.NewHandler(store, cookieSecret, adminEmail)
+	appEnv := os.Getenv("APP_ENV")
+	storageBucket := os.Getenv("STORAGE_BUCKET_NAME")
+	storageProvider := storage.NewStorageProvider(appEnv, storageBucket)
+
+	h := handlers.NewHandler(store, storageProvider, cookieSecret, adminEmail)
 
 	// Start the overdue rental checker background job.
 	if store != nil {
