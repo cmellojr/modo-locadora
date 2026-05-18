@@ -6,8 +6,6 @@
 ![PostgreSQL](https://img.shields.io/badge/postgresql-15-336791?logo=postgresql&logoColor=white)
 ![Docker](https://img.shields.io/badge/docker-compose-2496ED?logo=docker&logoColor=white)
 ![NES.css](https://img.shields.io/badge/nes.css-2.3.0-E76F51)
-![Retro](https://img.shields.io/badge/visual-8--bit-E76F51)
-![License](https://img.shields.io/badge/license-GPL%20v3-blue)
 ![SSR](https://img.shields.io/badge/rendering-SSR-green)
 ![JS](https://img.shields.io/badge/javascript-zero-red)
 
@@ -54,83 +52,76 @@ O projeto é uma homenagem aos antigos **Projeto Jogatina** e **Fórum NES Archi
 
 ## Stack
 
-| Componente | Tecnologia |
-|------------|-----------|
-| Backend | [Go](https://go.dev/) 1.24+ |
-| Banco de dados | [PostgreSQL](https://www.postgresql.org/) 15+ |
-| Interface | Server-Side Rendering com `html/template` |
-| Estilo | [NES.css](https://nostalgic-css.github.io/NES.css/) 2.3.0 + Press Start 2P |
-| Dados de jogos | [IGDB](https://api-docs.igdb.com/) via Twitch OAuth2 |
-| Deploy | Docker Compose (app + banco) |
+| Camada | Tecnologia |
+|--------|------------|
+| Backend | Go 1.24+ com `net/http.ServeMux` |
+| Banco de dados | PostgreSQL 15 + `pgx/v5` |
+| Interface | SSR com `html/template` |
+| Estilo | NES.css 2.3.0 + Press Start 2P |
+| Dados de jogos | IGDB via Twitch OAuth2 |
+| Deploy local | Docker Compose |
+| Uploads | `internal/storage` (`LocalStorage` ou `GCSStorage`) |
 
----
-
-## Começar a Jogar
-
-### Pré-requisitos
-
-- Docker e Docker Compose
-- Credenciais da [API do IGDB](https://dev.twitch.tv/) (Twitch Developer)
-
-### Início rápido
+## Início Rápido
 
 ```bash
 git clone https://github.com/cmellojr/modo-locadora.git
 cd modo-locadora
-cp .env.example .env        # preencha com seus valores
-docker compose up -d --build # sobe tudo: app + banco
-docker exec modo_locadora_app /app/server --seed  # popula com dados de teste (opcional)
+cp .env.example .env
+docker compose up -d --build
+docker exec modo_locadora_app /app/server --seed
 ```
 
-Acesse `http://localhost:8080` — a locadora está aberta.
-Com seed: `MegaDriveKid` / `sega1991`, `Devedor` / `atrasado123`, `Novato` / `novato2026`.
+Acesse `http://localhost:8080`.
 
-Para desenvolvimento local sem Docker, migrações manuais e criação do primeiro sócio, veja **[docs/setup.md](docs/setup.md)**.
+Contas de seed:
 
----
+| Perfil | Senha |
+|--------|-------|
+| `MegaDriveKid` | `sega1991` |
+| `Devedor` | `atrasado123` |
+| `Novato` | `novato2026` |
+| `tio_da_locadora` | `sopre_a_fita` |
+
+Para configuração completa, variáveis de ambiente, migrations e troubleshooting, veja [docs/setup.md](docs/setup.md).
 
 ## Documentação
 
-| Documento | Conteúdo |
-|-----------|---------|
-| [ARCHITECTURE.md](ARCHITECTURE.md) | Arquitetura do sistema |
-| [ROADMAP.md](ROADMAP.md) | Plano de evolução e versões |
-| [docs/setup.md](docs/setup.md) | Configuração do ambiente |
-| [docs/api.md](docs/api.md) | Referência da API |
-| [docs/security.md](docs/security.md) | Política de segurança |
-| [docs/contributing.md](docs/contributing.md) | Como contribuir |
-| [docs/changelog.md](docs/changelog.md) | Histórico de mudanças |
-
----
+| Documento | Responsabilidade |
+|-----------|------------------|
+| [ARCHITECTURE.md](ARCHITECTURE.md) | Arquitetura, módulos, fluxo de domínio e templates |
+| [ROADMAP.md](ROADMAP.md) | Versões entregues e próximas ideias |
+| [AGENTS.md](AGENTS.md) | Instruções para agentes de IA trabalhando no repositório |
+| [docs/setup.md](docs/setup.md) | Ambiente local, Docker, migrations, seed e storage |
+| [docs/api.md](docs/api.md) | Rotas SSR, endpoints de formulário e JSON |
+| [docs/security.md](docs/security.md) | Autenticação, autorização, uploads e checklist de deploy |
+| [docs/contributing.md](docs/contributing.md) | Fluxo de contribuição e convenções |
+| [docs/prd.md](docs/prd.md) | Contexto de produto e requisitos |
+| [docs/changelog.md](docs/changelog.md) | Histórico de mudanças notáveis |
 
 ## Automação
 
 O projeto usa [Task](https://taskfile.dev/) para comandos comuns:
 
 ```bash
-task check     # build + vet + lint
-task seed      # aplica migrações + dados de teste
-task reset     # reset completo (down + up + seed)
-task logs      # logs do container
+task build
+task vet
+task lint
+task check
+task dev
+task seed
+task up
+task down
+task reset
+task logs
+task psql
 ```
 
-## Próximos Passos
-
-Confira o [ROADMAP.md](ROADMAP.md) para o plano completo de evolução — versões lançadas, em andamento e futuras.
-
----
-
-## Contribuindo
-
-Pull requests são bem-vindos. Leia o [guia de contribuição](docs/contributing.md) antes de abrir um PR. Issues e discussões em português, por favor.
-
----
+Veja [docs/contributing.md](docs/contributing.md) para o fluxo de branches e validação antes de PR.
 
 ## Licença
 
-Distribuído sob a licença **GPL v3**. Veja [LICENSE](LICENSE) para mais informações.
-
----
+Distribuído sob a licença **GPL v3**. Veja [LICENSE](LICENSE).
 
 *Desenvolvido com nostalgia pelo Tio da Locadora.*
 

@@ -1,87 +1,71 @@
 # PRD: Modo Locadora
 
-**"A experiência definitiva do jogador honesto"**
+> **"A experiência definitiva do jogador honesto."**
 
-## 1. Visão Geral
+## Visão Geral
 
-O Modo Locadora é um simulador de ecossistema de locadora brasileira dos anos 90. Ele combina a robustez da engenharia moderna (Go, Docker, Postgres) com a alma dos projetos clássicos como Projeto Jogatina e NES Archive. O sistema não é apenas um catálogo, mas uma ferramenta de curadoria que combate a "Síndrome do Labirinto" através de mecânicas de escassez e reputação social.
+O Modo Locadora é um simulador de locadora brasileira dos anos 1990 aplicado a backlog e sessões de jogos retrô. O produto combina catálogo, escassez, reputação e interação social para combater a "Síndrome do Labirinto": ter muitos jogos e terminar poucos.
 
-## 2. Pilares do Produto
+Este PRD descreve intenção de produto. Implementação técnica e rotas ficam em [../ARCHITECTURE.md](../ARCHITECTURE.md) e [api.md](api.md).
 
-- **Escassez Real:** Cartuchos são itens finitos. Se estiver alugado, o sócio deve esperar.
-- **Identidade Nacional:** Prioridade para capas TecToy/Playtronic e referências a revistas como Ação Games e VideoGame.
-- **Consequência Social:** Ações do sócio (atrasos, zeramentos) impactam sua reputação pública na "comunidade".
-- **Imersão Retro:** Interface 8-bit funcional, sonora e visual (NES.css).
+## Pilares
 
-## 3. Requisitos Funcionais
+- **Escassez real**: cada jogo tem cópias físicas limitadas.
+- **Compromisso**: alugar cria prazo; atrasar gera consequência.
+- **Memória retrogamer brasileira**: capas nacionais, revistas, locadora, cartucho e carteirinha.
+- **Progressão social**: reputação, títulos, turmas e feed público.
+- **Simplicidade técnica**: SSR, zero JavaScript e interface rápida.
 
-### 3.1. Gestão de Acervo (O Balcão)
+## Requisitos Funcionais
 
-- **Navegação em 3 Níveis:**
-  1. Seleção de Plataforma (com logos SVG).
-  2. Prateleira de Jogos (Grid com capas brasileiras).
-  3. Detalhe do Título (Stats, curiosidades e botão de aluguel).
-- **Upload de Capas:** Sistema para o Admin subir imagens locais (TecToy) via Multipart Form.
-- **Sistema de Cópias:** Controle rígido de unidades disponíveis por título.
+### Acervo
 
-### 3.2. Experiência do Sócio (A Carteirinha)
+- Navegação em 3 níveis: plataformas, prateleira filtrada e detalhe do jogo.
+- Aquisição admin via IGDB.
+- Upload de capa local ou via storage de produção.
+- Edição de metadados, revista de origem e `cover_display`.
+- Inventário admin com classificação de popularidade.
 
-- **Identidade:** Numeração sequencial `1991-XXX`.
-- **Status de Progressão:** Títulos automáticos: Sócio Novato, Sócio Prata (10+ devoluções no prazo), Sócio Ouro (25+ devoluções no prazo) e Dono da Calçada (5+ jogos zerados). Devedores veem título esmaecido com indicador.
-- **Caderno de Passwords:** Campo de texto persistente para anotações e códigos de jogos.
-- **Estrela Dourada:** Badge visual para jogos marcados com o veredito "Zerei".
+### Sócio
 
-### 3.3. Dinâmica de Locação e Reputação
+- Registro com matrícula `1991-XXX`.
+- Login com perfil e senha.
+- Carteirinha com estatísticas, status, título de progressão, caderno de passwords e turmas.
+- Títulos calculados por histórico: `Sócio Novato`, `Sócio Prata`, `Sócio Ouro`, `Dono da Calçada`.
 
-- **Auto-Return System:** Job de segundo plano que penaliza atrasos automaticamente.
-- **Painel da Vergonha:** Exposição pública de sócios com status "em débito".
-- **Fluxo de Redenção:** Botão "Soprar Cartucho" para limpar pendências e restaurar acesso.
-- **Veredito de Devolução:** O sócio deve classificar sua experiência (Zerei, Joguei um pouco, Desisti).
+### Aluguel e Reputação
 
-### 3.4. Social e Conteúdo (Feed)
+- Aluguel bloqueado para sócios em `in_debt`.
+- Prazo padrão de 3 dias.
+- Devolução com vereditos: `completed`, `enjoyed`, `quick_play`, `not_for_me`, `gave_up`.
+- Auto-devolução para atrasos com `auto_return`.
+- Redenção manual via "Sopro".
+- Painel da Vergonha para maiores infratores.
 
-- **Aconteceu na Locadora:** Feed de atividades em tempo real (Novas fitas, Vereditos, Punições, Turmas).
-- **Almanaque do Tio:** Notícias históricas baseadas em efemérides reais da indústria de games.
+### Social
 
-### 3.5. Turmas (Comunidades Gamers)
+- Feed "Aconteceu na Locadora".
+- Almanaque do Tio com efemérides.
+- Turmas públicas com badge, URL, admins e membros.
+- Carteirinha lista as turmas do sócio.
 
-- **Criação de Turmas:** Sócios podem criar turmas representando podcasts, canais YouTube, grupos WhatsApp ou qualquer comunidade gamer. Cada turma tem nome, descrição, badge (upload de imagem) e URL.
-- **Participação Múltipla:** Sócios podem participar de quantas turmas quiserem.
-- **Administração Distribuída:** Turmas podem ter múltiplos admins. Admins podem promover membros e remover participantes. O criador é automaticamente o primeiro admin.
-- **Listagem Pública:** Qualquer visitante pode ver as turmas. Ações (criar, entrar, sair, editar) requerem login.
-- **Exclusão:** Apenas o criador original pode excluir uma turma.
-- **Integração com Carteirinha:** Seção "MINHAS TURMAS" exibe turmas do sócio com badge, nome e cargo.
+## Requisitos Não Funcionais
 
-### 3.6. Auditoria do Acervo (Admin)
+- Go 1.24+ e PostgreSQL 15.
+- SSR com `html/template`.
+- Sem JavaScript no frontend.
+- NES.css com tema escuro e estética 8-bit.
+- Uploads independentes do ambiente via `StorageProvider`.
+- Validação mínima antes de PR: `task check`.
 
-- **Saúde do Acervo:** Indicador visual no inventário: Cartucho Novo (0-1 aluguéis), Clássico Eterno (<25% ruins), Precisa Soprar (25-49%), Fita Gasta (50%+).
-- **Histórico de Aluguéis:** Ficha do jogo mostra últimos 5 aluguéis com sócio, datas, veredito e indicador de atraso.
-- **Modo de Exibição:** Campo `cover_display` controla CSS object-fit das capas (preencher, mostrar inteira, esticar).
+## Fora do Escopo Atual
 
-## 4. Requisitos Não-Funcionais (SRE Stack)
+- SPA ou framework JavaScript.
+- Sistema de pagamento.
+- Chat em tempo real.
+- Ranking competitivo global.
+- API pública versionada.
 
-- **Tecnologia:** Go 1.24+, PostgreSQL 15, Docker Compose.
-- **Segurança:** Senhas protegidas com bcrypt; Cookies assinados com HMAC-SHA256.
-- **Performance:** Interface estritamente SSR (Server-Side Rendering) para manter a leveza e velocidade.
-- **Design:** CSS Grid responsivo com fidelidade aos componentes NES.css.
-- **Áudio:** Feedback sonoro via Web Audio API (Ondas Quadradas/8-bit).
+## Plano
 
-## 5. Arquitetura de Dados (Principais Tabelas)
-
-| Tabela | Descrição |
-|--------|-----------|
-| `members` | Dados do sócio, reputação, status e contadores |
-| `games` | Informações de catálogo, capas e metadados |
-| `game_copies` | Instâncias físicas dos cartuchos e seu estado atual |
-| `rentals` | Histórico de locação, prazos e vereditos |
-| `activities` | Logs de eventos para o feed social |
-| `clubs` | Turmas (comunidades gamers) com badge e URL |
-| `club_members` | Relação M2M entre turmas e sócios (com cargo) |
-
-## 6. Plano de Lançamento
-
-Veja [ROADMAP.md](../ROADMAP.md) para o plano detalhado de versões e milestones.
-
----
-
-*&copy; 1991-2026 Modo Locadora - Inspirado no Projeto Jogatina e Fórum NES Archive.*
+Versões e próximas ideias estão em [../ROADMAP.md](../ROADMAP.md). Mudanças notáveis ficam em [changelog.md](changelog.md).

@@ -1,93 +1,107 @@
 # Histórico de Mudanças
 
-Todas as mudanças notáveis deste projeto serão documentadas neste arquivo.
+Todas as mudanças notáveis deste projeto são documentadas aqui.
 
-O formato segue o [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) e o projeto adere ao [Versionamento Semântico](https://semver.org/spec/v2.0.0.html).
+O formato segue [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) e o projeto adere ao [Versionamento Semântico](https://semver.org/spec/v2.0.0.html).
 
 ## [Não Lançado]
 
 ### Adicionado
-- **Banner de imagem 728x90**: Título do site substituído por imagem PNG no formato leaderboard clássico dos anos 2000. Renderização pixel art via `image-rendering: pixelated`, escala responsiva automática.
-- **Layout global 3 colunas (anos 2000)**: Estrutura de site inspirada em GameFAQs/Backloggery — sidebar esquerda (navegação + mini-card), área de conteúdo central, sidebar direita (feed + vergonha + almanaque). Template base `layout.html` com composição via `{{define "content"}}`. Todos os 12 templates convertidos.
-- **Header com banner + barra de navegação**: Header dividido em duas linhas — banner com gradiente e logo no topo, barra de links tabulados abaixo (Balcão, Prateleira, Turmas, Carteirinha, Admin).
-- **Turmas (Clubs)**: Sistema de comunidades gamers — sócios podem criar turmas (representando podcasts, canais YouTube, grupos WhatsApp etc.), personalizar com badge e URL, e convidar outros sócios. Múltiplos admins por turma; listagem pública. Relação M2M (`clubs` ↔ `club_members` ↔ `members`). Carteirinha exibe "MINHAS TURMAS" com badge, nome e cargo. Feed de atividades registra criação e entrada em turmas. Upload de badges salvos em `web/static/clubs/` (volume Docker). Migration `009_clubs.sql`. 11 rotas novas, 3 templates (`clubs.html`, `club_detail.html`, `club_form.html`). Botão TURMAS adicionado a todas as páginas.
-- **Títulos de progressão** (`Status de Veterano`): Carteirinha exibe badge de progressão — Sócio Novato (padrão), Sócio Prata (10+ devoluções no prazo), Sócio Ouro (25+ devoluções no prazo), Dono da Calçada (5+ jogos zerados). Devedores veem título esmaecido com "(EM DÉBITO)". Computação pura via `ComputeMemberTitle()` em `internal/models/member.go`.
-- **Classificação de popularidade do acervo**: Inventário admin substitui "Saúde do Acervo" por níveis de popularidade baseados em frequência de aluguel, jogos completados e taxa de rejeição. Migration `011_verdict_popularity.sql` converte vereditos antigos para slugs em inglês.
-- **Histórico de aluguéis na ficha do jogo**: Página de edição admin mostra os últimos 5 registros de aluguel (sócio, datas, veredito, indicador de atraso) via `ListGameRentalHistory()`.
-- **Modo de exibição de capa**: Jogos agora têm campo `cover_display` (cover/contain/fill) controlando CSS `object-fit` das imagens de capa. Editável na página admin. Migration `008_cover_display.sql`.
-- **Configuração golangci-lint** (`.golangci.yml`): Linters — errcheck, staticcheck, unused, gosec, govet, ineffassign, typecheck.
-- **Taskfile** (`Taskfile.yml`): Task runner SRE com comandos para build, vet, lint, check, dev, seed, up, down, reset, logs, psql.
-- **Auto-detecção de diretório de migrations**: Flag `--seed` agora detecta diretório automaticamente (`migrations/` no Docker, `internal/database/migrations/` localmente).
-- **Feed de atividades** (`Aconteceu na Locadora`): Feed de eventos em tempo real na página de plataformas mostrando novos jogos, vereditos, penalidades e redenções. Migration `006_activities_feed.sql`.
-- **Almanaque do Tio** (`internal/almanac/`): Efemérides estáticas de gaming por dia do ano, exibidas ao lado do feed.
-- **Sistema expandido de vereditos**: Na devolução, sócios escolhem entre cinco vereditos de interface (Zerei / Curti / Joguei rápido / Não é pra mim / Desisti), armazenados em `public_legacy` com slugs em inglês (`completed`, `enjoyed`, `quick_play`, `not_for_me`, `gave_up`). Auto-devoluções usam `auto_return`.
-- **Estrela Dourada**: Jogos completados ("Zerei") pelo sócio logado mostram estrela dourada na prateleira.
-- **Auto-devolução na carteirinha**: Sócios podem devolver aluguéis diretamente da carteirinha via `POST /membership/return`.
-- **Layout 3 colunas**: Página de plataformas usa CSS Grid (`.locadora-grid`): sidebar esquerda (mini-card + Painel da Vergonha), centro (grade de plataformas), sidebar direita (feed + almanaque).
-- **Sistema de seed SQL**: Flag `--seed` aplica todas as migrations + `007_seed_initial_data.sql` com 5 jogos da Ação Games #1, 3 sócios de teste, histórico de aluguéis e feed. Execução via `go run ./cmd/server --seed`.
-- **Fluxo de login/logout**: Balcão é sempre a página de entrada; sócios logados veem mensagem de boas-vindas + navegação. `POST /logout` limpa o cookie de sessão.
-- **Barra de autenticação**: Todas as páginas exibem "Sócio: nome / [DESCONECTAR]" alinhado no topo direito quando logado. Classe CSS `.auth-bar` em `retro.css`.
-- **Logos de console na grade**: Página de seleção de plataforma mostra logos SVG (`web/static/img/logos/`) ao invés de capas de jogos. Mapeamento automático via helper `platformLogoFile()`.
-- **Navegação em 3 níveis**: `/games` mostra grade de plataformas, `?platform=X` filtra por console, `/games/{id}` mostra detalhe completo com stats.
-- **Upload de capas brasileiras**: Admin pode enviar imagens locais (TecToy, Playtronic) via formulário multipart na página de edição. Capas salvas em `web/static/covers/` (volume Docker).
-- **Sistema de auto-devolução**: Job de background verifica aluguéis atrasados a cada 5 minutos, auto-devolve e penaliza sócios (status `in_debt` + incremento de `late_count`). Migration `005_auto_return_reputation.sql`.
-- **Painel da Vergonha**: Página de entrada mostra maiores devedores.
-- **Redenção de sócio**: `POST /membership/redeem` limpa status de débito.
-- **Aplicação Dockerizada**: Dockerfile multi-stage, Docker Compose roda app + PostgreSQL, volume `covers_data` para uploads.
-- **Caderno de Passwords**: Sócios podem salvar códigos de jogos na carteirinha. Migration `004_password_notes.sql`.
-- **Pacote `internal/jobs/`**: Goroutine de background para processamento de aluguéis atrasados.
-- **CLAUDE.md** e **AGENTS.md**: Arquivos de orientação para agentes de IA.
+
+- Abstração `StorageProvider` para uploads, com `LocalStorage` em desenvolvimento e `GCSStorage` em produção.
+- Suporte a Google Cloud Storage para capas e badges quando `APP_ENV=production`.
+- Documentação em português consolidada e com referências cruzadas entre README, arquitetura, setup, API, segurança, PRD, roadmap e contribuição.
 
 ### Alterado
-- **Convenção de idioma reforçada**: Rotas `/carteirinha` renomeadas para `/membership`; status `em_debito` renomeado para `in_debt` (migration `010_rename_status_english.sql`). Todas as mensagens `http.Error`, logs e query params (`?success=`) traduzidos para inglês. Português restrito exclusivamente ao texto da interface web.
-- **Nomes dos documentos em `docs/` normalizados**: Arquivos de documentação internos renomeados para letras minúsculas (`api.md`, `changelog.md`, `contributing.md`, `prd.md`, `security.md`, `setup.md`) e links internos atualizados.
-- **Breakpoint responsivo**: Reduzido de 1100px para 768px — sidebars permanecem visíveis em telas médias.
-- **Página de entrada**: Removido redirecionamento automático; Balcão sempre exibido primeiro com conteúdo condicional login/boas-vindas.
-- **Prateleira simplificada**: Cards agora mostram apenas capa, título, número de cópias e disponibilidade (sem resumo/revista).
-- **`GET /games/{id}`** mudou de API JSON para página renderizada no servidor.
-- **`POST /rent`** redireciona para página de detalhe ao invés da prateleira.
-- **Página de plataformas**: Reestruturada de flex 2 colunas para CSS Grid 3 colunas.
-- **Expansão de componentes NES.css**: `nes-radio` para veredito, `nes-icon star` para estrela dourada, `nes-progress`, `nes-list`, `nes-avatar`, `nes-dialog`, `nes-balloon`.
-- **Tamanhos de fonte e larguras** padronizados em todas as páginas.
-- **Estilos inline consolidados** em classes CSS reutilizáveis no `retro.css`.
+
+- `AGENTS.md` agora é a fonte única de instruções para agentes de IA.
+- Documentação removida/reestruturada para reduzir redundância entre arquivos.
+
+### Removido
+
+- Arquivos de instrução separados para agentes foram consolidados em `AGENTS.md`.
+- Arquivo de descrição isolada do repositório foi removido.
+
+## [0.1.6] - 2026-05-18
+
+### Adicionado
+
+- Cinco vereditos de devolução: `completed`, `enjoyed`, `quick_play`, `not_for_me`, `gave_up`.
+- Veredito `auto_return` para devoluções automáticas.
+- Classificação de popularidade no inventário admin.
+- Migration `011_verdict_popularity.sql`.
+
+### Alterado
+
+- Vereditos antigos em português foram migrados para slugs em inglês.
+- Eventos de atividade de veredito foram normalizados.
+- Indicador de "saúde do acervo" foi substituído por popularidade.
+
+## [0.1.5] - 2026-05-18
+
+### Adicionado
+
+- Sistema de turmas com criação, edição, exclusão, entrada, saída, promoção e remoção de membros.
+- Badges de turma e integração com carteirinha.
+- Migration `009_clubs.sql`.
+
+### Alterado
+
+- Navegação global passou a incluir Turmas.
+
+## [0.1.4] - 2026-05-18
+
+### Adicionado
+
+- Títulos de progressão do sócio.
+- `cover_display` para controlar exibição de capas.
+- Histórico de aluguéis no admin.
+- Taskfile e `golangci-lint`.
+- Migration `008_cover_display.sql`.
+
+## [0.1.3] - 2026-05-18
+
+### Adicionado
+
+- Caderno de passwords.
+- Auto-devolução com penalização.
+- Feed de atividades.
+- Almanaque do Tio.
+- Seed inicial.
+- Migrations `004` a `007`.
 
 ## [0.1.2] - 2026-03-04
 
 ### Adicionado
-- **Sistema de matrícula**: Números sequenciais no formato `1991-XXX`.
-- **Página da carteirinha**: Carteirinha digital de sócio.
-- **Sistema de aluguel**: Sócios alugam jogos via `POST /rent`.
-- **Dashboard de devoluções**: Página admin listando aluguéis ativos com botões de devolução.
-- **Inventário e edição admin**: Tabela do acervo com links de edição e formulário de edição.
-- **Migration `003`**: Campos de matrícula, sequência `membership_seq`, criação automática de cópias.
-- Middleware `RequireAuth` e `RequireAdmin`.
-- Cookies assinados com HMAC-SHA256 e hash de senhas com bcrypt.
-- `.env.example` e diretório `docs/`.
 
-### Alterado
-- Prateleira de jogos exibe estados de disponibilidade em tempo real.
-- Login requer nome de perfil + senha com verificação bcrypt.
-- Cookie de sessão armazena UUID assinado.
+- Matrículas `1991-XXX`.
+- Carteirinha de sócio.
+- Sistema de aluguel e devolução.
+- Dashboard admin de devoluções.
+- Inventário e edição admin.
+- Middleware `RequireAuth` e `RequireAdmin`.
+- Cookies assinados com HMAC-SHA256 e senhas com bcrypt.
+- Migration `003_membership_and_rental_support.sql`.
 
 ## [0.1.1] - 2026-03-03
 
 ### Adicionado
-- Docker Compose para PostgreSQL 15.
-- Página de estoque admin com busca IGDB.
-- Fluxo de aquisição de jogos, endpoints JSON de busca e detalhe.
-- Endpoint de registro de sócios.
-- Tema CSS estilo NES.
 
-### Alterado
-- UI migrada para tema escuro NES com grid responsivo.
-- Tabela de jogos estendida com capa, revista e data de aquisição (migration `002`).
+- Docker Compose com PostgreSQL 15.
+- Estoque admin com busca IGDB.
+- Fluxo de aquisição de jogos.
+- Registro de sócios.
+- Tema NES.css.
+- Migration `002_update_games_table.sql`.
 
 ## [0.1.0] - 2026-03-03
 
 ### Adicionado
-- Estrutura inicial do projeto Go com modelos base.
-- Camada PostgreSQL com `pgx/v5` e interface `Store`.
-- Migration `001_initial_schema.sql`.
+
+- Estrutura inicial em Go.
+- PostgreSQL com `pgx/v5`.
+- Interface `Store`.
 - Cliente IGDB com Twitch OAuth2.
-- Página de entrada e prateleira de jogos com SSR.
-- Graceful shutdown. Licença GPL v3.
+- Primeiras páginas SSR.
+- Migration `001_initial_schema.sql`.
+- Licença GPL v3.
