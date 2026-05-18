@@ -1,29 +1,29 @@
 # AGENTS.md
 
-This file is the single source of truth for AI coding agents (Gemini CLI, Jules, Claude Code, Copilot, Cursor, etc.) working on the **Modo Locadora** project.
+Este arquivo é a fonte única de referência para agentes de IA de programação (Gemini CLI, Jules, Claude Code, Copilot, Cursor, etc.) que trabalham no projeto **Modo Locadora**.
 
-## Project Overview
+## Visão Geral do Projeto
 
-**Modo Locadora** is a retro-gaming session manager and backlog tracker designed to emulate the experience of 1990s Brazilian video rental stores (*locadoras*). 
+**Modo Locadora** é um gerenciador de sessões e backlog de jogos retrô, projetado para emular a experiência das locadoras brasileiras de videogame dos anos 1990.
 
-- **Core Concept**: "Scarcity by design" — each game has limited physical copies.
-- **Reputation**: Members must manage their reputation to avoid the "Wall of Shame."
-- **Stack**: Go 1.24+, PostgreSQL 15, Server-Side Rendering (SSR) with `html/template`, NES.css for an 8-bit UI. No JavaScript.
-- **License**: GPL v3.
+- **Conceito central**: "Scarcity by design" — cada jogo possui um número limitado de cópias físicas.
+- **Reputação**: membros precisam cuidar da própria reputação para evitar o "Wall of Shame".
+- **Stack**: Go 1.24+, PostgreSQL 15, Server-Side Rendering (SSR) com `html/template`, NES.css para uma UI 8-bit. Sem JavaScript.
+- **Licença**: GPL v3.
 
-## Core Philosophy & Design Guidelines
+## Filosofia Central e Diretrizes de Design
 
-1.  **Language Split**: 
-    - **Code, database columns, routes, and comments**: English.
-    - **UI/User-facing text**: Portuguese (BR).
-2.  **No JavaScript**: Strictly zero-JS, fully SSR approach.
-3.  **Retro Aesthetic**: Adhere to the NES.css dark theme (`is-dark`, `#0A0E1A`) and the "video rental store" metaphor (e.g., "Sopro" for redemptions).
-4.  **Progression**: Members progress from `Sócio Novato` -> `Prata` -> `Ouro` -> `Dono da Calçada`.
-5.  **Scarcity**: Never bypass the copy-limit logic; if copies are 0, the game is "Alugado."
+1. **Divisão de idioma**:
+   - **Código, colunas de banco de dados, rotas e comentários**: inglês.
+   - **Texto de UI e conteúdo visível para usuários**: português (BR).
+2. **Sem JavaScript**: abordagem estritamente zero-JS, totalmente SSR.
+3. **Estética retrô**: siga o tema escuro do NES.css (`is-dark`, `#0A0E1A`) e a metáfora de "locadora de videogame" (por exemplo, "Sopro" para redenções).
+4. **Progressão**: membros evoluem de `Sócio Novato` -> `Prata` -> `Ouro` -> `Dono da Calçada`.
+5. **Escassez**: nunca ignore a lógica de limite de cópias; se as cópias forem 0, o jogo está "Alugado".
 
-## Build & Run
+## Build e Execução
 
-The project uses [Task](https://taskfile.dev/) (`Taskfile.yml`) for common commands.
+O projeto usa [Task](https://taskfile.dev/) (`Taskfile.yml`) para comandos comuns.
 
 ```bash
 task build     # Build the binary
@@ -36,47 +36,50 @@ task logs      # docker compose logs -f app
 task psql      # connect to DB container
 ```
 
-## Database & Migrations
+## Banco de Dados e Migrations
 
-PostgreSQL 15 via Docker Compose. Migrations are in `internal/database/migrations/`.
+PostgreSQL 15 via Docker Compose. As migrations ficam em `internal/database/migrations/`.
 
-Shortcut: `go run ./cmd/server --seed` applies all migrations (001-011) + seed data.
-Default Credentials: `tio_da_locadora` / `sopre_a_fita` / `modo_locadora`.
+Atalho: `go run ./cmd/server --seed` aplica todas as migrations (001-011) + seed data.
+Credenciais padrão: `tio_da_locadora` / `sopre_a_fita` / `modo_locadora`.
 
-Refer to [docs/setup.md](docs/setup.md) for a full list of migrations and test accounts.
+Consulte [docs/setup.md](docs/setup.md) para a lista completa de migrations e contas de teste.
 
-## Code Architecture
+## Arquitetura do Código
 
-Refer to [ARCHITECTURE.md](ARCHITECTURE.md) for a high-level system overview (in Portuguese).
+Consulte [ARCHITECTURE.md](ARCHITECTURE.md) para uma visão geral de alto nível do sistema.
 
-### Package Structure
+### Estrutura de Pacotes
 
-| Package | Purpose |
-|---------|---------|
+| Package | Propósito |
+|---------|-----------|
 | `cmd/server/main.go` | Entrypoint: config, template parsing, pgx pool, route wiring |
-| `internal/handlers/` | HTTP handlers encapsulated in a `Handler` struct |
-| `internal/database/` | `Store` interface (store.go) and `PostgreSQL` implementation (postgres.go) |
-| `internal/middleware/` | `RequireAuth` (session check) and `RequireAdmin` (auth + email check) |
+| `internal/handlers/` | HTTP handlers encapsulados em um `Handler` struct |
+| `internal/database/` | Interface `Store` (`store.go`) e implementação `PostgreSQL` (`postgres.go`) |
+| `internal/middleware/` | `RequireAuth` (session check) e `RequireAdmin` (auth + email check) |
 | `internal/auth/` | HMAC-SHA256 cookie signing/verification |
 | `internal/igdb/` | IGDB API client (Twitch OAuth2) |
 | `internal/models/` | Domain structs: Member, Game, GameCopy, Rental, Club, etc. |
-| `internal/storage/` | `StorageProvider` for file uploads (Local vs GCS) |
-| `web/templates/` | Standalone HTML templates (Portuguese UI) |
-| `web/static/` | Global CSS (`retro.css`), logos, and uploaded assets |
+| `internal/storage/` | `StorageProvider` para file uploads (Local vs GCS) |
+| `web/templates/` | Templates HTML standalone (UI em português) |
+| `web/static/` | CSS global (`retro.css`), logos e assets enviados por upload |
 
 ### Authentication
-- **Login**: `POST /login` -> bcrypt verify -> HMAC-signed cookie (`{uuid}.{hmac_hex}`).
-- **Admin**: Cookie verified + email checked against `ADMIN_EMAIL` env var.
 
-### Navigation Flow
-1. `GET /games`: Platform selection grid (`platforms.html`).
-2. `GET /games?platform=X`: Filtered game shelf (`games.html`).
-3. `GET /games/{id}`: Full game detail with rental stats (`game_detail.html`).
+- **Login**: `POST /login` -> bcrypt verify -> HMAC-signed cookie (`{uuid}.{hmac_hex}`).
+- **Admin**: cookie verificado + email comparado com `ADMIN_EMAIL` env var.
+
+### Fluxo de Navegação
+
+1. `GET /games`: grid de seleção de plataforma (`platforms.html`).
+2. `GET /games?platform=X`: prateleira de jogos filtrada (`games.html`).
+3. `GET /games/{id}`: detalhe completo do jogo com estatísticas de aluguel (`game_detail.html`).
 
 ## Routing
 
 ### Public
-- `GET /` — Landing page with login and "Wall of Shame"
+
+- `GET /` — Landing page com login e "Wall of Shame"
 - `POST /login` — Authentication
 - `POST /members` — Registration (JSON API)
 - `GET /search?q=` — IGDB search (JSON API)
@@ -84,38 +87,42 @@ Refer to [ARCHITECTURE.md](ARCHITECTURE.md) for a high-level system overview (in
 - `GET /clubs/{id}` — Public club detail
 
 ### Authenticated (`RequireAuth`)
-- `GET /membership` — Digital membership card & password notes
+
+- `GET /membership` — Carteirinha digital e password notes
 - `POST /rent` — Rent a game
-- `POST /membership/return` — Self-return a rental (with verdict)
+- `POST /membership/return` — Self-return de aluguel (com verdict)
 - `POST /membership/redeem` — Clear debt status ("Sopro")
 - `POST /clubs/new`, `POST /clubs/{id}/join`, etc.
 
 ### Admin (`RequireAdmin`)
-- `GET /admin/stock` — IGDB search & add games
+
+- `GET /admin/stock` — IGDB search e add games
 - `GET /admin/inventory` — Full catalog listing
-- `GET /admin/edit/{id}` — Edit game form & history
+- `GET /admin/edit/{id}` — Edit game form e history
 - `GET /admin/returns` — Active rentals dashboard
 
-## Conventions & Rules
+## Convenções e Regras
 
-1.  **Commit Format**: Conventional Commits (`feat:`, `fix:`, `docs:`, `refactor:`).
-2.  **Branching**: `main` (stable), `develop` (active).
-3.  **Routing**: Standard library only — `mux.HandleFunc("METHOD /path", handler)`.
-4.  **Templates**: Standalone HTML files. Use NES.css classes and `retro.css` utilities.
-5.  **Migrations**: New changes MUST be a new numbered `.sql` file and registered in `cmd/server/main.go`.
-6.  **Security**: Parameterized SQL. Never store plaintext passwords. Cookie secrets min 32 chars.
-7.  **SRE**: Always run `task check` before proposing a PR.
+1. **Commit format**: Conventional Commits (`feat:`, `fix:`, `docs:`, `refactor:`).
+2. **Branching**: `main` (stable), `develop` (active).
+3. **Routing**: somente standard library — `mux.HandleFunc("METHOD /path", handler)`.
+4. **Templates**: arquivos HTML standalone. Use classes NES.css e utilities de `retro.css`.
+5. **Migrations**: novas mudanças DEVEM ser adicionadas em um novo arquivo `.sql` numerado e registrado em `cmd/server/main.go`.
+6. **Security**: parameterized SQL. Nunca armazene senhas em texto puro. Cookie secrets devem ter no mínimo 32 caracteres.
+7. **SRE**: sempre rode `task check` antes de propor um PR.
 
-## Common Tasks
+## Tarefas Comuns
 
-### Adding a new route
-1. Add `Store` interface method in `store.go` and implement in `postgres.go`.
-2. Add handler method to `internal/handlers/handler.go`.
-3. Create/modify template in `web/templates/`.
-4. Register route in `cmd/server/main.go` with middleware.
-5. Run `task build` to verify template parsing.
+### Adicionar uma nova rota
 
-### Adding a database migration
-1. Create `internal/database/migrations/0XX_description.sql`.
-2. Register the file in `sqlFiles` list in `cmd/server/main.go`.
-3. Document in `docs/setup.md`.
+1. Adicione um método na interface `Store` em `store.go` e implemente em `postgres.go`.
+2. Adicione o handler em `internal/handlers/handler.go`.
+3. Crie/modifique o template em `web/templates/`.
+4. Registre a rota em `cmd/server/main.go` com o middleware apropriado.
+5. Rode `task build` para verificar o template parsing.
+
+### Adicionar uma database migration
+
+1. Crie `internal/database/migrations/0XX_description.sql`.
+2. Registre o arquivo na lista `sqlFiles` em `cmd/server/main.go`.
+3. Documente em `docs/setup.md`.
