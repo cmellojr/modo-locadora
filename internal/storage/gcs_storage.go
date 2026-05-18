@@ -41,6 +41,11 @@ func (s *GCSStorage) Save(ctx context.Context, folder string, filename string, s
 	objectPath := fmt.Sprintf("%s/%s", folder, filename)
 	wc := s.client.Bucket(s.bucketName).Object(objectPath).NewWriter(ctx)
 
+	// Ensure the object is publicly readable so the returned URL works.
+	// Note: This requires the bucket to not have "Uniform bucket-level access" enabled,
+	// or for the bucket to be configured to allow public access.
+	wc.ACL = []storage.ACLRule{{Entity: storage.AllUsers, Role: storage.RoleReader}}
+
 	if _, err := io.Copy(wc, src); err != nil {
 		return "", fmt.Errorf("storage_err: failed to upload to bucket %s: %w", s.bucketName, err)
 	}
