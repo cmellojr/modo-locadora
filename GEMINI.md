@@ -31,6 +31,7 @@ This file provides foundational context and instructions for Gemini CLI when wor
     - `store.go`: `Store` interface defining all DB operations.
     - `postgres.go`: PostgreSQL implementation of the `Store` interface.
     - `migrations/`: Numbered SQL migration files (001-011+).
+- `internal/storage/`: `StorageProvider` abstraction for file uploads (Local vs GCS).
 - `internal/models/`: Domain entities (Member, Game, Rental, Club, etc.).
 - `internal/middleware/`: Authentication and Authorization (`RequireAuth`, `RequireAdmin`).
 - `internal/auth/`: Cookie-based session management (HMAC-SHA256 signing).
@@ -72,6 +73,8 @@ Ensure the following are defined in `.env`:
 - `COOKIE_SECRET`: Min 32-character string for session security.
 - `ADMIN_EMAIL`: Email address granted admin privileges.
 - `TWITCH_CLIENT_ID` & `TWITCH_CLIENT_SECRET`: For IGDB integration.
+- `APP_ENV`: Use `production` for Cloud GCS, otherwise `local`.
+- `STORAGE_BUCKET_NAME`: Bucket for GCS uploads.
 
 ---
 
