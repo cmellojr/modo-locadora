@@ -1,6 +1,6 @@
 # AGENTS.md
 
-This file is the single source of truth for AI coding agents (Gemini CLI, Claude Code, Copilot, Cursor, etc.) working on the **Modo Locadora** project.
+This file is the single source of truth for AI coding agents (Gemini CLI, Jules, Claude Code, Copilot, Cursor, etc.) working on the **Modo Locadora** project.
 
 ## Project Overview
 
