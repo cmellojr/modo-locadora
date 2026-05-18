@@ -53,6 +53,8 @@ Required in `.env` (see `.env.example`):
 - `DB_USER`, `DB_PASSWORD`, `DB_NAME`, `DATABASE_URL`
 - `COOKIE_SECRET` — HMAC-SHA256 key for session cookies (min 32 chars)
 - `ADMIN_EMAIL` — email that grants admin panel access
+- `APP_ENV` — `production` to enable Google Cloud Storage, otherwise defaults to local file system
+- `STORAGE_BUCKET_NAME` — GCS bucket name (required if `APP_ENV=production`)
 
 ## Code Architecture
 
@@ -72,6 +74,7 @@ Go 1.24, standard library `net/http.ServeMux` with method-pattern routing. Serve
 | `internal/almanac/almanac.go` | Static gaming ephemerides by day-of-year |
 | `internal/jobs/overdue.go` | Background goroutine: auto-returns overdue rentals every 5 min |
 | `internal/config/config.go` | `.env` loader via godotenv |
+| `internal/storage/` | `StorageProvider` interface and implementations (`LocalStorage`, `GCSStorage`) |
 | `internal/models/` | Domain structs: Member (with status/late_count), Game (with cover_display), GameCopy, Rental, MemberTitle, Club |
 | `web/templates/` | 12 standalone HTML templates (Portuguese UI) |
 | `web/static/css/retro.css` | NES.css dark theme overrides and shared utility classes |

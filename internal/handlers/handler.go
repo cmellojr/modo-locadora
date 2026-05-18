@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"html/template"
-	"io"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -14,6 +13,7 @@ import (
 	"github.com/cmellojr/modo-locadora/internal/almanac"
 	"github.com/cmellojr/modo-locadora/internal/auth"
 	"github.com/cmellojr/modo-locadora/internal/database"
+	"github.com/cmellojr/modo-locadora/internal/storage"
 	"github.com/cmellojr/modo-locadora/internal/igdb"
 	"github.com/cmellojr/modo-locadora/internal/models"
 	"github.com/google/uuid"
@@ -23,13 +23,19 @@ import (
 // Handler handles HTTP requests for the system.
 type Handler struct {
 	store        database.Store
+	storage      storage.StorageProvider
 	cookieSecret string
 	adminEmail   string
 }
 
-// NewHandler creates a new Handler with the provided store, cookie secret and admin email.
-func NewHandler(store database.Store, cookieSecret, adminEmail string) *Handler {
-	return &Handler{store: store, cookieSecret: cookieSecret, adminEmail: adminEmail}
+// NewHandler creates a new Handler with the provided dependencies.
+func NewHandler(store database.Store, storage storage.StorageProvider, cookieSecret, adminEmail string) *Handler {
+	return &Handler{
+		store:        store,
+		storage:      storage,
+		cookieSecret: cookieSecret,
+		adminEmail:   adminEmail,
+	}
 }
 
 
@@ -881,21 +887,14 @@ func (h *Handler) UpdateGame(w http.ResponseWriter, r *http.Request) {
 			ext = ".jpg"
 		}
 		filename := id.String() + ext
-		savePath := filepath.Join("web", "static", "covers", filename)
 
-		dst, err := os.Create(savePath)
+		coverURL, err := h.storage.Save(r.Context(), "covers", filename, file)
 		if err != nil {
 			http.Error(w, "Failed to save cover: "+err.Error(), http.StatusInternalServerError)
 			return
 		}
-		defer dst.Close()
 
-		if _, err := io.Copy(dst, file); err != nil {
-			http.Error(w, "Failed to write cover: "+err.Error(), http.StatusInternalServerError)
-			return
-		}
-
-		game.CoverURL = "/static/covers/" + filename
+		game.CoverURL = coverURL
 	} else {
 		// No upload — preserve existing cover_url from hidden field.
 		coverURL := r.FormValue("cover_url")
@@ -1270,18 +1269,12 @@ func (h *Handler) CreateClub(w http.ResponseWriter, r *http.Request) {
 			ext = ".png"
 		}
 		filename := club.ID.String() + ext
-		savePath := filepath.Join("web", "static", "clubs", filename)
-		dst, err := os.Create(savePath)
+		badgeURL, err := h.storage.Save(r.Context(), "clubs", filename, file)
 		if err != nil {
 			http.Error(w, "Failed to save badge: "+err.Error(), http.StatusInternalServerError)
 			return
 		}
-		defer dst.Close()
-		if _, err := io.Copy(dst, file); err != nil {
-			http.Error(w, "Failed to write badge: "+err.Error(), http.StatusInternalServerError)
-			return
-		}
-		club.BadgeURL = "/static/clubs/" + filename
+		club.BadgeURL = badgeURL
 	}
 
 	if err := h.store.CreateClub(r.Context(), club); err != nil {
@@ -1343,18 +1336,12 @@ func (h *Handler) UpdateClub(w http.ResponseWriter, r *http.Request) {
 			ext = ".png"
 		}
 		filename := club.ID.String() + ext
-		savePath := filepath.Join("web", "static", "clubs", filename)
-		dst, err := os.Create(savePath)
+		badgeURL, err := h.storage.Save(r.Context(), "clubs", filename, file)
 		if err != nil {
 			http.Error(w, "Failed to save badge: "+err.Error(), http.StatusInternalServerError)
 			return
 		}
-		defer dst.Close()
-		if _, err := io.Copy(dst, file); err != nil {
-			http.Error(w, "Failed to write badge: "+err.Error(), http.StatusInternalServerError)
-			return
-		}
-		club.BadgeURL = "/static/clubs/" + filename
+		club.BadgeURL = badgeURL
 	}
 
 	if err := h.store.UpdateClub(r.Context(), club); err != nil {
