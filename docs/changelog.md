@@ -10,6 +10,8 @@ O formato segue [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) e o pro
 
 - Abstração `StorageProvider` para uploads, com `LocalStorage` em desenvolvimento e `GCSStorage` em produção.
 - Suporte a Google Cloud Storage para capas e badges quando `APP_ENV=production`.
+- Separação e suporte para ambientes de desenvolvimento (`compose.override.yaml`) e produção (`compose.prod.yaml`) no Docker Compose v2.
+- Usuário não-root (`1001:1001`), cache mounts do BuildKit e healthcheck nativo no `Dockerfile`.
 - Documentação em português consolidada e com referências cruzadas entre README, arquitetura, setup, API, segurança, PRD, roadmap e contribuição.
 
 ### Alterado

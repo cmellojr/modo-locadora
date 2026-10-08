@@ -1,0 +1,27 @@
+# Production configuration override
+# Run with: docker compose -f compose.yaml -f compose.prod.yaml up -d
+services:
+  app:
+    environment:
+      - APP_ENV=production
+      - STORAGE_BUCKET_NAME=${STORAGE_BUCKET_NAME}
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 512M
+        reservations:
+          cpus: "0.2"
+          memory: 128M
+
+  db:
+    # In production, never expose database ports directly to the host
+    ports: []
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 512M
+        reservations:
+          cpus: "0.2"
+          memory: 128M

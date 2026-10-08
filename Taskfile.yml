@@ -29,17 +29,27 @@ tasks:
       - go run ./cmd/server --seed
 
   up:
-    desc: Start Docker Compose stack (build + detach)
+    desc: Start Docker Compose stack in development mode (build + detach)
     cmds:
       - docker compose up -d --build
+
+  up:prod:
+    desc: Start Docker Compose stack in production mode (build + detach)
+    cmds:
+      - docker compose -f compose.yaml -f compose.prod.yaml up -d --build
 
   down:
     desc: Stop Docker Compose stack
     cmds:
       - docker compose down
 
+  down:prod:
+    desc: Stop Docker Compose production stack
+    cmds:
+      - docker compose -f compose.yaml -f compose.prod.yaml down
+
   reset:
-    desc: Destroy volumes, rebuild, and re-seed
+    desc: Destroy volumes, rebuild, and re-seed (dev mode)
     cmds:
       - docker compose down -v
       - docker compose up -d --build

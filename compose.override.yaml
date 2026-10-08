@@ -1,0 +1,23 @@
+# Development override for local workflow
+# Automatically loaded when running `docker compose up`
+services:
+  app:
+    volumes:
+      # Bind mount templates and static files for immediate feedback during development
+      - ./web:/app/web
+    develop:
+      watch:
+        - action: sync
+          path: ./web
+          target: /app/web
+        - action: rebuild
+          path: ./cmd
+        - action: rebuild
+          path: ./internal
+        - action: rebuild
+          path: ./go.mod
+
+  db:
+    # Expose database port only to localhost (loopback) to prevent accidental external access
+    ports:
+      - "127.0.0.1:${DB_PORT:-5432}:5432"

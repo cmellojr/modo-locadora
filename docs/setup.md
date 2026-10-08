@@ -37,6 +37,12 @@ O Docker Compose local define `DATABASE_URL` para a app automaticamente. `APP_EN
 
 ## Início com Docker
 
+O projeto utiliza a especificação moderna Compose v2 com suporte a dois ambientes: **desenvolvimento** e **produção**.
+
+### Ambiente de Desenvolvimento (padrão)
+
+Em desenvolvimento, o Compose carrega automaticamente [compose.yaml](../compose.yaml) e [compose.override.yaml](../compose.override.yaml). Isso habilita sincronização de templates (`./web`) em tempo real e expõe o banco de dados restrito à interface de loopback (`127.0.0.1:5432`):
+
 ```bash
 git clone https://github.com/cmellojr/modo-locadora.git
 cd modo-locadora
@@ -45,7 +51,27 @@ docker compose up -d --build
 docker exec modo_locadora_app /app/server --seed
 ```
 
+Ou usando Task:
+```bash
+task up
+task seed # ou task reset para recriar o banco do zero
+```
+
 Acesse `http://localhost:8080`.
+
+### Ambiente de Produção
+
+Em produção, o override [compose.prod.yaml](../compose.prod.yaml) define `APP_ENV=production`, ativa o provedor `GCSStorage`, define limites de recursos de CPU/Memória, remove bind mounts locais e isola o banco de dados (sem expor portas para a máquina host):
+
+```bash
+docker compose -f compose.yaml -f compose.prod.yaml up -d --build
+```
+
+Ou usando Task:
+```bash
+task up:prod
+task down:prod
+```
 
 ## Desenvolvimento Local
 

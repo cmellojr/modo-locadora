@@ -1,8 +1,36 @@
+# Git & IDEs
+.git/
+.github/
+.gitignore
+.vscode/
+.idea/
+.agents/
+
+# Documentation & Guidelines
+*.md
+LICENSE
+docs/
+
+# Environment files & Secrets
 .env
-.git
+.env.*
+*.pem
+*.key
+
+# Build artifacts & Binaries
 *.exe
 /server
-README.md
-CLAUDE.md
-AGENTS.md
-docs/
+modo-locadora
+dist/
+bin/
+
+# Tool configs
+.golangci.yml
+Taskfile.yml
+skills-lock.json
+
+# Caches & Test artifacts
+*.test
+*.out
+coverage.*
+.cache/
