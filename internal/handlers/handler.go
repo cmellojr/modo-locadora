@@ -41,12 +41,7 @@ func NewHandler(store database.Store, storage storage.StorageProvider, cookieSec
 
 // Logout handles POST /logout by clearing the session cookie.
 func (h *Handler) Logout(w http.ResponseWriter, r *http.Request) {
-	http.SetCookie(w, &http.Cookie{
-		Name:   "session_member",
-		Value:  "",
-		Path:   "/",
-		MaxAge: -1,
-	})
+	auth.ClearSessionCookie(w)
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 

@@ -2,6 +2,7 @@ package database
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -53,7 +54,7 @@ func scanMember(row pgx.Row) (*models.Member, error) {
 		&m.FavoriteConsole, &m.MembershipNumber, &m.Address, &m.Phone,
 		&m.PasswordNotes, &m.Status, &m.LateCount, &m.JoinedAt)
 	if err != nil {
-		if err == pgx.ErrNoRows {
+		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, nil
 		}
 		return nil, err
@@ -112,7 +113,7 @@ func (s *PostgresStore) GetGameByID(ctx context.Context, id uuid.UUID) (*models.
 	var g models.Game
 	err := s.pool.QueryRow(ctx, query, id).Scan(&g.ID, &g.Title, &g.IgdbID, &g.Platform, &g.Summary, &g.CoverURL, &g.SourceMagazine, &g.CoverDisplay, &g.AcquiredAt)
 	if err != nil {
-		if err == pgx.ErrNoRows {
+		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, nil
 		}
 		return nil, fmt.Errorf("failed to get game: %w", err)
@@ -180,6 +181,9 @@ func (s *PostgresStore) ListGames(ctx context.Context) ([]models.Game, error) {
 		}
 		games = append(games, g)
 	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("error iterating games rows: %w", err)
+	}
 	return games, nil
 }
 
@@ -226,6 +230,9 @@ func (s *PostgresStore) ListGamesWithAvailability(ctx context.Context, platform 
 		}
 		result = append(result, ga)
 	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("error iterating games availability rows: %w", err)
+	}
 	return result, nil
 }
 
@@ -251,6 +258,9 @@ func (s *PostgresStore) ListPlatforms(ctx context.Context) ([]PlatformSummary, e
 		}
 		result = append(result, ps)
 	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("error iterating platform rows: %w", err)
+	}
 	return result, nil
 }
 
@@ -273,20 +283,23 @@ func (s *PostgresStore) GetGameDetail(ctx context.Context, gameID uuid.UUID) (*G
 		&gd.TotalCopies, &gd.AvailableCopies,
 	)
 	if err != nil {
-		if err == pgx.ErrNoRows {
+		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, nil
 		}
 		return nil, fmt.Errorf("failed to get game detail: %w", err)
 	}
 
 	// Total rental count for this game.
-	s.pool.QueryRow(ctx, `
+	err = s.pool.QueryRow(ctx, `
 		SELECT COUNT(*) FROM rentals r
 		JOIN game_copies gc ON gc.id = r.copy_id
 		WHERE gc.game_id = $1`, gameID).Scan(&gd.TotalRentals)
+	if err != nil && !errors.Is(err, pgx.ErrNoRows) {
+		return nil, fmt.Errorf("failed to count total rentals: %w", err)
+	}
 
 	// Top renter for this game.
-	s.pool.QueryRow(ctx, `
+	err = s.pool.QueryRow(ctx, `
 		SELECT m.profile_name, COUNT(*) AS cnt
 		FROM rentals r
 		JOIN game_copies gc ON gc.id = r.copy_id
@@ -295,14 +308,20 @@ func (s *PostgresStore) GetGameDetail(ctx context.Context, gameID uuid.UUID) (*G
 		GROUP BY m.profile_name
 		ORDER BY cnt DESC
 		LIMIT 1`, gameID).Scan(&gd.TopRenterName, &gd.TopRenterCount)
+	if err != nil && !errors.Is(err, pgx.ErrNoRows) {
+		return nil, fmt.Errorf("failed to query top renter: %w", err)
+	}
 
 	// Current renter (if any copy is currently rented).
-	s.pool.QueryRow(ctx, `
+	err = s.pool.QueryRow(ctx, `
 		SELECT m.profile_name FROM rentals r
 		JOIN game_copies gc ON gc.id = r.copy_id
 		JOIN members m ON m.id = r.member_id
 		WHERE gc.game_id = $1 AND r.returned_at IS NULL
 		LIMIT 1`, gameID).Scan(&gd.CurrentRenter)
+	if err != nil && !errors.Is(err, pgx.ErrNoRows) {
+		return nil, fmt.Errorf("failed to query current renter: %w", err)
+	}
 
 	return &gd, nil
 }
@@ -408,6 +427,9 @@ func (s *PostgresStore) ListActiveRentals(ctx context.Context) ([]ActiveRental, 
 		ar.RentedAt = rentedAt.Format("02/01/2006")
 		result = append(result, ar)
 	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("error iterating active rentals rows: %w", err)
+	}
 	return result, nil
 }
 
@@ -486,6 +508,10 @@ func (s *PostgresStore) ProcessOverdueRentals(ctx context.Context) (int, error) 
 		}
 		overdue = append(overdue, o)
 	}
+	if err := rows.Err(); err != nil {
+		rows.Close()
+		return 0, fmt.Errorf("error iterating overdue rentals rows: %w", err)
+	}
 	rows.Close()
 
 	if len(overdue) == 0 {
@@ -546,6 +572,9 @@ func (s *PostgresStore) GetTopShameEntries(ctx context.Context, limit int) ([]Sh
 			return nil, fmt.Errorf("failed to scan shame entry: %w", err)
 		}
 		entries = append(entries, e)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("error iterating shame entry rows: %w", err)
 	}
 	return entries, nil
 }
@@ -624,6 +653,9 @@ func (s *PostgresStore) ListRecentActivities(ctx context.Context, limit int) ([]
 		}
 		result = append(result, a)
 	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("error iterating activity rows: %w", err)
+	}
 	return result, nil
 }
 
@@ -655,6 +687,9 @@ func (s *PostgresStore) ListMemberActiveRentals(ctx context.Context, memberID uu
 		mr.RentedAt = rentedAt.Format("02/01/2006")
 		mr.DueAt = dueAt.Format("02/01/2006")
 		result = append(result, mr)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("error iterating member active rentals rows: %w", err)
 	}
 	return result, nil
 }
@@ -743,6 +778,9 @@ func (s *PostgresStore) ListCompletedGameIDs(ctx context.Context, memberID uuid.
 			return nil, fmt.Errorf("failed to scan completed game id: %w", err)
 		}
 		ids = append(ids, id)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("error iterating completed game rows: %w", err)
 	}
 	return ids, nil
 }
@@ -859,6 +897,9 @@ func (s *PostgresStore) ListClubs(ctx context.Context, viewerID *uuid.UUID) ([]C
 		}
 		result = append(result, item)
 	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("error iterating club list rows: %w", err)
+	}
 	return result, nil
 }
 
@@ -890,6 +931,9 @@ func (s *PostgresStore) GetClubDetail(ctx context.Context, clubID uuid.UUID) (*C
 			return nil, fmt.Errorf("failed to scan club member: %w", err)
 		}
 		members = append(members, mv)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("error iterating club member rows: %w", err)
 	}
 
 	return &ClubDetail{
@@ -987,6 +1031,9 @@ func (s *PostgresStore) ListMemberClubs(ctx context.Context, memberID uuid.UUID)
 		}
 		result = append(result, mv)
 	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("error iterating member club rows: %w", err)
+	}
 	return result, nil
 }
 
@@ -1062,6 +1109,9 @@ func (s *PostgresStore) ListGamesWithPopularity(ctx context.Context) ([]GameInve
 		)
 		result = append(result, item)
 	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("error iterating games popularity rows: %w", err)
+	}
 	return result, nil
 }
 
@@ -1123,6 +1173,9 @@ func (s *PostgresStore) ListGameRentalHistory(ctx context.Context, gameID uuid.U
 		}
 		entry.Verdict = verdict
 		result = append(result, entry)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("error iterating game rental history rows: %w", err)
 	}
 	return result, nil
 }
